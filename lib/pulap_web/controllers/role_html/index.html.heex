@@ -1,0 +1,25 @@
+<.header>
+  Listing Roles
+  <:actions>
+    <.link href={~p"/roles/new"}>
+      <.button>New Role</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="roles" rows={@roles} row_click={&JS.navigate(~p"/roles/#{&1}")}>
+  <:col :let={role} label="Name">{role.name}</:col>
+  <:col :let={role} label="Description">{role.description}</:col>
+  <:col :let={role} label="Status">{role.status}</:col>
+  <:action :let={role}>
+    <div class="sr-only">
+      <.link navigate={~p"/roles/#{role}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/roles/#{role}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={role}>
+    <.link href={~p"/roles/#{role}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

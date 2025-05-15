@@ -1,0 +1,17 @@
+<.header>
+  Role {@role.id}
+  <:subtitle>This is a role record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/roles/#{@role}/edit"}>
+      <.button>Edit role</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@role.name}</:item>
+  <:item title="Description">{@role.description}</:item>
+  <:item title="Status">{@role.status}</:item>
+</.list>
+
+<.back navigate={~p"/roles"}>Back to roles</.back>
