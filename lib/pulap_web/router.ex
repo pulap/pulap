@@ -17,6 +17,14 @@ defmodule PulapWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :browser_redirect_if_logged_in do
+    plug :redirect_if_user_is_authenticated
+  end
+
+  pipeline :browser_require_auth do
+    plug :require_authenticated_user
+  end
+
   scope "/", PulapWeb do
     pipe_through :browser
 
@@ -66,6 +74,8 @@ defmodule PulapWeb.Router do
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
+
+    resources "/roles", RoleController
   end
 
   scope "/", PulapWeb do
