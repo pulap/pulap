@@ -9,7 +9,7 @@ import Config
 
 config :pulap,
   ecto_repos: [Pulap.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime, binary_id: true]
 
 # Configures the endpoint
 config :pulap, PulapWeb.Endpoint,
