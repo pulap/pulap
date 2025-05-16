@@ -60,4 +60,41 @@ defmodule PulapWeb.UserController do
     |> put_flash(:info, "User deleted successfully.")
     |> redirect(to: ~p"/users")
   end
+
+  def roles(conn, %{"id" => user_id}) do
+    user = Pulap.Accounts.get_user!(user_id)
+    roles = Pulap.Auth.list_roles_with_assignment_status(user_id)
+    {assigned, unassigned} = Enum.split_with(roles, & &1.assigned)
+    render(conn, "roles.html", user: user, assigned_roles: assigned, unassigned_roles: unassigned)
+  end
+
+  def assign_role(conn, %{"id" => user_id, "role_id" => role_id}) do
+    case Pulap.Auth.assign_role_to_user(user_id, role_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Role assigned successfully.")
+        |> redirect(to: ~p"/users/#{user_id}/roles")
+      {:error, :already_assigned} ->
+        conn
+        |> put_flash(:error, "Role was already assigned.")
+        |> redirect(to: ~p"/users/#{user_id}/roles")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not assign role.")
+        |> redirect(to: ~p"/users/#{user_id}/roles")
+    end
+  end
+
+  def revoke_role(conn, %{"id" => user_id, "role_id" => role_id}) do
+    case Pulap.Auth.revoke_role_from_user(user_id, role_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Role revoked successfully.")
+        |> redirect(to: ~p"/users/#{user_id}/roles")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not revoke role.")
+        |> redirect(to: ~p"/users/#{user_id}/roles")
+    end
+  end
 end

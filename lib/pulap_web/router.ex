@@ -79,6 +79,10 @@ defmodule PulapWeb.Router do
     resources "/roles", RoleController
     resources "/permissions", PermissionController
     resources "/resources", ResourceController
+
+    get "/users/:id/roles", UserController, :roles
+    post "/users/:id/assign_role", UserController, :assign_role # (to implement)
+    delete "/users/:id/roles/:role_id", UserController, :revoke_role # (to implement)
   end
 
   scope "/", PulapWeb do

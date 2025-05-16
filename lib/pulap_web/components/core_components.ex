@@ -457,7 +457,7 @@ defmodule PulapWeb.CoreComponents do
   ## Examples
 
       <.table id="users" rows={@users}>
-        <:col :let={user} label="id">{user.id}</:col>
+        <:col :let={user} label="id" style="width: 100px;">{user.id}</:col>
         <:col :let={user} label="username">{user.username}</:col>
       </.table>
   """
@@ -472,6 +472,7 @@ defmodule PulapWeb.CoreComponents do
 
   slot :col, required: true do
     attr :label, :string
+    attr :style, :string
   end
 
   slot :action, doc: "the slot for showing user actions in the last table column"
@@ -487,7 +488,7 @@ defmodule PulapWeb.CoreComponents do
       <table class="w-[40rem] mt-11 sm:w-full">
         <thead class="text-sm text-left leading-6 text-zinc-500">
           <tr>
-            <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal">{col[:label]}</th>
+            <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal" style={Map.get(col, :style)}>{col[:label]}</th>
             <th :if={@action != []} class="relative p-0 pb-4">
               <span class="sr-only">{gettext("Actions")}</span>
             </th>
@@ -503,6 +504,7 @@ defmodule PulapWeb.CoreComponents do
               :for={{col, i} <- Enum.with_index(@col)}
               phx-click={@row_click && @row_click.(row)}
               class={["relative p-0", @row_click && "hover:cursor-pointer"]}
+              style={Map.get(col, :style)}
             >
               <div class="block py-4 pr-6">
                 <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
