@@ -11,7 +11,6 @@ defmodule Pulap.Repo.Migrations.CreateResources do
       add :value, :string
       add :created_by, :uuid
       add :updated_by, :uuid
-      add :resource_id, :uuid
 
       timestamps(type: :utc_datetime)
     end

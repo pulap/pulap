@@ -7,8 +7,8 @@ defmodule Pulap.Repo.Migrations.CreatePermissions do
       add :slug, :string
       add :name, :string
       add :description, :string
-      add :created_by, references(:users, on_delete: :nothing, type: :binary_id)
-      add :updated_by, references(:users, on_delete: :nothing, type: :binary_id)
+      add :created_by, :binary_id
+      add :updated_by, :binary_id
 
       timestamps(type: :utc_datetime)
     end
