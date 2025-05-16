@@ -61,4 +61,41 @@ defmodule PulapWeb.ResourceController do
     |> put_flash(:info, "Resource deleted successfully.")
     |> redirect(to: ~p"/resources")
   end
+
+  def permissions(conn, %{"id" => resource_id}) do
+    resource = Auth.get_resource!(resource_id)
+    permissions = Auth.get_permissions_with_assignment_status_for_resource(resource_id)
+    {assigned, unassigned} = Enum.split_with(permissions, & &1.assigned)
+    render(conn, "permissions.html", resource: resource, assigned_permissions: assigned, unassigned_permissions: unassigned)
+  end
+
+  def assign_permission(conn, %{"id" => resource_id, "permission_id" => permission_id}) do
+    case Auth.assign_permission_to_resource(resource_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission assigned successfully.")
+        |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+      {:error, :already_assigned} ->
+        conn
+        |> put_flash(:error, "Permission was already assigned.")
+        |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not assign permission.")
+        |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+    end
+  end
+
+  def revoke_permission(conn, %{"id" => resource_id, "permission_id" => permission_id}) do
+    case Auth.revoke_permission_from_resource(resource_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission revoked successfully.")
+        |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not revoke permission.")
+        |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+    end
+  end
 end

@@ -262,6 +262,70 @@ defmodule Pulap.Auth do
     end
   end
 
+  def get_permissions_with_assignment_status_for_role(role_id) do
+    import Ecto.Query
+    query =
+      from p in Pulap.Auth.Permission,
+        left_join: rp in "role_permissions", on: rp.permission_id == p.id and rp.role_id == ^role_id,
+        select: %{
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          assigned: not is_nil(rp.role_id)
+        }
+    Pulap.Repo.all(query)
+  end
+
+  def assign_permission_to_role(role_id, permission_id) do
+    sql = "INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [role_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :assigned}
+      0 -> {:error, :already_assigned}
+    end
+  end
+
+  def revoke_permission_from_role(role_id, permission_id) do
+    sql = "DELETE FROM role_permissions WHERE role_id = ? AND permission_id = ?"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [role_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :revoked}
+      0 -> {:error, :not_assigned}
+    end
+  end
+
+  def get_permissions_with_assignment_status_for_resource(resource_id) do
+    import Ecto.Query
+    query =
+      from p in Pulap.Auth.Permission,
+        left_join: rp in "resource_permissions", on: rp.permission_id == p.id and rp.resource_id == ^resource_id,
+        select: %{
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          assigned: not is_nil(rp.resource_id)
+        }
+    Pulap.Repo.all(query)
+  end
+
+  def assign_permission_to_resource(resource_id, permission_id) do
+    sql = "INSERT OR IGNORE INTO resource_permissions (resource_id, permission_id) VALUES (?, ?)"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [resource_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :assigned}
+      0 -> {:error, :already_assigned}
+    end
+  end
+
+  def revoke_permission_from_resource(resource_id, permission_id) do
+    sql = "DELETE FROM resource_permissions WHERE resource_id = ? AND permission_id = ?"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [resource_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :revoked}
+      0 -> {:error, :not_assigned}
+    end
+  end
+
   alias Pulap.Auth.Resource
 
   @doc """

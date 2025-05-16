@@ -1,8 +1,9 @@
-<.header>
-  Edit Resource {@resource.id}
-  <:subtitle>Use this form to manage resource records in your database.</:subtitle>
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">Edit Resource {@resource.name}</span>
 </.header>
 
-<.resource_form changeset={@changeset} action={~p"/resources/#{@resource}"} />
-
-<.back navigate={~p"/resources"}>Back to resources</.back>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.resource_form changeset={@changeset} action={~p"/resources/#{@resource}"} />
+  </div>
+</div>
