@@ -102,9 +102,8 @@ defmodule Pulap.Auth do
     Role.changeset(role, attrs)
   end
 
-  def list_roles_with_assignment_status(user_id) do
+  def get_roles_with_assignment_status_for_user(user_id) do
     import Ecto.Query
-
     query =
       from r in Pulap.Auth.Role,
         left_join: ur in "users_roles", on: ur.role_id == r.id and ur.user_id == ^user_id,
@@ -114,7 +113,6 @@ defmodule Pulap.Auth do
           description: r.description,
           assigned: not is_nil(ur.user_id)
         }
-
     Pulap.Repo.all(query)
   end
 
@@ -230,6 +228,38 @@ defmodule Pulap.Auth do
   """
   def change_permission(%Permission{} = permission, attrs \\ %{}) do
     Permission.changeset(permission, attrs)
+  end
+
+  def get_permissions_with_assignment_status_for_user(user_id) do
+    import Ecto.Query
+    query =
+      from p in Pulap.Auth.Permission,
+        left_join: up in "user_permissions", on: up.permission_id == p.id and up.user_id == ^user_id,
+        select: %{
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          assigned: not is_nil(up.user_id)
+        }
+    Pulap.Repo.all(query)
+  end
+
+  def assign_permission_to_user(user_id, permission_id) do
+    sql = "INSERT OR IGNORE INTO user_permissions (user_id, permission_id) VALUES (?, ?)"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :assigned}
+      0 -> {:error, :already_assigned}
+    end
+  end
+
+  def revoke_permission_from_user(user_id, permission_id) do
+    sql = "DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, permission_id])
+    case result.num_rows do
+      1 -> {:ok, :revoked}
+      0 -> {:error, :not_assigned}
+    end
   end
 
   alias Pulap.Auth.Resource

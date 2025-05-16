@@ -1,0 +1,29 @@
+<div class="space-y-8">
+  <h1 class="text-2xl font-bold mb-4">Permissions for <strong>{@user.email}</strong></h1>
+
+  <h2 class="text-xl font-bold mb-2">Assigned</h2>
+  <.table id="assigned-permissions" rows={@assigned_permissions}>
+    <:col :let={permission} label="Name" style="width:40%">{permission.name}</:col>
+    <:col :let={permission} label="Description" style="width:45%">{permission.description}</:col>
+    <:col :let={permission} label="Action" style="width:15%">
+      <.link href={~p"/users/#{@user}/permissions/#{permission.id}"} method="delete">
+        <.button color="red">Revoke</.button>
+      </.link>
+    </:col>
+  </.table>
+
+  <h2 class="text-xl font-bold mb-2">Unassigned</h2>
+  <.table id="unassigned-permissions" rows={@unassigned_permissions}>
+    <:col :let={permission} label="Name" style="width:40%">{permission.name}</:col>
+    <:col :let={permission} label="Description" style="width:45%">{permission.description}</:col>
+    <:col :let={permission} label="Action" style="width:15%">
+      <.link href={~p"/users/#{@user}/assign_permission?permission_id=#{permission.id}"} method="post">
+        <.button color="yellow">Assign</.button>
+      </.link>
+    </:col>
+  </.table>
+
+  <div class="flex justify-center mt-6">
+    <.back_button navigate={~p"/users/#{@user}"}>Back</.back_button>
+  </div>
+</div>

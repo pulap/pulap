@@ -63,7 +63,7 @@ defmodule PulapWeb.UserController do
 
   def roles(conn, %{"id" => user_id}) do
     user = Pulap.Accounts.get_user!(user_id)
-    roles = Pulap.Auth.list_roles_with_assignment_status(user_id)
+    roles = Pulap.Auth.get_roles_with_assignment_status_for_user(user_id)
     {assigned, unassigned} = Enum.split_with(roles, & &1.assigned)
     render(conn, "roles.html", user: user, assigned_roles: assigned, unassigned_roles: unassigned)
   end
@@ -95,6 +95,43 @@ defmodule PulapWeb.UserController do
         conn
         |> put_flash(:error, "Could not revoke role.")
         |> redirect(to: ~p"/users/#{user_id}/roles")
+    end
+  end
+
+  def permissions(conn, %{"id" => user_id}) do
+    user = Pulap.Accounts.get_user!(user_id)
+    permissions = Pulap.Auth.get_permissions_with_assignment_status_for_user(user_id)
+    {assigned, unassigned} = Enum.split_with(permissions, & &1.assigned)
+    render(conn, "permissions.html", user: user, assigned_permissions: assigned, unassigned_permissions: unassigned)
+  end
+
+  def assign_permission(conn, %{"id" => user_id, "permission_id" => permission_id}) do
+    case Pulap.Auth.assign_permission_to_user(user_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission assigned successfully.")
+        |> redirect(to: ~p"/users/#{user_id}/permissions")
+      {:error, :already_assigned} ->
+        conn
+        |> put_flash(:error, "Permission was already assigned.")
+        |> redirect(to: ~p"/users/#{user_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not assign permission.")
+        |> redirect(to: ~p"/users/#{user_id}/permissions")
+    end
+  end
+
+  def revoke_permission(conn, %{"id" => user_id, "permission_id" => permission_id}) do
+    case Pulap.Auth.revoke_permission_from_user(user_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission revoked successfully.")
+        |> redirect(to: ~p"/users/#{user_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not revoke permission.")
+        |> redirect(to: ~p"/users/#{user_id}/permissions")
     end
   end
 end
