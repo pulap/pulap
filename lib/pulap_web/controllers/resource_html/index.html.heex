@@ -1,0 +1,28 @@
+<.header>
+  Resources
+</.header>
+
+<.table id="resources" rows={@resources} row_click={&JS.navigate(~p"/resources/#{&1}")}> 
+  <:col :let={resource} label="Name">
+    <.link navigate={~p"/resources/#{resource}"} class="text-blue-600 hover:underline">{resource.name}</.link>
+  </:col>
+  <:col :let={resource} label="Description">{resource.description}</:col>
+  <:col :let={resource} label="Type">{resource.kind}</:col>
+  <:col :let={resource} label="Value">{resource.value}</:col>
+  <:action :let={resource}>
+    <.link navigate={~p"/resources/#{resource}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/resources/#{resource}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link href={~p"/resources/#{resource}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+<div class="flex justify-center mt-8">
+  <.link href={~p"/resources/new"}>
+    <.button color="blue">New</.button>
+  </.link>
+</div>
