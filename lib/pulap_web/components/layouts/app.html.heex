@@ -59,20 +59,25 @@
       }
     </style>
     <script>
+      // Auto-dismiss flash messages after 5 seconds
       setTimeout(() => {
-        const alert = document.getElementById('flash-alert');
-        const notice = document.getElementById('flash-notice');
-        if (alert) {
-          alert.style.transition = 'opacity 0.5s';
-          alert.style.opacity = '0';
-          setTimeout(() => alert.style.display = 'none', 500);
-        }
-        if (notice) {
-          notice.style.transition = 'opacity 0.5s';
-          notice.style.opacity = '0';
-          setTimeout(() => notice.style.display = 'none', 500);
-        }
+        document.querySelectorAll('[id^="flash-"]').forEach(flash => {
+          flash.style.transition = 'opacity 0.5s';
+          flash.style.opacity = '0';
+          setTimeout(() => flash.style.display = 'none', 500);
+        });
       }, 5000);
+      // Close button handler for flash messages
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('button[aria-label="close"]')) {
+          const flash = e.target.closest('[id^="flash-"]');
+          if (flash) {
+            flash.style.transition = 'opacity 0.3s';
+            flash.style.opacity = '0';
+            setTimeout(() => flash.style.display = 'none', 300);
+          }
+        }
+      });
     </script>
   </body>
 </html>
