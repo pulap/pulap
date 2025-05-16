@@ -1,8 +1,15 @@
 <div class="flex justify-center">
   <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
     <div class="text-center mb-8">
-      <span class="font-bold text-xl">{@user.email}</span>
+      <span class="font-bold text-xl">{@user.username}</span>
     </div>
+    <.list>
+      <:item title="Name">{@user.name}</:item>
+      <:item title="Email">{@user.email}</:item>
+      <:item title="Last login at">{@user.last_login_at}</:item>
+      <:item title="Last login IP">{@user.last_login_ip}</:item>
+      <:item title="Active">{if @user.is_active, do: "Yes", else: "No"}</:item>
+    </.list>
   </div>
 </div>
 <div class="flex justify-center gap-2 mt-8">

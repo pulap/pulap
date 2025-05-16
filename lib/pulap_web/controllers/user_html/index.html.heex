@@ -3,18 +3,23 @@
 </.header>
 
 <.table id="users" rows={@users} row_click={&JS.navigate(~p"/users/#{&1}")}> 
+  <:col :let={user} label="Username">{user.username}</:col>
+  <:col :let={user} label="Name">{user.name}</:col>
   <:col :let={user} label="Email">
-    <.link navigate={~p"/users/#{user}"} class="text-blue-600 hover:underline">{user.email}</.link>
+    <.link navigate={"/users/" <> user.id} class="text-blue-600 hover:underline">{user.email}</.link>
   </:col>
+  <:col :let={user} label="Last login at">{user.last_login_at}</:col>
+  <:col :let={user} label="Last login IP">{user.last_login_ip}</:col>
+  <:col :let={user} label="Active">{if user.is_active, do: "Yes", else: "No"}</:col>
   <:col :let={user} label="Confirmed At">{user.confirmed_at}</:col>
   <:action :let={user}>
-    <.link navigate={~p"/users/#{user}"}>
+    <.link navigate={"/users/" <> user.id}>
       <.button color="blue">Show</.button>
     </.link>
-    <.link navigate={~p"/users/#{user}/edit"}>
+    <.link navigate={"/users/" <> user.id <> "/edit"}>
       <.button color="yellow">Edit</.button>
     </.link>
-    <.link href={~p"/users/#{user}"} method="delete" data-confirm="Are you sure?">
+    <.link href={"/users/" <> user.id} method="delete" data-confirm="Are you sure?">
       <.button color="red">Delete</.button>
     </.link>
   </:action>

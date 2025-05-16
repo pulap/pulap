@@ -4,14 +4,23 @@ defmodule Pulap.Repo.Migrations.CreateUsersAuthTables do
   def change do
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
+      add :slug, :string
+      add :name, :string
+      add :username, :string
       add :email, :string, null: false, collate: :nocase
       add :hashed_password, :string, null: false
+      add :last_login_at, :utc_datetime
+      add :last_login_ip, :string
+      add :is_active, :boolean, default: true, null: false
       add :confirmed_at, :utc_datetime
+      add :created_by, :binary_id
+      add :updated_by, :binary_id
 
       timestamps(type: :utc_datetime)
     end
 
     create unique_index(:users, [:email])
+    create unique_index(:users, [:slug])
 
     create table(:users_tokens, primary_key: false) do
       add :id, :binary_id, primary_key: true

@@ -11,17 +11,38 @@
 # and so on) as they will fail if something goes wrong.
 
 alias Pulap.Accounts
+alias Pulap.Repo
+alias Pulap.Accounts.User
+
+random_password = fn length ->
+  chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+  for _ <- 1..length, into: "", do: <<Enum.random(String.to_charlist(chars))>>
+end
 
 email = "superadmin@example.com"
+password = random_password.(12)
 
 unless Accounts.get_user_by_email(email) do
-  # 12-character password
   {:ok, _user} =
     Accounts.register_user(%{
       email: email,
-      password: "password1234",
-      password_confirmation: "password1234"
+      username: "superadmin",
+      name: "superadmin",
+      password: password,
+      password_confirmation: password
     })
+  IO.puts("User created: #{email} / #{password}")
+end
 
-  IO.puts("User created: #{email} / password1234")
+if Repo.aggregate(User, :count, :id) == 0 do
+  %User{}
+  |> User.registration_changeset(%{
+    email: email,
+    username: "superadmin",
+    name: "superadmin",
+    password: password,
+    is_active: true
+  })
+  |> Repo.insert!()
+  IO.puts("User created: #{email} / #{password}")
 end

@@ -4,11 +4,19 @@ defmodule Pulap.Accounts.User do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "users" do
+    field :slug, :string
+    field :name, :string
+    field :username, :string
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
+    field :last_login_at, :utc_datetime
+    field :last_login_ip, :string
+    field :is_active, :boolean, default: true
     field :confirmed_at, :utc_datetime
+    field :created_by, :binary_id
+    field :updated_by, :binary_id
 
     timestamps(type: :utc_datetime)
   end
@@ -38,7 +46,8 @@ defmodule Pulap.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password])
+    |> cast(attrs, [:email, :password, :username, :name])
+    |> validate_required([:email, :password, :username, :name])
     |> validate_email(opts)
     |> validate_password(opts)
   end
