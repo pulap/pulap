@@ -1,8 +1,9 @@
-<.header>
-  New Role
-  <:subtitle>Use this form to manage role records in your database.</:subtitle>
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">New Role</span>
 </.header>
 
-<.role_form changeset={@changeset} action={~p"/roles"} />
-
-<.back navigate={~p"/roles"}>Back to roles</.back>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.role_form changeset={@changeset} action={~p"/roles"} />
+  </div>
+</div>
