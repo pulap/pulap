@@ -59,4 +59,41 @@ defmodule PulapWeb.RoleController do
     |> put_flash(:info, "Role deleted successfully.")
     |> redirect(to: ~p"/roles")
   end
+
+  def permissions(conn, %{"id" => role_id}) do
+    role = Auth.get_role!(role_id)
+    permissions = Auth.get_permissions_with_assignment_status_for_role(role_id)
+    {assigned, unassigned} = Enum.split_with(permissions, & &1.assigned)
+    render(conn, "permissions.html", role: role, assigned_permissions: assigned, unassigned_permissions: unassigned)
+  end
+
+  def assign_permission(conn, %{"id" => role_id, "permission_id" => permission_id}) do
+    case Auth.assign_permission_to_role(role_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission assigned successfully.")
+        |> redirect(to: ~p"/roles/#{role_id}/permissions")
+      {:error, :already_assigned} ->
+        conn
+        |> put_flash(:error, "Permission was already assigned.")
+        |> redirect(to: ~p"/roles/#{role_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not assign permission.")
+        |> redirect(to: ~p"/roles/#{role_id}/permissions")
+    end
+  end
+
+  def revoke_permission(conn, %{"id" => role_id, "permission_id" => permission_id}) do
+    case Auth.revoke_permission_from_role(role_id, permission_id) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Permission revoked successfully.")
+        |> redirect(to: ~p"/roles/#{role_id}/permissions")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not revoke permission.")
+        |> redirect(to: ~p"/roles/#{role_id}/permissions")
+    end
+  end
 end

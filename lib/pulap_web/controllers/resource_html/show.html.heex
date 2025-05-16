@@ -1,21 +1,23 @@
-<.header>
-  Resource {@resource.id}
-  <:subtitle>This is a resource record from your database.</:subtitle>
-  <:actions>
-    <.link href={~p"/resources/#{@resource}/edit"}>
-      <.button>Edit resource</.button>
-    </.link>
-  </:actions>
-</.header>
-
-<.list>
-  <:item title="Slug">{@resource.slug}</:item>
-  <:item title="Name">{@resource.name}</:item>
-  <:item title="Description">{@resource.description}</:item>
-  <:item title="Kind">{@resource.kind}</:item>
-  <:item title="Value">{@resource.value}</:item>
-  <:item title="Created by">{@resource.created_by}</:item>
-  <:item title="Updated by">{@resource.updated_by}</:item>
-</.list>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@resource.name}</span>
+    </div>
+    <.list>
+      <:item title="Description">{@resource.description}</:item>
+      <:item title="Kind">{@resource.kind}</:item>
+      <:item title="Value">{@resource.value}</:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/resources"}>Back</.back_button>
+  <.link href={~p"/resources/#{@resource}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+  <.link href={~p"/resources/#{@resource}/permissions"}>
+    <.button color="blue">Permissions</.button>
+  </.link>
+</div>
 
 <.back navigate={~p"/resources"}>Back to resources</.back>
