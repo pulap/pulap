@@ -102,6 +102,40 @@ defmodule Pulap.Auth do
     Role.changeset(role, attrs)
   end
 
+  def list_roles_with_assignment_status(user_id) do
+    import Ecto.Query
+
+    query =
+      from r in Pulap.Auth.Role,
+        left_join: ur in "users_roles", on: ur.role_id == r.id and ur.user_id == ^user_id,
+        select: %{
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          assigned: not is_nil(ur.user_id)
+        }
+
+    Pulap.Repo.all(query)
+  end
+
+  def assign_role_to_user(user_id, role_id) do
+    sql = "INSERT OR IGNORE INTO users_roles (user_id, role_id) VALUES (?, ?)"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, role_id])
+    case result.num_rows do
+      0 -> {:error, :already_assigned}
+      n -> {:ok, n}
+    end
+  end
+
+  def revoke_role_from_user(user_id, role_id) do
+    sql = "DELETE FROM users_roles WHERE user_id = ? AND role_id = ?"
+    result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, role_id])
+    case result.num_rows do
+      0 -> {:error, :not_found}
+      n -> {:ok, n}
+    end
+  end
+
   alias Pulap.Auth.Permission
 
   @doc """
