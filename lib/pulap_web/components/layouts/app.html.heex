@@ -1,32 +1,78 @@
-<header class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <a href="/">
-        <img src={~p"/images/logo.svg"} width="36" />
-      </a>
-      <p class="bg-brand/5 text-brand rounded-full px-2 font-medium leading-6">
-        v{Application.spec(:phoenix, :vsn)}
-      </p>
-    </div>
-    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
-      <a href="https://twitter.com/elixirphoenix" class="hover:text-zinc-700">
-        @elixirphoenix
-      </a>
-      <a href="https://github.com/phoenixframework/phoenix" class="hover:text-zinc-700">
-        GitHub
-      </a>
-      <a
-        href="https://hexdocs.pm/phoenix/overview.html"
-        class="rounded-lg bg-zinc-100 px-2 py-1 hover:bg-zinc-200/80"
-      >
-        Get Started <span aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </div>
-</header>
-<main class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl">
-    <.flash_group flash={@flash} />
-    {@inner_content}
-  </div>
-</main>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{Map.get(assigns, :page_title, "Pulap")}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+  </head>
+  <body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col overflow-x-hidden">
+    <header class="bg-blue-600 text-white p-4 flex items-center w-full">
+      <div class="mr-4">
+        <a href="/">
+          <img src={~p"/images/logo.png"} alt="Logo" class="w-12 h-12" />
+        </a>
+      </div>
+      <nav class="flex-1">
+        <ul class="flex space-x-5">
+          <li><.link navigate="#" class="text-white">Users</.link></li>
+          <li><.link navigate={~p"/roles"} class="text-white">Roles</.link></li>
+          <li><.link navigate={~p"/permissions"} class="text-white">Permissions</.link></li>
+          <li><.link navigate="#" class="text-white">Resources</.link></li>
+        </ul>
+      </nav>
+      <div class="flex items-center gap-4 ml-auto">
+        <span class="text-white text-sm">{Map.get(@current_user || %{}, :email, "")}</span>
+        <.link navigate={~p"/users/settings"} class="text-white text-sm font-semibold hover:underline">Settings</.link>
+        <.link href={~p"/users/log_out"} method="delete" class="text-white text-sm font-semibold hover:underline">Log out</.link>
+      </div>
+    </header>
+    <main class="flex-1 p-4">
+      <.flash_group flash={@flash} />
+      {@inner_content}
+    </main>
+    <footer class="bg-gray-200 text-center p-4 mt-4">
+      <p>© {Date.utc_today().year} Pulap</p>
+      <div class="ml-auto">
+        <pre class="text-sm text-gray-500">Permissions: {inspect(Map.get(@current_user || %{}, :permissions, "No permissions in session"))}</pre>
+      </div>
+    </footer>
+    <style>
+      .flash-message {
+        position: relative;
+        padding: 10px 40px 10px 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .flash-message .close {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+        color: inherit.
+      }
+    </style>
+    <script>
+      setTimeout(() => {
+        const alert = document.getElementById('flash-alert');
+        const notice = document.getElementById('flash-notice');
+        if (alert) {
+          alert.style.transition = 'opacity 0.5s';
+          alert.style.opacity = '0';
+          setTimeout(() => alert.style.display = 'none', 500);
+        }
+        if (notice) {
+          notice.style.transition = 'opacity 0.5s';
+          notice.style.opacity = '0';
+          setTimeout(() => notice.style.display = 'none', 500);
+        }
+      }, 5000);
+    </script>
+  </body>
+</html>

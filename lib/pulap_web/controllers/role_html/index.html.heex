@@ -1,25 +1,27 @@
 <.header>
-  Listing Roles
-  <:actions>
-    <.link href={~p"/roles/new"}>
-      <.button>New Role</.button>
-    </.link>
-  </:actions>
+  Roles
 </.header>
 
-<.table id="roles" rows={@roles} row_click={&JS.navigate(~p"/roles/#{&1}")}>
-  <:col :let={role} label="Name">{role.name}</:col>
+<.table id="roles" rows={@roles} row_click={&JS.navigate(~p"/roles/#{&1}")}> 
+  <:col :let={role} label="Name">
+    <.link navigate={~p"/roles/#{role}"} class="text-blue-600 hover:underline">{role.name}</.link>
+  </:col>
   <:col :let={role} label="Description">{role.description}</:col>
   <:col :let={role} label="Status">{role.status}</:col>
   <:action :let={role}>
-    <div class="sr-only">
-      <.link navigate={~p"/roles/#{role}"}>Show</.link>
-    </div>
-    <.link navigate={~p"/roles/#{role}/edit"}>Edit</.link>
-  </:action>
-  <:action :let={role}>
+    <.link navigate={~p"/roles/#{role}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/roles/#{role}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
     <.link href={~p"/roles/#{role}"} method="delete" data-confirm="Are you sure?">
-      Delete
+      <.button color="red">Delete</.button>
     </.link>
   </:action>
 </.table>
+<div class="flex justify-center mt-8">
+  <.link href={~p"/roles/new"}>
+    <.button color="blue">New</.button>
+  </.link>
+</div>

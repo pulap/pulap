@@ -1,17 +1,17 @@
-<.header>
-  Role {@role.id}
-  <:subtitle>This is a role record from your database.</:subtitle>
-  <:actions>
-    <.link href={~p"/roles/#{@role}/edit"}>
-      <.button>Edit role</.button>
-    </.link>
-  </:actions>
-</.header>
-
-<.list>
-  <:item title="Name">{@role.name}</:item>
-  <:item title="Description">{@role.description}</:item>
-  <:item title="Status">{@role.status}</:item>
-</.list>
-
-<.back navigate={~p"/roles"}>Back to roles</.back>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@role.name}</span>
+    </div>
+    <.list>
+      <:item title="Description">{@role.description}</:item>
+      <:item title="Status">{@role.status}</:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/roles"}>Back</.back_button>
+  <.link href={~p"/roles/#{@role}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+</div>

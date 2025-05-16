@@ -1,17 +1,18 @@
-<.header>
-  Permission {@permission.id}
-  <:subtitle>This is a permission record from your database.</:subtitle>
-  <:actions>
-    <.link href={~p"/permissions/#{@permission}/edit"}>
-      <.button>Edit permission</.button>
-    </.link>
-  </:actions>
-</.header>
-
-<.list>
-  <:item title="Slug">{@permission.slug}</:item>
-  <:item title="Name">{@permission.name}</:item>
-  <:item title="Description">{@permission.description}</:item>
-</.list>
-
-<.back navigate={~p"/permissions"}>Back to permissions</.back>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@permission.name}</span>
+    </div>
+    <.list>
+      <:item title="Description">{@permission.description}</:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <a href={~p"/permissions"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">
+    Back
+  </a>
+  <.link href={~p"/permissions/#{@permission}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+</div>

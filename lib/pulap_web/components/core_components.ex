@@ -222,17 +222,27 @@ defmodule PulapWeb.CoreComponents do
   """
   attr :type, :string, default: nil
   attr :class, :string, default: nil
+  attr :color, :string, default: "default"
   attr :rest, :global, include: ~w(disabled form name value)
 
   slot :inner_block, required: true
 
   def button(assigns) do
+    color_classes = case assigns[:color] do
+      "blue" -> "bg-blue-600 hover:bg-blue-700 text-white"
+      "yellow" -> "bg-yellow-400 hover:bg-yellow-500 text-white"
+      "green" -> "bg-green-600 hover:bg-green-700 text-white"
+      "red" -> "bg-red-600 hover:bg-red-700 text-white"
+      "gray" -> "bg-gray-400 hover:bg-gray-500 text-white"
+      _ -> "bg-zinc-900 hover:bg-zinc-700 text-white"
+    end
+    assigns = assign(assigns, :color_classes, color_classes)
     ~H"""
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "phx-submit-loading:opacity-75 rounded-lg py-2 px-3 text-sm font-semibold leading-6 active:text-white/80",
+        @color_classes,
         @class
       ]}
       {@rest}
@@ -567,6 +577,24 @@ defmodule PulapWeb.CoreComponents do
         {render_slot(@inner_block)}
       </.link>
     </div>
+    """
+  end
+
+  @doc """
+  Renders a back navigation button.
+
+  ## Examples
+
+      <.back_button navigate={~p"/posts"}>Back</.back_button>
+  """
+  attr :navigate, :any, required: true
+  slot :inner_block, required: true
+
+  def back_button(assigns) do
+    ~H"""
+    <.link navigate={@navigate}>
+      <.button color="gray">{render_slot(@inner_block)}</.button>
+    </.link>
     """
   end
 

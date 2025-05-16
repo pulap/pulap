@@ -17,11 +17,13 @@ defmodule PulapWeb.PermissionController do
   def create(conn, %{"permission" => permission_params}) do
     case Auth.create_permission(permission_params) do
       {:ok, permission} ->
+        IO.puts("[INFO] Permission created: #{inspect(permission)}")
         conn
         |> put_flash(:info, "Permission created successfully.")
         |> redirect(to: ~p"/permissions/#{permission}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        IO.puts("[ERROR] Permission creation failed: #{inspect(changeset.errors)}")
         render(conn, :new, changeset: changeset)
     end
   end

@@ -4,7 +4,12 @@
   </.error>
   <.input field={f[:name]} type="text" label="Name" />
   <.input field={f[:description]} type="text" label="Description" />
-  <:actions>
-    <.button>Save Permission</.button>
-  </:actions>
+  <div class="flex justify-center gap-2 mt-8">
+    <a href={~p"/permissions"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">
+      Back
+    </a>
+    <.button color="green">
+      <%= if @changeset.data.id, do: "Update", else: "Save" %>
+    </.button>
+  </div>
 </.simple_form>

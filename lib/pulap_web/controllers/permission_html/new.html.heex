@@ -1,8 +1,11 @@
-<.header>
-  New Permission
-  <:subtitle>Use this form to manage permission records in your database.</:subtitle>
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">New Permission</span>
 </.header>
 
-<.permission_form changeset={@changeset} action={~p"/permissions"} />
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.permission_form changeset={@changeset} action={~p"/permissions"} />
+  </div>
+</div>
 
-<.back navigate={~p"/permissions"}>Back to permissions</.back>
+<!-- Removed duplicate back button -->
