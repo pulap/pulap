@@ -1,0 +1,19 @@
+defmodule Pulap.Repo.Migrations.CreatePermissions do
+  use Ecto.Migration
+
+  def change do
+    create table(:permissions, primary_key: false) do
+      add :id, :binary_id, primary_key: true
+      add :slug, :string
+      add :name, :string
+      add :description, :string
+      add :created_by, references(:users, on_delete: :nothing, type: :binary_id)
+      add :updated_by, references(:users, on_delete: :nothing, type: :binary_id)
+
+      timestamps(type: :utc_datetime)
+    end
+
+    create index(:permissions, [:created_by])
+    create index(:permissions, [:updated_by])
+  end
+end

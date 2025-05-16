@@ -1,0 +1,25 @@
+<.header>
+  Listing Permissions
+  <:actions>
+    <.link href={~p"/permissions/new"}>
+      <.button>New Permission</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="permissions" rows={@permissions} row_click={&JS.navigate(~p"/permissions/#{&1}")}>
+  <:col :let={permission} label="Slug">{permission.slug}</:col>
+  <:col :let={permission} label="Name">{permission.name}</:col>
+  <:col :let={permission} label="Description">{permission.description}</:col>
+  <:action :let={permission}>
+    <div class="sr-only">
+      <.link navigate={~p"/permissions/#{permission}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/permissions/#{permission}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={permission}>
+    <.link href={~p"/permissions/#{permission}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

@@ -1,0 +1,17 @@
+<.header>
+  Permission {@permission.id}
+  <:subtitle>This is a permission record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/permissions/#{@permission}/edit"}>
+      <.button>Edit permission</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Slug">{@permission.slug}</:item>
+  <:item title="Name">{@permission.name}</:item>
+  <:item title="Description">{@permission.description}</:item>
+</.list>
+
+<.back navigate={~p"/permissions"}>Back to permissions</.back>
