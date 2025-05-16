@@ -159,4 +159,15 @@ defmodule Pulap.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  @doc """
+  A generic changeset for user CRUD (used by admin UI).
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email, :confirmed_at])
+    |> validate_required([:email])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
+    |> validate_length(:email, max: 160)
+  end
 end

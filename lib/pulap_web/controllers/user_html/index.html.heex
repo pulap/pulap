@@ -1,0 +1,26 @@
+<.header>
+  Users
+</.header>
+
+<.table id="users" rows={@users} row_click={&JS.navigate(~p"/users/#{&1}")}> 
+  <:col :let={user} label="Email">
+    <.link navigate={~p"/users/#{user}"} class="text-blue-600 hover:underline">{user.email}</.link>
+  </:col>
+  <:col :let={user} label="Confirmed At">{user.confirmed_at}</:col>
+  <:action :let={user}>
+    <.link navigate={~p"/users/#{user}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/users/#{user}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link href={~p"/users/#{user}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+<div class="flex justify-center mt-8">
+  <.link href={~p"/users/new"}>
+    <.button color="blue">New</.button>
+  </.link>
+</div>

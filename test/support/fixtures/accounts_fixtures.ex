@@ -28,4 +28,20 @@ defmodule Pulap.AccountsFixtures do
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
     token
   end
+
+  @doc """
+  Generate a user.
+  """
+  def user_fixture(attrs \\ %{}) do
+    {:ok, user} =
+      attrs
+      |> Enum.into(%{
+        confirmed_at: ~U[2025-05-15 18:05:00Z],
+        email: "some email",
+        hashed_password: "some hashed_password"
+      })
+      |> Pulap.Accounts.create_user()
+
+    user
+  end
 end

@@ -75,9 +75,10 @@ defmodule PulapWeb.Router do
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
 
+    resources "/users", UserController
     resources "/roles", RoleController
     resources "/permissions", PermissionController
-    resources "/resources", ResourceController 
+    resources "/resources", ResourceController
   end
 
   scope "/", PulapWeb do

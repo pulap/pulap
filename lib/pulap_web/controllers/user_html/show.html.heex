@@ -1,0 +1,13 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@user.email}</span>
+    </div>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/users"}>Back</.back_button>
+  <.link href={~p"/users/#{@user}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+</div>
