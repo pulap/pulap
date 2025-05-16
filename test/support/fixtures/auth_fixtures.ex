@@ -35,4 +35,24 @@ defmodule Pulap.AuthFixtures do
 
     permission
   end
+
+  @doc """
+  Generate a resource.
+  """
+  def resource_fixture(attrs \\ %{}) do
+    {:ok, resource} =
+      attrs
+      |> Enum.into(%{
+        created_by: "7488a646-e31f-11e4-aace-600308960662",
+        description: "some description",
+        kind: "some kind",
+        name: "some name",
+        slug: "some slug",
+        updated_by: "7488a646-e31f-11e4-aace-600308960662",
+        value: "some value"
+      })
+      |> Pulap.Auth.create_resource()
+
+    resource
+  end
 end
