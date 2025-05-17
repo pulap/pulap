@@ -427,4 +427,56 @@ defmodule Pulap.Auth do
   def change_resource(%Resource{} = resource, attrs \\ %{}) do
     Resource.changeset(resource, attrs)
   end
+
+  alias Pulap.Auth.Organization
+
+  @doc """
+  Returns the list of organizations.
+  """
+  def list_organizations do
+    Repo.all(Organization)
+  end
+
+  @doc """
+  Gets a single organization.
+  Raises `Ecto.NoResultsError` if the Organization does not exist.
+  """
+  def get_organization!(id), do: Repo.get!(Organization, id)
+
+  @doc """
+  Gets a single organization.
+  """
+  def get_organization(id), do: Repo.get(Organization, id)
+
+  @doc """
+  Creates an organization.
+  """
+  def create_organization(attrs \\ %{}) do
+    %Organization{}
+    |> Organization.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates an organization.
+  """
+  def update_organization(%Organization{} = organization, attrs) do
+    organization
+    |> Organization.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes an organization.
+  """
+  def delete_organization(%Organization{} = organization) do
+    Repo.delete(organization)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking organization changes.
+  """
+  def change_organization(%Organization{} = organization, attrs \\ %{}) do
+    Organization.changeset(organization, attrs)
+  end
 end
