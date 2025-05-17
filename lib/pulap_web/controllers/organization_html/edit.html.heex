@@ -1,0 +1,19 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@organization.name}</span>
+    </div>
+    <.simple_form :let={f} for={@changeset} action={~p"/organizations/#{@organization}"} method="put">
+      <.input field={f[:name]} label="Name" />
+      <.input field={f[:description]} label="Description" />
+      <div class="flex justify-center gap-2 mt-8">
+        <a href={~p"/organizations"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">
+          Back
+        </a>
+        <.button color="blue">
+          Update
+        </.button>
+      </div>
+    </.simple_form>
+  </div>
+</div>

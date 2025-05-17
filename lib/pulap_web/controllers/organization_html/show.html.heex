@@ -1,0 +1,23 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@organization.name}</span>
+    </div>
+    <.list>
+      <:item title="Description">{@organization.description}</:item>
+      <:item title="Owner">
+        <%= if @organization.owner do %>
+          <%= @organization.owner.username || @organization.owner.name %>
+        <% else %>
+          -
+        <% end %>
+      </:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/"}>Back</.back_button>
+  <.link href={~p"/organizations/#{@organization}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+</div>

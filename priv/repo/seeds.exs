@@ -13,6 +13,7 @@
 alias Pulap.Accounts
 alias Pulap.Repo
 alias Pulap.Accounts.User
+alias Pulap.Auth.Organization
 
 random_password = fn length ->
   chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -46,3 +47,23 @@ if Repo.aggregate(User, :count, :id) == 0 do
   |> Repo.insert!()
   IO.puts("User created: #{email} / #{password}")
 end
+
+org_slug = "default-org"
+org_name = "Default Organization"
+org_description = "The default organization for the system."
+
+user = Accounts.get_user_by_email(email)
+
+organization =
+  Pulap.Repo.get_by(Organization, slug: org_slug) ||
+    %Organization{}
+    |> Organization.changeset(%{
+      slug: org_slug,
+      name: org_name,
+      description: org_description,
+      owner_id: user.id,
+      created_by: user.id
+    })
+    |> Pulap.Repo.insert!()
+
+IO.puts("Organization created: #{org_name} (slug: #{org_slug}) and owned by #{user.email}")

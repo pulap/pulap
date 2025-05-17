@@ -1,6 +1,8 @@
 defmodule PulapWeb.UserController do
   use PulapWeb, :controller
 
+  plug :put_layout, {PulapWeb.Layouts, :auth}
+
   alias Pulap.Accounts
   alias Pulap.Accounts.User
   alias PulapWeb.AuditHelpers

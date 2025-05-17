@@ -28,7 +28,7 @@ defmodule PulapWeb.Router do
   scope "/", PulapWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", HomeController, :show
   end
 
   # Other scopes may use custom stacks.
@@ -79,6 +79,11 @@ defmodule PulapWeb.Router do
     resources "/roles", RoleController
     resources "/permissions", PermissionController
     resources "/resources", ResourceController
+
+    get "/organizations/default", OrganizationController, :show_single
+    resources "/organizations", OrganizationController
+
+    get "/organizations/show", OrganizationController, :show_single
 
     get "/users/:id/roles", UserController, :roles
     get "/users/:id/permissions", UserController, :permissions
