@@ -1,20 +1,34 @@
-<div class="flex justify-center">
-  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
-    <div class="text-center mb-8">
-      <span class="font-bold text-xl">{@organization.name}</span>
-    </div>
-    <.list>
-      <:item title="Description">{@organization.description}</:item>
-      <:item title="Owner">
-        <%= if @organization.owner do %>
-          <%= @organization.owner.username || @organization.owner.name %>
-        <% else %>
-          -
-        <% end %>
-      </:item>
-    </.list>
-  </div>
+<.flash_group flash={@flash} />
+
+<h1 class="text-2xl font-bold mb-4 text-blue-600">{@organization.name}</h1>
+
+<div class="bg-white shadow-md rounded p-4 mb-6">
+  <%= if @organization.short_description do %>
+    <p class="text-gray-800 mb-4">{@organization.short_description}</p>
+  <% end %>
+  <p class="text-gray-800">{@organization.description}</p>
 </div>
+
+<h2 class="text-xl font-bold mb-4">Owners</h2>
+<table class="min-w-full divide-y divide-gray-200">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= for owner <- @organization.owners do %>
+      <tr>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-white border-b border-gray-200"><%= owner.username %></td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 bg-white border-b border-gray-200"><%= owner.name %></td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 bg-white border-b border-gray-200"><%= owner.email %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
 <div class="flex justify-center gap-2 mt-8">
   <.back_button navigate={~p"/"}>Back</.back_button>
   <.link href={~p"/organizations/#{@organization}/edit"}>

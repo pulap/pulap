@@ -7,17 +7,20 @@ defmodule Pulap.Auth.Organization do
   schema "organizations" do
     field :slug, :string
     field :name, :string
+    field :short_description, :string
     field :description, :string
     field :created_by, :binary_id
     field :updated_by, :binary_id
-    belongs_to :owner, Pulap.Accounts.User, type: :binary_id
+    many_to_many :owners, Pulap.Accounts.User,
+      join_through: Pulap.Org.OrganizationOwner,
+      join_keys: [organization_id: :id, user_id: :id]
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(organization, attrs) do
     organization
-    |> cast(attrs, [:slug, :name, :description, :created_by, :updated_by, :owner_id])
+    |> cast(attrs, [:slug, :name, :short_description, :description, :created_by, :updated_by])
     |> validate_required([:name])
     |> unique_constraint(:slug)
   end

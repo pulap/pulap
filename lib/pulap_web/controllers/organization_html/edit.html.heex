@@ -5,6 +5,7 @@
     </div>
     <.simple_form :let={f} for={@changeset} action={~p"/organizations/#{@organization}"} method="put">
       <.input field={f[:name]} label="Name" />
+      <.input field={f[:short_description]} label="Short Description" />
       <.input field={f[:description]} label="Description" />
       <div class="flex justify-center gap-2 mt-8">
         <a href={~p"/organizations"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">

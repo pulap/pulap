@@ -17,7 +17,7 @@ defmodule Pulap.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :created_by, :binary_id
     field :updated_by, :binary_id
-
+    many_to_many :owned_organizations, Pulap.Org.Organization, join_through: "organization_owners"
     timestamps(type: :utc_datetime)
   end
 
