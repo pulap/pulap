@@ -1,18 +1,30 @@
-# Pulap
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 
-To start your Phoenix server:
+# Pulap - Real Estate Manager
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+Pulap is a project for real estate management. The current focus is on completing authentication and authorization interfaces, as well as team and role management features.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Current Status
+- Authentication and authorization interfaces in progress
+- Team and role management features in progress
+- Basic web interface
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+## Example View
 
-## Learn more
+![User list](docs/img/gallery/list-users.png)
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+## Quick Setup
+
+```sh
+mix deps.get
+mix ecto.setup
+mix run priv/repo/seeds.exs 
+mix phx.server
+```
+
+## Notes
+- Requires Elixir and Phoenix.
+
+---
+
+Pulap © 2025
