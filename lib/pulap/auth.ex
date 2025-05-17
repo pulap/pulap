@@ -235,11 +235,17 @@ defmodule Pulap.Auth do
     query =
       from p in Pulap.Auth.Permission,
         left_join: up in "user_permissions", on: up.permission_id == p.id and up.user_id == ^user_id,
+        left_join: ur in "users_roles", on: ur.user_id == ^user_id,
+        left_join: r in Pulap.Auth.Role, on: r.id == ur.role_id,
+        left_join: rp in "role_permissions", on: rp.role_id == ur.role_id and rp.permission_id == p.id,
+        group_by: [p.id, p.name, p.description, up.user_id],
         select: %{
           id: p.id,
           name: p.name,
           description: p.description,
-          assigned: not is_nil(up.user_id)
+          direct: not is_nil(up.user_id),
+          indirect: fragment("count(DISTINCT ?) > 0", rp.role_id),
+          source_roles: fragment("group_concat(DISTINCT ?) FILTER (WHERE ? IS NOT NULL)", r.name, rp.role_id)
         }
     Pulap.Repo.all(query)
   end

@@ -104,7 +104,12 @@ defmodule PulapWeb.UserController do
   def permissions(conn, %{"id" => user_id}) do
     user = Pulap.Accounts.get_user!(user_id)
     permissions = Pulap.Auth.get_permissions_with_assignment_status_for_user(user_id)
-    {assigned, unassigned} = Enum.split_with(permissions, & &1.assigned)
+    assigned = Enum.filter(permissions, fn p ->
+      p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
+    end)
+    unassigned = Enum.reject(permissions, fn p ->
+      p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
+    end)
     render(conn, "permissions.html", user: user, assigned_permissions: assigned, unassigned_permissions: unassigned)
   end
 
