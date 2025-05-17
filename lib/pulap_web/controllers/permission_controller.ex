@@ -3,6 +3,7 @@ defmodule PulapWeb.PermissionController do
 
   alias Pulap.Auth
   alias Pulap.Auth.Permission
+  alias PulapWeb.AuditHelpers
 
   def index(conn, _params) do
     permissions = Auth.list_permissions()
@@ -15,7 +16,8 @@ defmodule PulapWeb.PermissionController do
   end
 
   def create(conn, %{"permission" => permission_params}) do
-    case Auth.create_permission(permission_params) do
+    params = AuditHelpers.maybe_put_created_by(permission_params, conn)
+    case Auth.create_permission(params) do
       {:ok, permission} ->
         IO.puts("[INFO] Permission created: #{inspect(permission)}")
         conn
@@ -41,8 +43,9 @@ defmodule PulapWeb.PermissionController do
 
   def update(conn, %{"id" => id, "permission" => permission_params}) do
     permission = Auth.get_permission!(id)
+    params = AuditHelpers.maybe_put_updated_by(permission_params, conn)
 
-    case Auth.update_permission(permission, permission_params) do
+    case Auth.update_permission(permission, params) do
       {:ok, permission} ->
         conn
         |> put_flash(:info, "Permission updated successfully.")

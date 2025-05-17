@@ -3,6 +3,7 @@ defmodule PulapWeb.RoleController do
 
   alias Pulap.Auth
   alias Pulap.Auth.Role
+  alias PulapWeb.AuditHelpers
 
   def index(conn, _params) do
     roles = Auth.list_roles()
@@ -15,7 +16,8 @@ defmodule PulapWeb.RoleController do
   end
 
   def create(conn, %{"role" => role_params}) do
-    case Auth.create_role(role_params) do
+    params = AuditHelpers.maybe_put_created_by(role_params, conn)
+    case Auth.create_role(params) do
       {:ok, role} ->
         conn
         |> put_flash(:info, "Role created successfully.")
@@ -39,8 +41,8 @@ defmodule PulapWeb.RoleController do
 
   def update(conn, %{"id" => id, "role" => role_params}) do
     role = Auth.get_role!(id)
-
-    case Auth.update_role(role, role_params) do
+    params = AuditHelpers.maybe_put_updated_by(role_params, conn)
+    case Auth.update_role(role, params) do
       {:ok, role} ->
         conn
         |> put_flash(:info, "Role updated successfully.")

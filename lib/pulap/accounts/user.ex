@@ -46,7 +46,7 @@ defmodule Pulap.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password, :username, :name])
+    |> cast(attrs, [:email, :password, :username, :name, :created_by, :updated_by])
     |> validate_required([:email, :password, :username, :name])
     |> validate_email(opts)
     |> validate_password(opts)
@@ -174,7 +174,7 @@ defmodule Pulap.Accounts.User do
   """
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :confirmed_at])
+    |> cast(attrs, [:email, :confirmed_at, :created_by, :updated_by, :username, :name])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_length(:email, max: 160)

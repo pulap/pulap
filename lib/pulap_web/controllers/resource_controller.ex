@@ -3,6 +3,7 @@ defmodule PulapWeb.ResourceController do
 
   alias Pulap.Auth
   alias Pulap.Auth.Resource
+  alias PulapWeb.AuditHelpers
 
   def index(conn, _params) do
     resources = Auth.list_resources()
@@ -15,7 +16,8 @@ defmodule PulapWeb.ResourceController do
   end
 
   def create(conn, %{"resource" => resource_params}) do
-    case Auth.create_resource(resource_params) do
+    params = AuditHelpers.maybe_put_created_by(resource_params, conn)
+    case Auth.create_resource(params) do
       {:ok, resource} ->
         conn
         |> put_flash(:info, "Resource created successfully.")
@@ -40,8 +42,9 @@ defmodule PulapWeb.ResourceController do
 
   def update(conn, %{"id" => id, "resource" => resource_params}) do
     resource = Auth.get_resource!(id)
+    params = AuditHelpers.maybe_put_updated_by(resource_params, conn)
 
-    case Auth.update_resource(resource, resource_params) do
+    case Auth.update_resource(resource, params) do
       {:ok, resource} ->
         conn
         |> put_flash(:info, "Resource updated successfully.")

@@ -3,6 +3,7 @@ defmodule PulapWeb.UserController do
 
   alias Pulap.Accounts
   alias Pulap.Accounts.User
+  alias PulapWeb.AuditHelpers
 
   def index(conn, _params) do
     users = Accounts.list_users()
@@ -15,7 +16,8 @@ defmodule PulapWeb.UserController do
   end
 
   def create(conn, %{"user" => user_params}) do
-    case Accounts.create_user(user_params) do
+    params = AuditHelpers.maybe_put_created_by(user_params, conn)
+    case Accounts.create_user(params) do
       {:ok, user} ->
         conn
         |> put_flash(:info, "User created successfully.")
@@ -40,8 +42,9 @@ defmodule PulapWeb.UserController do
 
   def update(conn, %{"id" => id, "user" => user_params}) do
     user = Accounts.get_user!(id)
+    params = AuditHelpers.maybe_put_updated_by(user_params, conn)
 
-    case Accounts.update_user(user, user_params) do
+    case Accounts.update_user(user, params) do
       {:ok, user} ->
         conn
         |> put_flash(:info, "User updated successfully.")

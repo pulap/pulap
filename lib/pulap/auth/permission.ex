@@ -17,7 +17,7 @@ defmodule Pulap.Auth.Permission do
   @doc false
   def changeset(permission, attrs) do
     permission
-    |> cast(attrs, [:slug, :name, :description])
+    |> cast(attrs, [:slug, :name, :description, :created_by, :updated_by])
     |> put_slug()
     |> validate_required([:slug, :name, :description])
     |> unique_constraint(:slug)

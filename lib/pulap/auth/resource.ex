@@ -19,7 +19,7 @@ defmodule Pulap.Auth.Resource do
   @doc false
   def changeset(resource, attrs) do
     resource
-    |> cast(attrs, [:name, :description, :kind, :value])
+    |> cast(attrs, [:name, :description, :kind, :value, :created_by, :updated_by])
     |> put_slug()
     |> validate_required([:name, :description, :kind, :value])
     |> unique_constraint(:slug)

@@ -9,6 +9,8 @@ defmodule Pulap.Auth.Role do
     field :description, :string
     field :status, :string
     field :slug, :string
+    field :created_by, :binary_id
+    field :updated_by, :binary_id
 
     timestamps(type: :utc_datetime)
   end
@@ -16,10 +18,18 @@ defmodule Pulap.Auth.Role do
   @doc false
   def changeset(role, attrs) do
     role
-    |> cast(attrs, [:name, :description, :status])
-    |> validate_required([:name, :description, :status])
+    |> cast(attrs, [:name, :description, :created_by, :updated_by])
+    |> put_status_default()
+    |> validate_required([:name, :description])
     |> put_slug()
     |> unique_constraint(:slug)
+  end
+
+  defp put_status_default(changeset) do
+    case get_field(changeset, :status) do
+      nil -> put_change(changeset, :status, "active")
+      _ -> changeset
+    end
   end
 
   defp put_slug(changeset) do
