@@ -35,7 +35,7 @@ defmodule PulapWeb.OrganizationController do
         |> put_flash(:error, "Organization not found.")
         |> redirect(to: ~p"/organizations/default")
       organization ->
-        organization = Pulap.Repo.preload(organization, :owner)
+        organization = Pulap.Repo.preload(organization, :owners)
         render(conn, :show, organization: organization)
     end
   end
@@ -43,7 +43,7 @@ defmodule PulapWeb.OrganizationController do
   def show_single(conn, _params) do
     case Auth.list_organizations() do
       [organization | _] ->
-        organization = Pulap.Repo.preload(organization, :owner)
+        organization = Pulap.Repo.preload(organization, :owners)
         render(conn, :show, organization: organization)
       [] ->
         conn

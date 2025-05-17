@@ -11,7 +11,7 @@ defmodule Pulap.Org.Organization do
     field :short_description, :string
     field :created_by, :string
     field :updated_by, :string
-    field :owner_id, :binary_id
+    many_to_many :owners, Pulap.Accounts.User, join_through: "organization_owners"
 
     timestamps(type: :utc_datetime)
   end

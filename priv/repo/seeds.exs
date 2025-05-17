@@ -60,10 +60,16 @@ organization =
     |> Organization.changeset(%{
       slug: org_slug,
       name: org_name,
+      short_description: "The default org for all users.",
       description: org_description,
-      owner_id: user.id,
       created_by: user.id
     })
     |> Pulap.Repo.insert!()
+
+# Add superadmin as owner through the join table
+Pulap.Repo.insert!(%Pulap.Org.OrganizationOwner{
+  organization_id: organization.id,
+  user_id: user.id
+})
 
 IO.puts("Organization created: #{org_name} (slug: #{org_slug}) and owned by #{user.email}")
