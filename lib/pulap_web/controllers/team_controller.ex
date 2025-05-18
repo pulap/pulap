@@ -6,6 +6,7 @@ defmodule PulapWeb.TeamController do
   alias Pulap.Auth
   alias Pulap.Org.Team
   alias PulapWeb.AuditHelpers
+  import Ecto.Query
 
   def index(conn, _params) do
     IO.inspect(:index_start, label: "[DEBUG] TeamController.index")
@@ -86,5 +87,43 @@ defmodule PulapWeb.TeamController do
     conn
     |> put_flash(:info, "Team deleted successfully.")
     |> redirect(to: ~p"/teams")
+  end
+
+  def members(conn, %{"team_id" => team_id}) do
+    team = Pulap.Auth.get_team!(team_id)
+    # Single query to get all users and their assignment status
+    users_with_status =
+      from(u in Pulap.Accounts.User,
+        left_join: tm in Pulap.Org.TeamMembership,
+        on: tm.user_id == u.id and tm.team_id == ^team_id,
+        select: %{user: u, assigned: not is_nil(tm.id)}
+      )
+      |> Pulap.Repo.all()
+
+    assigned = Enum.filter(users_with_status, & &1.assigned) |> Enum.map(& &1.user)
+    unassigned = Enum.reject(users_with_status, & &1.assigned) |> Enum.map(& &1.user)
+    render(conn, :members, team: team, assigned: assigned, unassigned: unassigned)
+  end
+
+  def assign_member(conn, %{"team_id" => team_id, "user_id" => user_id}) do
+    attrs = %{team_id: team_id, user_id: user_id, relation_type: "direct"}
+    case Pulap.Org.TeamMembership.changeset(%Pulap.Org.TeamMembership{}, attrs) |> Pulap.Repo.insert() do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Member assigned successfully.")
+        |> redirect(to: ~p"/teams/#{team_id}/members")
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Could not assign member.")
+        |> redirect(to: ~p"/teams/#{team_id}/members")
+    end
+  end
+
+  def delete_member(conn, %{"team_id" => team_id, "id" => user_id}) do
+    from(tm in Pulap.Org.TeamMembership, where: tm.team_id == ^team_id and tm.user_id == ^user_id)
+    |> Pulap.Repo.delete_all()
+    conn
+    |> put_flash(:info, "Member revoked successfully.")
+    |> redirect(to: ~p"/teams/#{team_id}/members")
   end
 end
