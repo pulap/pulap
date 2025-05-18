@@ -18,6 +18,8 @@ defmodule Pulap.Accounts.User do
     field :created_by, :binary_id
     field :updated_by, :binary_id
     many_to_many :owned_organizations, Pulap.Org.Organization, join_through: "organization_owners"
+    has_many :team_memberships, Pulap.Org.TeamMembership
+    has_many :teams, through: [:team_memberships, :team]
     timestamps(type: :utc_datetime)
   end
 

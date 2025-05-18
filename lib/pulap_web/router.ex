@@ -79,7 +79,11 @@ defmodule PulapWeb.Router do
     resources "/roles", RoleController
     resources "/permissions", PermissionController
     resources "/resources", ResourceController
-    resources "/teams", TeamController
+    resources "/teams", TeamController do
+      get "/members", TeamController, :members, as: :members
+      post "/assign_member", TeamController, :assign_member, as: :assign_member
+      delete "/members/:id", TeamController, :delete_member, as: :delete_member
+    end
 
     get "/organizations/default", OrganizationController, :show_single
     resources "/organizations", OrganizationController
