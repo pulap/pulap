@@ -1,7 +1,7 @@
 defmodule PulapWeb.ResourceController do
   use PulapWeb, :controller
 
-  plug :put_layout, {PulapWeb.Layouts, :auth}
+  plug :put_layout, html: {PulapWeb.Layouts, :auth}
 
   alias Pulap.Auth
   alias Pulap.Auth.Resource

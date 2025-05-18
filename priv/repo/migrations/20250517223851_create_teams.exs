@@ -9,7 +9,7 @@ defmodule Pulap.Repo.Migrations.CreateTeams do
       add :name, :string, null: false
       add :short_description, :string
       add :description, :string
-      add :kind, :string
+      # add :kind, :string -- removed for consistency
       add :created_by, :uuid
       add :updated_by, :uuid
       timestamps(type: :utc_datetime)

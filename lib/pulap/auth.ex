@@ -480,7 +480,7 @@ defmodule Pulap.Auth do
     Organization.changeset(organization, attrs)
   end
 
-  alias Pulap.Auth.Team
+  alias Pulap.Org.Team
 
   @doc """
   Returns the list of teams.

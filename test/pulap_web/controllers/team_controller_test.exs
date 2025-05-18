@@ -3,9 +3,9 @@ defmodule PulapWeb.TeamControllerTest do
 
   import Pulap.AuthFixtures
 
-  @create_attrs %{name: "some name", description: "some description", kind: "some kind", slug: "some slug", inserted_by: 42, updated_by: 42}
-  @update_attrs %{name: "some updated name", description: "some updated description", kind: "some updated kind", slug: "some updated slug", inserted_by: 43, updated_by: 43}
-  @invalid_attrs %{name: nil, description: nil, kind: nil, slug: nil, inserted_by: nil, updated_by: nil}
+  @create_attrs %{name: "some name", description: "some description", kind: "some kind", slug: "some slug", updated_by: 42}
+  @update_attrs %{name: "some updated name", description: "some updated description", kind: "some updated kind", slug: "some updated slug", updated_by: 43}
+  @invalid_attrs %{name: nil, description: nil, kind: nil, slug: nil, updated_by: nil}
 
   describe "index" do
     test "lists all teams", %{conn: conn} do
