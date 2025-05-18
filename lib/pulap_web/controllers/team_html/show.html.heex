@@ -1,0 +1,20 @@
+<.header>
+  Team {@team.id}
+  <:subtitle>This is a team record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/teams/#{@team}/edit"}>
+      <.button>Edit team</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@team.name}</:item>
+  <:item title="Description">{@team.description}</:item>
+  <:item title="Kind">{@team.kind}</:item>
+  <:item title="Slug">{@team.slug}</:item>
+  <:item title="Inserted by">{@team.inserted_by}</:item>
+  <:item title="Updated by">{@team.updated_by}</:item>
+</.list>
+
+<.back navigate={~p"/teams"}>Back to teams</.back>

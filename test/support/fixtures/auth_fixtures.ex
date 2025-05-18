@@ -55,4 +55,23 @@ defmodule Pulap.AuthFixtures do
 
     resource
   end
+
+  @doc """
+  Generate a team.
+  """
+  def team_fixture(attrs \\ %{}) do
+    {:ok, team} =
+      attrs
+      |> Enum.into(%{
+        description: "some description",
+        inserted_by: 42,
+        kind: "some kind",
+        name: "some name",
+        slug: "some slug",
+        updated_by: 42
+      })
+      |> Pulap.Auth.create_team()
+
+    team
+  end
 end

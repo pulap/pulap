@@ -1,0 +1,27 @@
+<.header>
+  Teams
+</.header>
+
+<.table id="teams" rows={@teams} row_click={&JS.navigate(~p"/teams/#{&1}")}> 
+  <:col :let={team} label="Name">
+    <.link navigate={~p"/teams/#{team}"} class="text-blue-600 hover:underline">{team.name}</.link>
+  </:col>
+  <:col :let={team} label="Description">{team.description}</:col>
+  <:col :let={team} label="Kind">{team.kind}</:col>
+  <:action :let={team}>
+    <.link navigate={~p"/teams/#{team}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/teams/#{team}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link navigate={~p"/teams/#{team}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+<div class="flex justify-center mt-8">
+  <.link navigate={~p"/teams/new"}>
+    <.button color="blue">New</.button>
+  </.link>
+</div>

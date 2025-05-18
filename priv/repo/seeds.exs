@@ -73,3 +73,23 @@ Pulap.Repo.insert!(%Pulap.Org.OrganizationOwner{
 })
 
 IO.puts("Organization created: #{org_name} (slug: #{org_slug}) and owned by #{user.email}")
+
+# --- Create sample teams and associate them with the organization ---
+team_attrs = [
+  %{name: "Alpha Team", description: "Handles alpha projects", kind: "core"},
+  %{name: "Beta Team", description: "Handles beta testing", kind: "support"},
+  %{name: "Gamma Team", description: "Handles gamma operations", kind: "ops"}
+]
+
+for attrs <- team_attrs do
+  Pulap.Auth.create_team(%{
+    name: attrs.name,
+    description: attrs.description,
+    kind: attrs.kind,
+    organization_id: organization.id,
+    created_by: user.id,
+    updated_by: user.id
+  })
+end
+
+IO.puts("3 sample teams created and associated with organization: #{org_name}")
