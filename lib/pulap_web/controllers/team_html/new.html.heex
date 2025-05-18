@@ -1,8 +1,11 @@
-<.header>
-  New Team
-  <:subtitle>Use this form to manage team records in your database.</:subtitle>
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">New Team</span>
 </.header>
 
-<.team_form changeset={@changeset} action={~p"/teams"} />
+<.flash_group flash={@flash} />
 
-<.back navigate={~p"/teams"}>Back to teams</.back>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.team_form changeset={@changeset} action={~p"/teams"} />
+  </div>
+</div>

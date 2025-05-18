@@ -186,11 +186,11 @@ defmodule Pulap.AuthTest do
   end
 
   describe "teams" do
-    alias Pulap.Auth.Team
+    alias Pulap.Org.Team
 
     import Pulap.AuthFixtures
 
-    @invalid_attrs %{name: nil, description: nil, kind: nil, slug: nil, inserted_by: nil, updated_by: nil}
+    @invalid_attrs %{name: nil, description: nil, kind: nil, slug: nil, updated_by: nil}
 
     test "list_teams/0 returns all teams" do
       team = team_fixture()
@@ -203,14 +203,13 @@ defmodule Pulap.AuthTest do
     end
 
     test "create_team/1 with valid data creates a team" do
-      valid_attrs = %{name: "some name", description: "some description", kind: "some kind", slug: "some slug", inserted_by: 42, updated_by: 42}
+      valid_attrs = %{name: "some name", description: "some description", kind: "some kind", slug: "some slug", updated_by: 42}
 
       assert {:ok, %Team{} = team} = Auth.create_team(valid_attrs)
       assert team.name == "some name"
       assert team.description == "some description"
       assert team.kind == "some kind"
       assert team.slug == "some slug"
-      assert team.inserted_by == 42
       assert team.updated_by == 42
     end
 
@@ -220,14 +219,13 @@ defmodule Pulap.AuthTest do
 
     test "update_team/2 with valid data updates the team" do
       team = team_fixture()
-      update_attrs = %{name: "some updated name", description: "some updated description", kind: "some updated kind", slug: "some updated slug", inserted_by: 43, updated_by: 43}
+      update_attrs = %{name: "some updated name", description: "some updated description", kind: "some updated kind", slug: "some updated slug", updated_by: 43}
 
       assert {:ok, %Team{} = team} = Auth.update_team(team, update_attrs)
       assert team.name == "some updated name"
       assert team.description == "some updated description"
       assert team.kind == "some updated kind"
       assert team.slug == "some updated slug"
-      assert team.inserted_by == 43
       assert team.updated_by == 43
     end
 

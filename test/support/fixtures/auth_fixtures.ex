@@ -64,13 +64,13 @@ defmodule Pulap.AuthFixtures do
       attrs
       |> Enum.into(%{
         description: "some description",
-        inserted_by: 42,
+        created_by: 42,
         kind: "some kind",
         name: "some name",
         slug: "some slug",
         updated_by: 42
       })
-      |> Pulap.Auth.create_team()
+      |> Pulap.Org.create_team()
 
     team
   end
