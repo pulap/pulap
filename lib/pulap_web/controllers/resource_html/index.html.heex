@@ -16,13 +16,13 @@
     <.link navigate={~p"/resources/#{resource}/edit"}>
       <.button color="yellow">Edit</.button>
     </.link>
-    <.link href={~p"/resources/#{resource}"} method="delete" data-confirm="Are you sure?">
+    <.link navigate={~p"/resources/#{resource}"} method="delete" data-confirm="Are you sure?">
       <.button color="red">Delete</.button>
     </.link>
   </:action>
 </.table>
 <div class="flex justify-center mt-8">
-  <.link href={~p"/resources/new"}>
+  <.link navigate={~p"/resources/new"}>
     <.button color="blue">New</.button>
   </.link>
 </div>

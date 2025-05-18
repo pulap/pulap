@@ -79,6 +79,7 @@ defmodule PulapWeb.Router do
     resources "/roles", RoleController
     resources "/permissions", PermissionController
     resources "/resources", ResourceController
+    resources "/teams", TeamController
 
     get "/organizations/default", OrganizationController, :show_single
     resources "/organizations", OrganizationController

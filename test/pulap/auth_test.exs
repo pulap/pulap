@@ -184,4 +184,68 @@ defmodule Pulap.AuthTest do
       assert %Ecto.Changeset{} = Auth.change_resource(resource)
     end
   end
+
+  describe "teams" do
+    alias Pulap.Auth.Team
+
+    import Pulap.AuthFixtures
+
+    @invalid_attrs %{name: nil, description: nil, kind: nil, slug: nil, inserted_by: nil, updated_by: nil}
+
+    test "list_teams/0 returns all teams" do
+      team = team_fixture()
+      assert Auth.list_teams() == [team]
+    end
+
+    test "get_team!/1 returns the team with given id" do
+      team = team_fixture()
+      assert Auth.get_team!(team.id) == team
+    end
+
+    test "create_team/1 with valid data creates a team" do
+      valid_attrs = %{name: "some name", description: "some description", kind: "some kind", slug: "some slug", inserted_by: 42, updated_by: 42}
+
+      assert {:ok, %Team{} = team} = Auth.create_team(valid_attrs)
+      assert team.name == "some name"
+      assert team.description == "some description"
+      assert team.kind == "some kind"
+      assert team.slug == "some slug"
+      assert team.inserted_by == 42
+      assert team.updated_by == 42
+    end
+
+    test "create_team/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Auth.create_team(@invalid_attrs)
+    end
+
+    test "update_team/2 with valid data updates the team" do
+      team = team_fixture()
+      update_attrs = %{name: "some updated name", description: "some updated description", kind: "some updated kind", slug: "some updated slug", inserted_by: 43, updated_by: 43}
+
+      assert {:ok, %Team{} = team} = Auth.update_team(team, update_attrs)
+      assert team.name == "some updated name"
+      assert team.description == "some updated description"
+      assert team.kind == "some updated kind"
+      assert team.slug == "some updated slug"
+      assert team.inserted_by == 43
+      assert team.updated_by == 43
+    end
+
+    test "update_team/2 with invalid data returns error changeset" do
+      team = team_fixture()
+      assert {:error, %Ecto.Changeset{}} = Auth.update_team(team, @invalid_attrs)
+      assert team == Auth.get_team!(team.id)
+    end
+
+    test "delete_team/1 deletes the team" do
+      team = team_fixture()
+      assert {:ok, %Team{}} = Auth.delete_team(team)
+      assert_raise Ecto.NoResultsError, fn -> Auth.get_team!(team.id) end
+    end
+
+    test "change_team/1 returns a team changeset" do
+      team = team_fixture()
+      assert %Ecto.Changeset{} = Auth.change_team(team)
+    end
+  end
 end
