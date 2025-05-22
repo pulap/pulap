@@ -4,7 +4,7 @@ defmodule PulapWeb.OrganizationController do
   plug :put_layout, {PulapWeb.Layouts, :org}
 
   alias Pulap.Auth
-  alias Pulap.Auth.Organization
+  alias Pulap.Org.Organization
   alias PulapWeb.AuditHelpers
 
   def index(conn, _params) do
@@ -18,11 +18,13 @@ defmodule PulapWeb.OrganizationController do
 
   def create(conn, %{"organization" => organization_params}) do
     params = AuditHelpers.maybe_put_created_by(organization_params, conn)
+
     case Auth.create_organization(params) do
       {:ok, organization} ->
         conn
         |> put_flash(:info, "Organization created successfully.")
         |> redirect(to: ~p"/organizations/#{organization}")
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, :new, changeset: changeset)
     end
@@ -34,6 +36,7 @@ defmodule PulapWeb.OrganizationController do
         conn
         |> put_flash(:error, "Organization not found.")
         |> redirect(to: ~p"/organizations/default")
+
       organization ->
         organization = Pulap.Repo.preload(organization, :owners)
         render(conn, :show, organization: organization)
@@ -45,6 +48,7 @@ defmodule PulapWeb.OrganizationController do
       [organization | _] ->
         organization = Pulap.Repo.preload(organization, :owners)
         render(conn, :show, organization: organization)
+
       [] ->
         conn
         |> put_flash(:error, "No organization found. Please create one first.")
@@ -61,11 +65,13 @@ defmodule PulapWeb.OrganizationController do
   def update(conn, %{"id" => id, "organization" => organization_params}) do
     organization = Auth.get_organization!(id)
     params = AuditHelpers.maybe_put_updated_by(organization_params, conn)
+
     case Auth.update_organization(organization, params) do
       {:ok, organization} ->
         conn
         |> put_flash(:info, "Organization updated successfully.")
         |> redirect(to: ~p"/organizations/#{organization}")
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, :edit, organization: organization, changeset: changeset)
     end
@@ -74,6 +80,7 @@ defmodule PulapWeb.OrganizationController do
   def delete(conn, %{"id" => id}) do
     organization = Auth.get_organization!(id)
     {:ok, _organization} = Auth.delete_organization(organization)
+
     conn
     |> put_flash(:info, "Organization deleted successfully.")
     |> redirect(to: ~p"/organizations/default")
