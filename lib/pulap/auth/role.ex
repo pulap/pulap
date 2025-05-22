@@ -1,6 +1,7 @@
 defmodule Pulap.Auth.Role do
   use Ecto.Schema
   import Ecto.Changeset
+  import Pulap.Utils
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -18,7 +19,7 @@ defmodule Pulap.Auth.Role do
   @doc false
   def changeset(role, attrs) do
     role
-    |> cast(attrs, [:name, :description, :created_by, :updated_by])
+    |> cast(attrs, [:name, :description])
     |> put_status_default()
     |> validate_required([:name, :description])
     |> put_slug()
@@ -29,23 +30,6 @@ defmodule Pulap.Auth.Role do
     case get_field(changeset, :status) do
       nil -> put_change(changeset, :status, "active")
       _ -> changeset
-    end
-  end
-
-  defp put_slug(changeset) do
-    if name = get_field(changeset, :name) do
-      uuid = Ecto.UUID.generate()
-      last_segment = uuid |> String.split("-") |> List.last()
-      slug =
-        name
-        |> String.downcase()
-        |> String.replace(~r/[^a-z0-9]+/u, "-")
-        |> String.trim("-")
-        |> Kernel.<>("-" <> last_segment)
-
-      change(changeset, slug: slug)
-    else
-      changeset
     end
   end
 end

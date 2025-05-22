@@ -104,21 +104,25 @@ defmodule Pulap.Auth do
 
   def get_roles_with_assignment_status_for_user(user_id) do
     import Ecto.Query
+
     query =
       from r in Pulap.Auth.Role,
-        left_join: ur in "users_roles", on: ur.role_id == r.id and ur.user_id == ^user_id,
+        left_join: ur in "users_roles",
+        on: ur.role_id == r.id and ur.user_id == ^user_id,
         select: %{
           id: r.id,
           name: r.name,
           description: r.description,
           assigned: not is_nil(ur.user_id)
         }
+
     Pulap.Repo.all(query)
   end
 
   def assign_role_to_user(user_id, role_id) do
     sql = "INSERT OR IGNORE INTO users_roles (user_id, role_id) VALUES (?, ?)"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, role_id])
+
     case result.num_rows do
       0 -> {:error, :already_assigned}
       n -> {:ok, n}
@@ -128,6 +132,7 @@ defmodule Pulap.Auth do
   def revoke_role_from_user(user_id, role_id) do
     sql = "DELETE FROM users_roles WHERE user_id = ? AND role_id = ?"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, role_id])
+
     case result.num_rows do
       0 -> {:error, :not_found}
       n -> {:ok, n}
@@ -232,12 +237,17 @@ defmodule Pulap.Auth do
 
   def get_permissions_with_assignment_status_for_user(user_id) do
     import Ecto.Query
+
     query =
       from p in Pulap.Auth.Permission,
-        left_join: up in "user_permissions", on: up.permission_id == p.id and up.user_id == ^user_id,
-        left_join: ur in "users_roles", on: ur.user_id == ^user_id,
-        left_join: r in Pulap.Auth.Role, on: r.id == ur.role_id,
-        left_join: rp in "role_permissions", on: rp.role_id == ur.role_id and rp.permission_id == p.id,
+        left_join: up in "user_permissions",
+        on: up.permission_id == p.id and up.user_id == ^user_id,
+        left_join: ur in "users_roles",
+        on: ur.user_id == ^user_id,
+        left_join: r in Pulap.Auth.Role,
+        on: r.id == ur.role_id,
+        left_join: rp in "role_permissions",
+        on: rp.role_id == ur.role_id and rp.permission_id == p.id,
         group_by: [p.id, p.name, p.description, up.user_id],
         select: %{
           id: p.id,
@@ -245,14 +255,17 @@ defmodule Pulap.Auth do
           description: p.description,
           direct: not is_nil(up.user_id),
           indirect: fragment("count(DISTINCT ?) > 0", rp.role_id),
-          source_roles: fragment("group_concat(DISTINCT ?) FILTER (WHERE ? IS NOT NULL)", r.name, rp.role_id)
+          source_roles:
+            fragment("group_concat(DISTINCT ?) FILTER (WHERE ? IS NOT NULL)", r.name, rp.role_id)
         }
+
     Pulap.Repo.all(query)
   end
 
   def assign_permission_to_user(user_id, permission_id) do
     sql = "INSERT OR IGNORE INTO user_permissions (user_id, permission_id) VALUES (?, ?)"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :assigned}
       0 -> {:error, :already_assigned}
@@ -262,6 +275,7 @@ defmodule Pulap.Auth do
   def revoke_permission_from_user(user_id, permission_id) do
     sql = "DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [user_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :revoked}
       0 -> {:error, :not_assigned}
@@ -270,21 +284,25 @@ defmodule Pulap.Auth do
 
   def get_permissions_with_assignment_status_for_role(role_id) do
     import Ecto.Query
+
     query =
       from p in Pulap.Auth.Permission,
-        left_join: rp in "role_permissions", on: rp.permission_id == p.id and rp.role_id == ^role_id,
+        left_join: rp in "role_permissions",
+        on: rp.permission_id == p.id and rp.role_id == ^role_id,
         select: %{
           id: p.id,
           name: p.name,
           description: p.description,
           assigned: not is_nil(rp.role_id)
         }
+
     Pulap.Repo.all(query)
   end
 
   def assign_permission_to_role(role_id, permission_id) do
     sql = "INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [role_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :assigned}
       0 -> {:error, :already_assigned}
@@ -294,6 +312,7 @@ defmodule Pulap.Auth do
   def revoke_permission_from_role(role_id, permission_id) do
     sql = "DELETE FROM role_permissions WHERE role_id = ? AND permission_id = ?"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [role_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :revoked}
       0 -> {:error, :not_assigned}
@@ -302,21 +321,25 @@ defmodule Pulap.Auth do
 
   def get_permissions_with_assignment_status_for_resource(resource_id) do
     import Ecto.Query
+
     query =
       from p in Pulap.Auth.Permission,
-        left_join: rp in "resource_permissions", on: rp.permission_id == p.id and rp.resource_id == ^resource_id,
+        left_join: rp in "resource_permissions",
+        on: rp.permission_id == p.id and rp.resource_id == ^resource_id,
         select: %{
           id: p.id,
           name: p.name,
           description: p.description,
           assigned: not is_nil(rp.resource_id)
         }
+
     Pulap.Repo.all(query)
   end
 
   def assign_permission_to_resource(resource_id, permission_id) do
     sql = "INSERT OR IGNORE INTO resource_permissions (resource_id, permission_id) VALUES (?, ?)"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [resource_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :assigned}
       0 -> {:error, :already_assigned}
@@ -326,6 +349,7 @@ defmodule Pulap.Auth do
   def revoke_permission_from_resource(resource_id, permission_id) do
     sql = "DELETE FROM resource_permissions WHERE resource_id = ? AND permission_id = ?"
     result = Ecto.Adapters.SQL.query!(Pulap.Repo, sql, [resource_id, permission_id])
+
     case result.num_rows do
       1 -> {:ok, :revoked}
       0 -> {:error, :not_assigned}
@@ -428,7 +452,7 @@ defmodule Pulap.Auth do
     Resource.changeset(resource, attrs)
   end
 
-  alias Pulap.Auth.Organization
+  alias Pulap.Org.Organization
 
   @doc """
   Returns the list of organizations.
