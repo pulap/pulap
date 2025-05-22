@@ -32,7 +32,7 @@ defmodule Pulap.AccountsFixtures do
   @doc """
   Generate a user.
   """
-  def user_fixture(attrs \\ %{}) do
+  def user_fixture_create(attrs \\ %{}) do
     {:ok, user} =
       attrs
       |> Enum.into(%{
