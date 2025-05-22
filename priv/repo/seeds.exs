@@ -13,7 +13,7 @@
 alias Pulap.Accounts
 alias Pulap.Repo
 alias Pulap.Accounts.User
-alias Pulap.Auth.Organization
+alias Pulap.Org.Organization
 
 random_password = fn length ->
   chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -32,6 +32,7 @@ unless Accounts.get_user_by_email(email) do
       password: password,
       password_confirmation: password
     })
+
   IO.puts("User created: #{email} / #{password}")
 end
 
@@ -45,6 +46,7 @@ if Repo.aggregate(User, :count, :id) == 0 do
     is_active: true
   })
   |> Repo.insert!()
+
   IO.puts("User created: #{email} / #{password}")
 end
 
