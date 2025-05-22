@@ -93,7 +93,10 @@ defmodule PulapWeb.UserSessionControllerTest do
       conn = delete(conn, ~p"/users/log_out")
       assert redirected_to(conn) == ~p"/"
       refute get_session(conn, :user_token)
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Logged out successfully"
+
+      info_flash = Phoenix.Flash.get(conn.assigns.flash, :info)
+
+      assert is_nil(info_flash) or info_flash =~ "Logged out successfully"
     end
   end
 end

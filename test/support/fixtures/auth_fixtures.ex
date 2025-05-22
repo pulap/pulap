@@ -12,8 +12,7 @@ defmodule Pulap.AuthFixtures do
       attrs
       |> Enum.into(%{
         name: "some name",
-        slug: "some slug",
-        status: "some status"
+        description: "some description"
       })
       |> Pulap.Auth.create_role()
 
@@ -43,13 +42,13 @@ defmodule Pulap.AuthFixtures do
     {:ok, resource} =
       attrs
       |> Enum.into(%{
-        created_by: "7488a646-e31f-11e4-aace-600308960662",
+        name: "some name",
+        value: "some value",
         description: "some description",
         kind: "some kind",
-        name: "some name",
-        slug: "some slug",
-        updated_by: "7488a646-e31f-11e4-aace-600308960662",
-        value: "some value"
+        slug: "some-slug-#{System.unique_integer()}",
+        created_by: "7488a646-e31f-11e4-aace-600308960662",
+        updated_by: "7488a646-e31f-11e4-aace-600308960662"
       })
       |> Pulap.Auth.create_resource()
 
@@ -60,6 +59,19 @@ defmodule Pulap.AuthFixtures do
   Generate a team.
   """
   def team_fixture(attrs \\ %{}) do
+    attrs =
+      attrs
+      |> Enum.map(fn
+        {k, v} when is_binary(k) -> {String.to_atom(k), v}
+        pair -> pair
+      end)
+      |> Enum.into(%{})
+
+    org =
+      Map.get(attrs, :organization) || Map.get(attrs, "organization") || organization_fixture()
+
+    attrs = Map.put(attrs, :organization_id, org.id)
+
     {:ok, team} =
       attrs
       |> Enum.into(%{
@@ -70,8 +82,24 @@ defmodule Pulap.AuthFixtures do
         slug: "some slug",
         updated_by: 42
       })
-      |> Pulap.Org.create_team()
+      |> Pulap.Auth.create_team()
 
     team
+  end
+
+  @doc """
+  Generate an organization.
+  """
+  def organization_fixture(attrs \\ %{}) do
+    {:ok, organization} =
+      attrs
+      |> Enum.into(%{
+        name: "Test Org",
+        slug: "test-org-#{System.unique_integer()}",
+        description: "A test organization"
+      })
+      |> Pulap.Auth.create_organization()
+
+    organization
   end
 end

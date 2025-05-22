@@ -19,6 +19,7 @@ defmodule PulapWeb.ResourceController do
 
   def create(conn, %{"resource" => resource_params}) do
     params = AuditHelpers.maybe_put_created_by(resource_params, conn)
+
     case Auth.create_resource(params) do
       {:ok, resource} ->
         conn
@@ -26,7 +27,7 @@ defmodule PulapWeb.ResourceController do
         |> redirect(to: ~p"/resources/#{resource}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors, label: "[DEBUG] Resource creation failed")
+        # IO.inspect(changeset.errors, label: "[DEBUG] Resource creation failed")
         render(conn, :new, changeset: changeset)
     end
   end
@@ -53,7 +54,7 @@ defmodule PulapWeb.ResourceController do
         |> redirect(to: ~p"/resources/#{resource}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors, label: "[DEBUG] Resource update failed")
+        # IO.inspect(changeset.errors, label: "[DEBUG] Resource update failed")
         render(conn, :edit, resource: resource, changeset: changeset)
     end
   end
@@ -71,7 +72,12 @@ defmodule PulapWeb.ResourceController do
     resource = Auth.get_resource!(resource_id)
     permissions = Auth.get_permissions_with_assignment_status_for_resource(resource_id)
     {assigned, unassigned} = Enum.split_with(permissions, & &1.assigned)
-    render(conn, "permissions.html", resource: resource, assigned_permissions: assigned, unassigned_permissions: unassigned)
+
+    render(conn, "permissions.html",
+      resource: resource,
+      assigned_permissions: assigned,
+      unassigned_permissions: unassigned
+    )
   end
 
   def assign_permission(conn, %{"id" => resource_id, "permission_id" => permission_id}) do
@@ -80,10 +86,12 @@ defmodule PulapWeb.ResourceController do
         conn
         |> put_flash(:info, "Permission assigned successfully.")
         |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+
       {:error, :already_assigned} ->
         conn
         |> put_flash(:error, "Permission was already assigned.")
         |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not assign permission.")
@@ -97,6 +105,7 @@ defmodule PulapWeb.ResourceController do
         conn
         |> put_flash(:info, "Permission revoked successfully.")
         |> redirect(to: ~p"/resources/#{resource_id}/permissions")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not revoke permission.")

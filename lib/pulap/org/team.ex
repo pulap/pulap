@@ -21,9 +21,9 @@ defmodule Pulap.Org.Team do
   @doc false
   def changeset(team, attrs) do
     team
-    |> cast(attrs, [:name, :description])
+    |> cast(attrs, [:name, :description, :organization_id])
     |> put_slug()
-    |> validate_required([:name, :description, :slug])
+    |> validate_required([:name, :description, :slug, :organization_id])
     |> unique_constraint(:slug)
   end
 end
