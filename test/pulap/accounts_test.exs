@@ -97,7 +97,7 @@ defmodule Pulap.AccountsTest do
   describe "change_user_registration/2" do
     test "returns a changeset" do
       assert %Ecto.Changeset{} = changeset = Accounts.change_user_registration(%User{})
-      assert changeset.required == [:password, :email]
+      assert MapSet.new(changeset.required) == MapSet.new([:password, :email, :username, :name])
     end
 
     test "allows fields to be set" do
@@ -524,12 +524,16 @@ defmodule Pulap.AccountsTest do
     end
 
     test "create_user/1 with valid data creates a user" do
-      valid_attrs = %{email: "some email", hashed_password: "some hashed_password", confirmed_at: ~U[2025-05-15 18:05:00Z]}
+      valid_attrs = %{
+        email: "user_#{System.unique_integer()}@example.com",
+        password: "validpassword123",
+        username: "user_#{System.unique_integer()}",
+        name: "Test User"
+      }
 
       assert {:ok, %User{} = user} = Accounts.create_user(valid_attrs)
-      assert user.email == "some email"
-      assert user.hashed_password == "some hashed_password"
-      assert user.confirmed_at == ~U[2025-05-15 18:05:00Z]
+      assert user.email == valid_attrs.email
+      assert is_binary(user.hashed_password)
     end
 
     test "create_user/1 with invalid data returns error changeset" do
@@ -538,11 +542,18 @@ defmodule Pulap.AccountsTest do
 
     test "update_user/2 with valid data updates the user" do
       user = user_fixture()
-      update_attrs = %{email: "some updated email", hashed_password: "some updated hashed_password", confirmed_at: ~U[2025-05-16 18:05:00Z]}
+
+      update_attrs = %{
+        email: "updated_#{System.unique_integer()}@example.com",
+        password: "newvalidpassword123",
+        username: "updated_user_#{System.unique_integer()}",
+        name: "Updated User",
+        confirmed_at: ~U[2025-05-16 18:05:00Z]
+      }
 
       assert {:ok, %User{} = user} = Accounts.update_user(user, update_attrs)
-      assert user.email == "some updated email"
-      assert user.hashed_password == "some updated hashed_password"
+      assert user.email == update_attrs.email
+      assert is_binary(user.hashed_password)
       assert user.confirmed_at == ~U[2025-05-16 18:05:00Z]
     end
 

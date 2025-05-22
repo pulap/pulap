@@ -68,6 +68,18 @@ defmodule PulapWeb.Router do
     put "/users/reset_password/:token", UserResetPasswordController, :update
   end
 
+  # Place logout routes BEFORE the authenticated user scope to avoid shadowing by resources "/users"
+  scope "/", PulapWeb do
+    pipe_through [:browser]
+
+    get "/users/log_out", UserSessionController, :not_found
+    delete "/users/log_out", UserSessionController, :delete
+    get "/users/confirm", UserConfirmationController, :new
+    post "/users/confirm", UserConfirmationController, :create
+    get "/users/confirm/:token", UserConfirmationController, :edit
+    post "/users/confirm/:token", UserConfirmationController, :update
+  end
+
   scope "/", PulapWeb do
     pipe_through [:browser, :require_authenticated_user]
 
@@ -79,6 +91,7 @@ defmodule PulapWeb.Router do
     resources "/roles", RoleController
     resources "/permissions", PermissionController
     resources "/resources", ResourceController
+
     resources "/teams", TeamController do
       get "/members", TeamController, :members, as: :members
       post "/assign_member", TeamController, :assign_member, as: :assign_member
@@ -92,8 +105,10 @@ defmodule PulapWeb.Router do
 
     get "/users/:id/roles", UserController, :roles
     get "/users/:id/permissions", UserController, :permissions
-    post "/users/:id/assign_role", UserController, :assign_role # (to implement)
-    delete "/users/:id/roles/:role_id", UserController, :revoke_role # (to implement)
+    # (to implement)
+    post "/users/:id/assign_role", UserController, :assign_role
+    # (to implement)
+    delete "/users/:id/roles/:role_id", UserController, :revoke_role
     post "/users/:id/assign_permission", UserController, :assign_permission
     delete "/users/:id/permissions/:permission_id", UserController, :revoke_permission
 
@@ -104,15 +119,5 @@ defmodule PulapWeb.Router do
     get "/resources/:id/permissions", ResourceController, :permissions
     post "/resources/:id/assign_permission", ResourceController, :assign_permission
     delete "/resources/:id/permissions/:permission_id", ResourceController, :revoke_permission
-  end
-
-  scope "/", PulapWeb do
-    pipe_through [:browser]
-
-    delete "/users/log_out", UserSessionController, :delete
-    get "/users/confirm", UserConfirmationController, :new
-    post "/users/confirm", UserConfirmationController, :create
-    get "/users/confirm/:token", UserConfirmationController, :edit
-    post "/users/confirm/:token", UserConfirmationController, :update
   end
 end

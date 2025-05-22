@@ -19,6 +19,7 @@ defmodule PulapWeb.UserController do
 
   def create(conn, %{"user" => user_params}) do
     params = AuditHelpers.maybe_put_created_by(user_params, conn)
+
     case Accounts.create_user(params) do
       {:ok, user} ->
         conn
@@ -26,7 +27,7 @@ defmodule PulapWeb.UserController do
         |> redirect(to: ~p"/users/#{user}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors, label: "[DEBUG] User creation failed")
+        # IO.inspect(changeset.errors, label: "[DEBUG] User creation failed")
         render(conn, :new, changeset: changeset)
     end
   end
@@ -79,10 +80,12 @@ defmodule PulapWeb.UserController do
         conn
         |> put_flash(:info, "Role assigned successfully.")
         |> redirect(to: ~p"/users/#{user_id}/roles")
+
       {:error, :already_assigned} ->
         conn
         |> put_flash(:error, "Role was already assigned.")
         |> redirect(to: ~p"/users/#{user_id}/roles")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not assign role.")
@@ -96,6 +99,7 @@ defmodule PulapWeb.UserController do
         conn
         |> put_flash(:info, "Role revoked successfully.")
         |> redirect(to: ~p"/users/#{user_id}/roles")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not revoke role.")
@@ -106,13 +110,22 @@ defmodule PulapWeb.UserController do
   def permissions(conn, %{"id" => user_id}) do
     user = Pulap.Accounts.get_user!(user_id)
     permissions = Pulap.Auth.get_permissions_with_assignment_status_for_user(user_id)
-    assigned = Enum.filter(permissions, fn p ->
-      p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
-    end)
-    unassigned = Enum.reject(permissions, fn p ->
-      p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
-    end)
-    render(conn, "permissions.html", user: user, assigned_permissions: assigned, unassigned_permissions: unassigned)
+
+    assigned =
+      Enum.filter(permissions, fn p ->
+        p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
+      end)
+
+    unassigned =
+      Enum.reject(permissions, fn p ->
+        p.direct == true or (p.indirect == 1 and p.source_roles not in [nil, ""])
+      end)
+
+    render(conn, "permissions.html",
+      user: user,
+      assigned_permissions: assigned,
+      unassigned_permissions: unassigned
+    )
   end
 
   def assign_permission(conn, %{"id" => user_id, "permission_id" => permission_id}) do
@@ -121,10 +134,12 @@ defmodule PulapWeb.UserController do
         conn
         |> put_flash(:info, "Permission assigned successfully.")
         |> redirect(to: ~p"/users/#{user_id}/permissions")
+
       {:error, :already_assigned} ->
         conn
         |> put_flash(:error, "Permission was already assigned.")
         |> redirect(to: ~p"/users/#{user_id}/permissions")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not assign permission.")
@@ -138,6 +153,7 @@ defmodule PulapWeb.UserController do
         conn
         |> put_flash(:info, "Permission revoked successfully.")
         |> redirect(to: ~p"/users/#{user_id}/permissions")
+
       {:error, _} ->
         conn
         |> put_flash(:error, "Could not revoke permission.")

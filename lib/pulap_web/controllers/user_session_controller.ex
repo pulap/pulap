@@ -26,4 +26,11 @@ defmodule PulapWeb.UserSessionController do
     |> put_flash(:info, "Logged out successfully.")
     |> UserAuth.log_out_user()
   end
+
+  def not_found(conn, _params) do
+    conn
+    |> put_status(:not_found)
+    |> put_view(PulapWeb.ErrorHTML)
+    |> render("404.html")
+  end
 end

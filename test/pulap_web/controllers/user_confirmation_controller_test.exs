@@ -12,8 +12,7 @@ defmodule PulapWeb.UserConfirmationControllerTest do
   describe "GET /users/confirm" do
     test "renders the resend confirmation page", %{conn: conn} do
       conn = get(conn, ~p"/users/confirm")
-      response = html_response(conn, 200)
-      assert response =~ "Resend confirmation instructions"
+      assert html_response(conn, 200) =~ "Resend confirmation instructions"
     end
   end
 
