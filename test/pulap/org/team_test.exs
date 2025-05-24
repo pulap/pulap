@@ -3,7 +3,11 @@ defmodule Pulap.Org.TeamTest do
   alias Pulap.Org.Team
 
   describe "changeset/2" do
-    @valid_attrs %{"name" => "Dev Team", "description" => "Development team"}
+    @valid_attrs %{
+      "name" => "Dev Team",
+      "description" => "Development team",
+      "organization_id" => "11111111-1111-1111-1111-111111111111"
+    }
     @invalid_attrs %{"name" => "", "description" => ""}
 
     test "changeset casts only allowed fields and ignores forbidden ones" do
