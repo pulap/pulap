@@ -14,6 +14,11 @@ alias Pulap.Accounts
 alias Pulap.Repo
 alias Pulap.Accounts.User
 alias Pulap.Org.Organization
+alias Pulap.Org.Team
+alias Pulap.Geo.Address
+alias Pulap.Estate.RealEstate
+alias Pulap.Dict.Dictionary
+alias Pulap.Dict.Entry
 
 random_password = fn length ->
   chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -94,3 +99,137 @@ for attrs <- team_attrs do
 end
 
 IO.puts("3 sample teams created and associated with organization: #{org_name}")
+
+# --- Create sample address ---
+address_attrs = %{
+  name: "Sample Address",
+  street: "123 Main Street",
+  number: "123",
+  city: "New York",
+  state: "NY",
+  country: "USA",
+  postal_code: "10001",
+  created_by: user.id,
+  updated_by: user.id
+}
+
+{:ok, address} = Pulap.Geo.create_address(address_attrs)
+IO.puts("Sample address created: #{address.street}, #{address.city}")
+
+# --- Create sample real estate ---
+real_estate_attrs = %{
+  name: "Sample House",
+  type: "house",
+  description: "A beautiful sample house for testing",
+  surface_total: 200.0,
+  surface_covered: 150.0,
+  built_year: 2020,
+  lat: 40.7128,
+  lng: -74.0060,
+  alt: 10.0,
+  address_id: address.id,
+  created_by: user.id,
+  updated_by: user.id
+}
+
+Pulap.Estate.create_real_estate(real_estate_attrs)
+
+IO.puts("Sample real estate created: #{real_estate_attrs.name}")
+
+# Create dictionaries with their entries
+dictionaries = [
+  %Dictionary{
+    label: "Property Types",
+    slug: "property-types",
+    description: "Types of real estate properties"
+  },
+  %Dictionary{
+    label: "Property Status",
+    slug: "property-status",
+    description: "Current status of properties"
+  },
+  %Dictionary{
+    label: "Property Features",
+    slug: "property-features",
+    description: "Available features for properties"
+  }
+]
+
+# Insert dictionaries and their entries
+Enum.each(dictionaries, fn dictionary ->
+  {:ok, dict} = Repo.insert!(dictionary)
+
+  entries =
+    case dict.slug do
+      "property-types" ->
+        [
+          %Entry{
+            value: "house",
+            label: "House",
+            position: 1,
+            active: true,
+            dictionary_id: dict.id
+          },
+          %Entry{
+            value: "apartment",
+            label: "Apartment",
+            position: 2,
+            active: true,
+            dictionary_id: dict.id
+          },
+          %Entry{
+            value: "commercial",
+            label: "Commercial",
+            position: 3,
+            active: true,
+            dictionary_id: dict.id
+          }
+        ]
+
+      "property-status" ->
+        [
+          %Entry{
+            value: "available",
+            label: "Available",
+            position: 1,
+            active: true,
+            dictionary_id: dict.id
+          },
+          %Entry{value: "sold", label: "Sold", position: 2, active: true, dictionary_id: dict.id},
+          %Entry{
+            value: "reserved",
+            label: "Reserved",
+            position: 3,
+            active: true,
+            dictionary_id: dict.id
+          }
+        ]
+
+      "property-features" ->
+        [
+          %Entry{
+            value: "garage",
+            label: "Garage",
+            position: 1,
+            active: true,
+            dictionary_id: dict.id
+          },
+          %Entry{
+            value: "pool",
+            label: "Swimming Pool",
+            position: 2,
+            active: true,
+            dictionary_id: dict.id
+          },
+          %Entry{
+            value: "garden",
+            label: "Garden",
+            position: 3,
+            active: true,
+            dictionary_id: dict.id
+          }
+        ]
+    end
+
+  Enum.each(entries, &Repo.insert!(&1))
+end)

@@ -1,0 +1,35 @@
+<.header>
+  Real Estates
+</.header>
+
+<.table id="real_estates" rows={@real_estates} row_click={&JS.navigate(~p"/real-estates/#{&1}")}>
+  <:col :let={estate} label="Name">
+    <.link navigate={~p"/real-estates/#{estate}"} class="text-blue-600 hover:underline">{estate.name}</.link>
+  </:col>
+  <:col :let={estate} label="Type">{estate.type}</:col>
+  <:col :let={estate} label="Address">
+    <%= if estate.address do %>
+      <%= estate.address.street %>, <%= estate.address.city %>
+    <% end %>
+  </:col>
+  <:col :let={estate} label="Total Surface">{estate.surface_total} m²</:col>
+  <:col :let={estate} label="Covered Surface">{estate.surface_covered} m²</:col>
+  <:col :let={estate} label="Built Year">{estate.built_year}</:col>
+  <:action :let={estate}>
+    <.link navigate={~p"/real-estates/#{estate}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/real-estates/#{estate}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link href={~p"/real-estates/#{estate}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+
+<div class="flex justify-center mt-8">
+  <.link href={~p"/real-estates/new"}>
+    <.button color="blue">New</.button>
+  </.link>
+</div> 
