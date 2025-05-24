@@ -1,0 +1,22 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.error :if={@changeset.action}>
+    Oops, something went wrong! Please check the errors below.
+  </.error>
+  <.input field={f[:name]} type="text" label="Name" />
+  <.input field={f[:type]} type="select" label="Type" options={["house", "apartment", "commercial", "land"]} />
+  <.input field={f[:description]} type="textarea" label="Description" />
+  <.input field={f[:surface_total]} type="number" label="Total Surface (m²)" step="0.01" />
+  <.input field={f[:surface_covered]} type="number" label="Covered Surface (m²)" step="0.01" />
+  <.input field={f[:built_year]} type="number" label="Built Year" />
+  <.input field={f[:lat]} type="number" label="Latitude" step="0.000001" />
+  <.input field={f[:lng]} type="number" label="Longitude" step="0.000001" />
+  <.input field={f[:alt]} type="number" label="Altitude (m)" step="0.01" />
+  <div class="flex justify-center gap-2 mt-8">
+    <.link navigate={~p"/real-estates"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">
+      Back
+    </.link>
+    <.button color="green">
+      <%= if @changeset.data.id, do: "Update", else: "Save" %>
+    </.button>
+  </div>
+</.simple_form> 

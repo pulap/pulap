@@ -1,0 +1,8 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl"><%= @real_estate.name %></span>
+    </div>
+    <.real_estate_form changeset={@changeset} action={~p"/real-estates/#{@real_estate}"} method="put" />
+  </div>
+</div> 
