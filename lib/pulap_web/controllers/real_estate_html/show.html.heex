@@ -1,53 +1,29 @@
-<.flash_group flash={@flash} />
-
-<h1 class="text-2xl font-bold mb-4 text-blue-600"><%= @real_estate.name %></h1>
-
-<div class="bg-white shadow-md rounded p-4 mb-6">
-  <div class="grid grid-cols-2 gap-4">
-    <div>
-      <p class="text-gray-600">Type</p>
-      <p class="text-gray-800"><%= @real_estate.type %></p>
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <.flash_group flash={@flash} />
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@real_estate.name}</span>
     </div>
-    <div>
-      <p class="text-gray-600">Built Year</p>
-      <p class="text-gray-800"><%= @real_estate.built_year %></p>
-    </div>
-    <div>
-      <p class="text-gray-600">Total Surface</p>
-      <p class="text-gray-800"><%= @real_estate.surface_total %> m²</p>
-    </div>
-    <div>
-      <p class="text-gray-600">Covered Surface</p>
-      <p class="text-gray-800"><%= @real_estate.surface_covered %> m²</p>
-    </div>
-    <div>
-      <p class="text-gray-600">Location</p>
-      <p class="text-gray-800">
-        <%= @real_estate.lat %>, <%= @real_estate.lng %>
-        <%= if @real_estate.alt, do: "at #{@real_estate.alt} m" %>
-      </p>
-    </div>
-    <div>
-      <p class="text-gray-600">Address</p>
-      <p class="text-gray-800">
+    <.list>
+      <:item title="Type">{@real_estate.type}</:item>
+      <:item title="Built Year">{@real_estate.built_year}</:item>
+      <:item title="Total Surface">{@real_estate.surface_total} m²</:item>
+      <:item title="Covered Surface">{@real_estate.surface_covered} m²</:item>
+      <:item title="Location">{@real_estate.lat}, {@real_estate.lng}<%= if @real_estate.alt, do: ", at #{@real_estate.alt} m" %></:item>
+      <:item title="Address">
         <%= if @real_estate.address do %>
-          <%= @real_estate.address.street %>, <%= @real_estate.address.number %><br>
-          <%= @real_estate.address.city %>, <%= @real_estate.address.state %><br>
-          <%= @real_estate.address.postal_code %>, <%= @real_estate.address.country %>
+          {@real_estate.address.street}, {@real_estate.address.number}<br>
+          {@real_estate.address.city}, {@real_estate.address.state}<br>
+          {@real_estate.address.postal_code}, {@real_estate.address.country}
         <% end %>
-      </p>
-    </div>
-  </div>
-
-  <div class="mt-4">
-    <p class="text-gray-600">Description</p>
-    <p class="text-gray-800"><%= @real_estate.description %></p>
+      </:item>
+      <:item title="Description">{@real_estate.description}</:item>
+    </.list>
   </div>
 </div>
-
 <div class="flex justify-center gap-2 mt-8">
   <.back_button navigate={~p"/real-estates"}>Back</.back_button>
   <.link href={~p"/real-estates/#{@real_estate}/edit"}>
     <.button color="yellow">Edit</.button>
   </.link>
-</div> 
+</div>
