@@ -42,3 +42,6 @@ npm-debug.log
 # Ignore Makefile
 Makefile
 
+# Ignore seeds output file
+/priv/seeds.out
+

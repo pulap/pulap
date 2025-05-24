@@ -105,6 +105,10 @@ defmodule PulapWeb.Router do
 
     resources "/real-estates", RealEstateController
 
+    resources "/dictionaries", DictionaryController do
+      resources "/entries", EntryController, only: [:index, :new, :create, :edit, :update, :delete], as: :entry
+    end
+
     get "/users/:id/roles", UserController, :roles
     get "/users/:id/permissions", UserController, :permissions
     # (to implement)
