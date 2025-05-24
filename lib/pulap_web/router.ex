@@ -103,6 +103,8 @@ defmodule PulapWeb.Router do
 
     get "/organizations/show", OrganizationController, :show_single
 
+    resources "/real-estates", RealEstateController
+
     get "/users/:id/roles", UserController, :roles
     get "/users/:id/permissions", UserController, :permissions
     # (to implement)
