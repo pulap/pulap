@@ -1,0 +1,20 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <.flash_group flash={@flash} />
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@dictionary.label}</span>
+    </div>
+    <.list>
+      <:item title="Description">{@dictionary.description}</:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/dictionaries"}>Back</.back_button>
+  <.link href={~p"/dictionaries/#{@dictionary}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+  <.link href={~p"/dictionaries/#{@dictionary}/entries"}>
+    <.button color="blue">Entries</.button>
+  </.link>
+</div>
