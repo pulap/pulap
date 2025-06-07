@@ -10,7 +10,7 @@ defmodule Pulap.Auth.Resource do
     field :value, :string
     field :description, :string
     field :kind, :string
-    field :slug, :string
+    field :short_code, :string
     field :created_by, Ecto.UUID
     field :updated_by, Ecto.UUID
 
@@ -21,8 +21,8 @@ defmodule Pulap.Auth.Resource do
   def changeset(resource, attrs) do
     resource
     |> cast(attrs, [:name, :value, :description, :kind])
-    |> put_slug()
-    |> validate_required([:name, :value, :description, :kind, :slug])
-    |> unique_constraint(:slug)
+    |> put_slug(:short_code)
+    |> validate_required([:name, :value, :description, :kind, :short_code])
+    |> unique_constraint(:short_code)
   end
 end

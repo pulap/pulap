@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateResources do
   def change do
     create table(:resources, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :name, :string
       add :description, :string
       add :kind, :string

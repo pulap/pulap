@@ -5,7 +5,7 @@ defmodule Pulap.Auth.Organization do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "organizations" do
-    field :slug, :string
+    field :short_code, :string
     field :name, :string
     field :short_description, :string
     field :description, :string
@@ -22,8 +22,8 @@ defmodule Pulap.Auth.Organization do
   @doc false
   def changeset(organization, attrs) do
     organization
-    |> cast(attrs, [:slug, :name, :short_description, :description])
+    |> cast(attrs, [:short_code, :name, :short_description, :description])
     |> validate_required([:name])
-    |> unique_constraint(:slug)
+    |> unique_constraint(:short_code)
   end
 end

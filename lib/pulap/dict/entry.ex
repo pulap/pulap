@@ -1,6 +1,7 @@
 defmodule Pulap.Dict.Entry do
   use Ecto.Schema
   import Ecto.Changeset
+  import Pulap.Utils
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -8,7 +9,7 @@ defmodule Pulap.Dict.Entry do
     field :active, :boolean, default: true
     field :label, :string
     field :description, :string
-    field :slug, :string
+    field :short_code, :string
     field :value, :string
     field :order, :integer, default: 0
     field :created_by, Ecto.UUID
@@ -21,8 +22,9 @@ defmodule Pulap.Dict.Entry do
   @doc false
   def changeset(entry, attrs) do
     entry
-    |> cast(attrs, [:value, :label, :description, :slug, :order, :active, :dictionary_id])
-    |> validate_required([:value, :label, :slug, :dictionary_id])
-    |> unique_constraint([:slug, :dictionary_id])
+    |> cast(attrs, [:value, :label, :description, :order, :active, :dictionary_id])
+    |> validate_required([:value, :label, :dictionary_id])
+    |> put_slug(:short_code, :value)
+    |> unique_constraint([:short_code, :dictionary_id])
   end
 end

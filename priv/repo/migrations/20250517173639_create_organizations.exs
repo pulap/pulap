@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateOrganizations do
   def change do
     create table(:organizations, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :name, :string
       add :short_description, :string
       add :description, :string
@@ -13,6 +13,6 @@ defmodule Pulap.Repo.Migrations.CreateOrganizations do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:organizations, [:slug])
+    create unique_index(:organizations, [:short_code])
   end
 end
