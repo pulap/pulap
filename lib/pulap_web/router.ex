@@ -96,6 +96,13 @@ defmodule PulapWeb.Router do
       get "/members", TeamController, :members, as: :members
       post "/assign_member", TeamController, :assign_member, as: :assign_member
       delete "/members/:id", TeamController, :delete_member, as: :delete_member
+      get "/members/:id/roles", TeamController, :member_roles, as: :member_roles
+
+      post "/members/:id/assign_role", TeamController, :assign_member_role,
+        as: :assign_member_role
+
+      delete "/members/:id/roles/:role_id", TeamController, :revoke_member_role,
+        as: :revoke_member_role
     end
 
     get "/organizations/default", OrganizationController, :show_single
@@ -106,7 +113,9 @@ defmodule PulapWeb.Router do
     resources "/real-estates", RealEstateController
 
     resources "/dictionaries", DictionaryController do
-      resources "/entries", EntryController, only: [:index, :new, :create, :edit, :update, :delete], as: :entry
+      resources "/entries", EntryController,
+        only: [:index, :new, :create, :edit, :update, :delete],
+        as: :entry
     end
 
     get "/users/:id/roles", UserController, :roles

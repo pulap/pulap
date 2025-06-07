@@ -107,8 +107,9 @@ defmodule Pulap.Auth do
 
     query =
       from r in Pulap.Auth.Role,
+        where: r.contextual == false,
         left_join: ur in "users_roles",
-        on: ur.role_id == r.id and ur.user_id == ^user_id,
+        on: ur.role_id == r.id and ur.user_id == ^user_id and is_nil(ur.context_type),
         select: %{
           id: r.id,
           name: r.name,
