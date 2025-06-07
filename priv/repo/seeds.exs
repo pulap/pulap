@@ -94,6 +94,43 @@ end
 
 IO.puts("3 sample teams created and associated with organization: #{org_name}")
 
+# Create roles
+roles = [
+  %{
+    name: "System Administrator",
+    description: "Full system access",
+    scope: "global"
+  },
+  %{
+    name: "Team Leader",
+    description: "Can manage team members and assignments",
+    scope: "team"
+  },
+  %{
+    name: "Team Member",
+    description: "Basic team access",
+    scope: "team"
+  }
+]
+
+created_roles =
+  for role_attrs <- roles do
+    {:ok, role} = Pulap.Auth.create_role(Map.put(role_attrs, :created_by, user.id))
+    role
+  end
+
+IO.puts("\nRoles created:")
+
+Enum.each(created_roles, fn role ->
+  IO.puts("- #{role.name} (#{role.scope})")
+end)
+
+# Assign superadmin to global System Administrator role
+[system_admin_role | _] = created_roles
+Pulap.Auth.assign_role_to_user(user.id, system_admin_role.id)
+
+IO.puts("\nAssigned #{user.email} to System Administrator role")
+
 address_attrs = %{
   name: "Sample Address",
   street: "123 Main Street",

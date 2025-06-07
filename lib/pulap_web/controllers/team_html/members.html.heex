@@ -8,9 +8,14 @@
     <:col :let={user} label="Name" style="width:40%">{user.name}</:col>
     <:col :let={user} label="Email" style="width:45%">{user.email}</:col>
     <:col :let={user} label="Action" style="width:15%">
-      <.link href={~p"/teams/#{@team}/members/#{user.id}"} method="delete">
-        <.button color="red">Revoke</.button>
-      </.link>
+      <div class="flex gap-2">
+        <.link href={~p"/teams/#{@team}/members/#{user.id}"} method="delete">
+          <.button color="red">Revoke</.button>
+        </.link>
+        <.link href="#">
+          <.button color="blue">Roles</.button>
+        </.link>
+      </div>
     </:col>
   </.table>
 
