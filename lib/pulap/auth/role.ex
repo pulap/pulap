@@ -1,17 +1,15 @@
 defmodule Pulap.Auth.Role do
   use Ecto.Schema
   import Ecto.Changeset
-  import Pulap.Utils
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "roles" do
     field :name, :string
     field :description, :string
-    field :status, :string
-    field :slug, :string
-    field :created_by, :binary_id
-    field :updated_by, :binary_id
+    field :status, :string, default: "active"
+    field :short_code, :string
+    field :contextual, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -19,11 +17,9 @@ defmodule Pulap.Auth.Role do
   @doc false
   def changeset(role, attrs) do
     role
-    |> cast(attrs, [:name, :description])
+    |> cast(attrs, [:name, :description, :contextual])
     |> put_status_default()
     |> validate_required([:name, :description])
-    |> put_slug()
-    |> unique_constraint(:slug)
   end
 
   defp put_status_default(changeset) do
