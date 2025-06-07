@@ -1,15 +1,3 @@
-# Script for populating the database. You can run it as:
-#
-#     mix run priv/repo/seeds.exs
-#
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     Pulap.Repo.insert!(%Pulap.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.
-
 alias Pulap.Accounts
 alias Pulap.Repo
 alias Pulap.Accounts.User
@@ -63,17 +51,17 @@ if Repo.aggregate(User, :count, :id) == 0 do
   write_credentials.(email, password)
 end
 
-org_slug = "default-org"
+org_code = "def456"
 org_name = "Default Organization"
 org_description = "The default organization for the system."
 
 user = Accounts.get_user_by_email(email)
 
 organization =
-  Pulap.Repo.get_by(Organization, slug: org_slug) ||
+  Pulap.Repo.get_by(Organization, short_code: org_code) ||
     %Organization{}
     |> Organization.changeset(%{
-      slug: org_slug,
+      short_code: org_code,
       name: org_name,
       short_description: "The default org for all users.",
       description: org_description,
@@ -81,15 +69,13 @@ organization =
     })
     |> Pulap.Repo.insert!()
 
-# Add superadmin as owner through the join table
 Pulap.Repo.insert!(%Pulap.Org.OrganizationOwner{
   organization_id: organization.id,
   user_id: user.id
 })
 
-IO.puts("Organization created: #{org_name} (slug: #{org_slug}) and owned by #{user.email}")
+IO.puts("Organization created: #{org_name} (code: #{org_code}) and owned by #{user.email}")
 
-# --- Create sample teams and associate them with the organization ---
 team_attrs = [
   %{name: "Alpha Team", description: "Handles alpha projects"},
   %{name: "Beta Team", description: "Handles beta testing"},
@@ -108,7 +94,6 @@ end
 
 IO.puts("3 sample teams created and associated with organization: #{org_name}")
 
-# --- Create sample address ---
 address_attrs = %{
   name: "Sample Address",
   street: "123 Main Street",
@@ -124,7 +109,6 @@ address_attrs = %{
 {:ok, address} = Pulap.Geo.create_address(address_attrs)
 IO.puts("Sample address created: #{address.street}, #{address.city}")
 
-# --- Create sample real estate ---
 real_estate_attrs = %{
   name: "Sample House",
   type: "house",
@@ -144,100 +128,122 @@ Pulap.Estate.create_real_estate(real_estate_attrs)
 
 IO.puts("Sample real estate created: #{real_estate_attrs.name}")
 
-# Create dictionaries with their entries
 dictionaries = [
   %Dictionary{
     label: "Property Types",
-    slug: "property-types",
+    short_code: "pt123",
     description: "Types of real estate properties"
   },
   %Dictionary{
     label: "Property Status",
-    slug: "property-status",
+    short_code: "ps456",
     description: "Current status of properties"
   },
   %Dictionary{
     label: "Property Features",
-    slug: "property-features",
+    short_code: "pf789",
     description: "Available features for properties"
   }
 ]
 
-# Insert dictionaries and their entries
 Enum.each(dictionaries, fn dictionary ->
   dict = Repo.insert!(dictionary)
 
   entries =
-    case dict.slug do
-      "property-types" ->
+    case dict.short_code do
+      "pt123" ->
         [
-          %Entry{
+          %{
             value: "house",
             label: "House",
-            position: 1,
+            order: 1,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           },
-          %Entry{
+          %{
             value: "apartment",
             label: "Apartment",
-            position: 2,
+            order: 2,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           },
-          %Entry{
+          %{
             value: "commercial",
             label: "Commercial",
-            position: 3,
+            order: 3,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           }
         ]
 
-      "property-status" ->
+      "ps456" ->
         [
-          %Entry{
+          %{
             value: "available",
             label: "Available",
-            position: 1,
+            order: 1,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           },
-          %Entry{value: "sold", label: "Sold", position: 2, active: true, dictionary_id: dict.id},
-          %Entry{
+          %{
+            value: "sold",
+            label: "Sold",
+            order: 2,
+            active: true,
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
+          },
+          %{
             value: "reserved",
             label: "Reserved",
-            position: 3,
+            order: 3,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           }
         ]
 
-      "property-features" ->
+      "pf789" ->
         [
-          %Entry{
+          %{
             value: "garage",
             label: "Garage",
-            position: 1,
+            order: 1,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           },
-          %Entry{
+          %{
             value: "pool",
             label: "Swimming Pool",
-            position: 2,
+            order: 2,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           },
-          %Entry{
+          %{
             value: "garden",
             label: "Garden",
-            position: 3,
+            order: 3,
             active: true,
-            dictionary_id: dict.id
+            dictionary_id: dict.id,
+            created_by: user.id,
+            updated_by: user.id
           }
         ]
     end
 
-  Enum.each(entries, &Repo.insert!(&1))
+  Enum.each(entries, &Pulap.Dict.create_dictionary_entry/1)
 end)

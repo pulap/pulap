@@ -1,10 +1,12 @@
 defmodule Pulap.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
+  import Pulap.Utils
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "users" do
-    field :slug, :string
+    field :short_code, :string
     field :name, :string
     field :username, :string
     field :email, :string
@@ -52,6 +54,7 @@ defmodule Pulap.Accounts.User do
     |> validate_required([:email, :password, :username, :name])
     |> validate_email(opts)
     |> validate_password(opts)
+    |> put_slug(:short_code)
   end
 
   defp validate_email(changeset, opts) do
@@ -176,9 +179,18 @@ defmodule Pulap.Accounts.User do
   """
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :confirmed_at, :created_by, :updated_by, :username, :name])
+    |> cast(attrs, [
+      :email,
+      :short_code,
+      :confirmed_at,
+      :created_by,
+      :updated_by,
+      :username,
+      :name
+    ])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_length(:email, max: 160)
+    |> unique_constraint(:short_code)
   end
 end

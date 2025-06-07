@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateRoles do
   def change do
     create table(:roles, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :name, :string
       add :description, :string
       add :status, :string
@@ -14,6 +14,6 @@ defmodule Pulap.Repo.Migrations.CreateRoles do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:roles, [:slug])
+    create unique_index(:roles, [:short_code])
   end
 end

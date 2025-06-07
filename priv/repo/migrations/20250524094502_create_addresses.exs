@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateAddresses do
   def change do
     create table(:addresses, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :name, :string
       add :street, :string
       add :number, :string

@@ -9,7 +9,7 @@ defmodule Pulap.Estate.RealEstate do
     field :name, :string
     field :type, :string
     field :description, :string
-    field :slug, :string
+    field :short_code, :string
     field :surface_total, :float
     field :surface_covered, :float
     field :built_year, :integer
@@ -38,7 +38,8 @@ defmodule Pulap.Estate.RealEstate do
       :lng,
       :alt,
       :created_by,
-      :updated_by
+      :updated_by,
+      :address_id
     ])
     |> validate_required([
       :name,
@@ -52,6 +53,6 @@ defmodule Pulap.Estate.RealEstate do
       :created_by,
       :updated_by
     ])
-    |> put_slug()
+    |> put_slug(:short_code)
   end
 end

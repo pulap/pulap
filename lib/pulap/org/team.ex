@@ -8,7 +8,7 @@ defmodule Pulap.Org.Team do
   schema "teams" do
     field :name, :string
     field :description, :string
-    field :slug, :string
+    field :short_code, :string
     field :created_by, :binary_id
     field :updated_by, :binary_id
     belongs_to :organization, Pulap.Org.Organization, type: :binary_id
@@ -22,8 +22,8 @@ defmodule Pulap.Org.Team do
   def changeset(team, attrs) do
     team
     |> cast(attrs, [:name, :description, :organization_id])
-    |> put_slug()
-    |> validate_required([:name, :description, :slug, :organization_id])
-    |> unique_constraint(:slug)
+    |> put_slug(:short_code)
+    |> validate_required([:name, :description, :short_code, :organization_id])
+    |> unique_constraint(:short_code)
   end
 end

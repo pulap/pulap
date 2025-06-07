@@ -6,7 +6,7 @@ defmodule Pulap.Repo.Migrations.CreateDictionaryEntries do
       add :id, :binary_id, primary_key: true
       add :label, :string, null: false
       add :description, :text
-      add :slug, :string, null: false
+      add :short_code, :string, null: false
       add :value, :string, null: false
       add :order, :integer, default: 0
       add :active, :boolean, default: true
@@ -18,6 +18,6 @@ defmodule Pulap.Repo.Migrations.CreateDictionaryEntries do
     end
 
     create index(:dictionary_entries, [:dictionary_id])
-    create unique_index(:dictionary_entries, [:slug, :dictionary_id])
+    create unique_index(:dictionary_entries, [:short_code, :dictionary_id])
   end
 end
