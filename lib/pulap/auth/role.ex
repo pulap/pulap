@@ -5,10 +5,10 @@ defmodule Pulap.Auth.Role do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "roles" do
+    field :short_code, :string
     field :name, :string
     field :description, :string
     field :status, :string, default: "active"
-    field :short_code, :string
     field :contextual, :boolean, default: false
 
     timestamps(type: :utc_datetime)
@@ -20,6 +20,7 @@ defmodule Pulap.Auth.Role do
     |> cast(attrs, [:name, :description, :contextual])
     |> put_status_default()
     |> validate_required([:name, :description])
+    |> unique_constraint(:name, name: :roles_name_contextual_index)
   end
 
   defp put_status_default(changeset) do

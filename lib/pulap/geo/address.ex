@@ -6,11 +6,11 @@ defmodule Pulap.Geo.Address do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "addresses" do
+    field :short_code, :string
     field :name, :string
     field :floor, :string
     field :state, :string
     field :number, :string
-    field :short_code, :string
     field :street, :string
     field :apartment, :string
     field :city, :string
@@ -55,6 +55,18 @@ defmodule Pulap.Geo.Address do
       :updated_by
     ])
     |> validate_required([:street, :city, :state, :country])
-    |> put_slug(:short_code)
+    |> put_short_code(:short_code)
+  end
+
+  def slug(%__MODULE__{} = address) do
+    Pulap.Utils.get_slug(address)
+  end
+end
+
+defimpl Pulap.SlugSource, for: Pulap.Geo.Address do
+  def source_for_slug(%Pulap.Geo.Address{street: street, number: number}) do
+    [street, number]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
   end
 end

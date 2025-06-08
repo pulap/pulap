@@ -5,9 +5,9 @@ defmodule Pulap.Dict.Dictionary do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "dictionaries" do
+    field :short_code, :string
     field :label, :string
     field :description, :string
-    field :short_code, :string
     field :created_by, Ecto.UUID
     field :updated_by, Ecto.UUID
 
