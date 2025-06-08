@@ -1,10 +1,12 @@
 defmodule Pulap.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
+  import Pulap.Utils
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "users" do
-    field :slug, :string
+    field :short_code, :string
     field :name, :string
     field :username, :string
     field :email, :string
@@ -52,6 +54,7 @@ defmodule Pulap.Accounts.User do
     |> validate_required([:email, :password, :username, :name])
     |> validate_email(opts)
     |> validate_password(opts)
+    |> put_short_code(:short_code)
   end
 
   defp validate_email(changeset, opts) do
@@ -81,8 +84,6 @@ defmodule Pulap.Accounts.User do
       changeset
       # If using Bcrypt, then further validate it is at most 72 bytes long
       |> validate_length(:password, max: 72, count: :bytes)
-      # Hashing could be done with `Ecto.Changeset.prepare_changes/2`, but that
-      # would keep the database transaction open longer and hurt performance.
       |> put_change(:hashed_password, Bcrypt.hash_pwd_salt(password))
       |> delete_change(:password)
     else
@@ -176,9 +177,28 @@ defmodule Pulap.Accounts.User do
   """
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :confirmed_at, :created_by, :updated_by, :username, :name])
+    |> cast(attrs, [
+      :email,
+      :short_code,
+      :confirmed_at,
+      :created_by,
+      :updated_by,
+      :username,
+      :name
+    ])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_length(:email, max: 160)
+    |> unique_constraint(:short_code)
+  end
+
+  def slug(%__MODULE__{} = user) do
+    Pulap.Utils.get_slug(user)
+  end
+end
+
+defimpl Pulap.SlugSource, for: Pulap.Accounts.User do
+  def source_for_slug(%Pulap.Accounts.User{username: username}) do
+    username
   end
 end

@@ -4,16 +4,15 @@ defmodule Pulap.Repo.Migrations.CreateRoles do
   def change do
     create table(:roles, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
-      add :name, :string
-      add :description, :string
-      add :status, :string
-      add :created_by, :binary_id
-      add :updated_by, :binary_id
+      add :short_code, :string
+      add :name, :string, null: false
+      add :description, :text
+      add :contextual, :boolean, default: false, null: false
+      add :status, :string, default: "active"
 
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:roles, [:slug])
+    create unique_index(:roles, [:name, :contextual])
   end
 end

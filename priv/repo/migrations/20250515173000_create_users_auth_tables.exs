@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateUsersAuthTables do
   def change do
     create table(:users, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :name, :string
       add :username, :string
       add :email, :string, null: false, collate: :nocase
@@ -20,7 +20,7 @@ defmodule Pulap.Repo.Migrations.CreateUsersAuthTables do
     end
 
     create unique_index(:users, [:email])
-    create unique_index(:users, [:slug])
+    create unique_index(:users, [:short_code])
 
     create table(:users_tokens, primary_key: false) do
       add :id, :binary_id, primary_key: true

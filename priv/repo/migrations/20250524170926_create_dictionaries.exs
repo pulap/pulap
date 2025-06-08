@@ -4,7 +4,7 @@ defmodule Pulap.Repo.Migrations.CreateDictionaries do
   def change do
     create table(:dictionaries, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :slug, :string
+      add :short_code, :string
       add :label, :string
       add :description, :text
       add :created_by, :uuid
@@ -13,6 +13,6 @@ defmodule Pulap.Repo.Migrations.CreateDictionaries do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:dictionaries, [:slug])
+    create unique_index(:dictionaries, [:short_code])
   end
 end

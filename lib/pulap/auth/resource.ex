@@ -6,11 +6,11 @@ defmodule Pulap.Auth.Resource do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "resources" do
+    field :short_code, :string
     field :name, :string
     field :value, :string
     field :description, :string
     field :kind, :string
-    field :slug, :string
     field :created_by, Ecto.UUID
     field :updated_by, Ecto.UUID
 
@@ -21,8 +21,18 @@ defmodule Pulap.Auth.Resource do
   def changeset(resource, attrs) do
     resource
     |> cast(attrs, [:name, :value, :description, :kind])
-    |> put_slug()
-    |> validate_required([:name, :value, :description, :kind, :slug])
-    |> unique_constraint(:slug)
+    |> put_short_code(:short_code)
+    |> validate_required([:name, :value, :description, :kind, :short_code])
+    |> unique_constraint(:short_code)
+  end
+
+  def slug(%__MODULE__{} = resource) do
+    Pulap.Utils.get_slug(resource)
+  end
+end
+
+defimpl Pulap.SlugSource, for: Pulap.Auth.Resource do
+  def source_for_slug(%Pulap.Auth.Resource{name: name}) do
+    name
   end
 end

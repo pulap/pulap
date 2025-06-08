@@ -6,7 +6,7 @@ defmodule Pulap.Org.Organization do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "organizations" do
-    field :slug, :string
+    field :short_code, :string
     field :name, :string
     field :short_description, :string
     field :description, :string
@@ -23,9 +23,19 @@ defmodule Pulap.Org.Organization do
   @doc false
   def changeset(organization, attrs) do
     organization
-    |> cast(attrs, [:slug, :name, :short_description, :description])
-    |> put_slug()
+    |> cast(attrs, [:short_code, :name, :short_description, :description])
+    |> put_short_code(:short_code)
     |> validate_required([:name])
-    |> unique_constraint(:slug)
+    |> unique_constraint(:short_code)
+  end
+
+  def slug(%__MODULE__{} = organization) do
+    Pulap.Utils.get_slug(organization)
+  end
+end
+
+defimpl Pulap.SlugSource, for: Pulap.Org.Organization do
+  def source_for_slug(%Pulap.Org.Organization{name: name}) do
+    name
   end
 end
