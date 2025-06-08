@@ -13,6 +13,6 @@ defmodule Pulap.Repo.Migrations.CreateRoles do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:roles, [:name])
+    create unique_index(:roles, [:name, :contextual])
   end
 end
