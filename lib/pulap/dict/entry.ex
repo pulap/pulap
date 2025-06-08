@@ -6,10 +6,10 @@ defmodule Pulap.Dict.Entry do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "dictionary_entries" do
+    field :short_code, :string
     field :active, :boolean, default: true
     field :label, :string
     field :description, :string
-    field :short_code, :string
     field :value, :string
     field :order, :integer, default: 0
     field :created_by, Ecto.UUID
@@ -24,7 +24,16 @@ defmodule Pulap.Dict.Entry do
     entry
     |> cast(attrs, [:value, :label, :description, :order, :active, :dictionary_id])
     |> validate_required([:value, :label, :dictionary_id])
-    |> put_slug(:short_code, :value)
-    |> unique_constraint([:short_code, :dictionary_id])
+    |> put_short_code(:short_code)
+  end
+
+  def slug(%__MODULE__{} = entry) do
+    Pulap.Utils.get_slug(entry)
+  end
+end
+
+defimpl Pulap.SlugSource, for: Pulap.Dict.Entry do
+  def source_for_slug(%Pulap.Dict.Entry{value: value}) do
+    value
   end
 end
