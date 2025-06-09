@@ -1,0 +1,20 @@
+<div class="flex justify-center">
+  <div class="w-full max-w-xl bg-white rounded-lg shadow p-8">
+    <div class="text-center mb-8">
+      <span class="font-bold text-xl">{@set.key}</span>
+    </div>
+    <.list>
+      <:item title="Label">{@set.label}</:item>
+      <:item title="Description">{@set.description}</:item>
+    </.list>
+  </div>
+</div>
+<div class="flex justify-center gap-2 mt-8">
+  <.back_button navigate={~p"/sets"}>Back</.back_button>
+  <.link href={~p"/sets/#{@set}/edit"}>
+    <.button color="yellow">Edit</.button>
+  </.link>
+  <.link href={~p"/sets/#{@set}/options"}>
+    <.button color="blue">Options</.button>
+  </.link>
+</div>

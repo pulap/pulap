@@ -1,0 +1,30 @@
+<.flash_group flash={@flash} />
+
+<.header>
+  Sets
+</.header>
+
+<.table id="sets" rows={@sets} row_click={&JS.navigate(~p"/sets/#{&1}")}> 
+  <:col :let={set} label="Key">
+    <.link navigate={~p"/sets/#{set}"} class="text-blue-600 hover:underline">{set.key}</.link>
+  </:col>
+  <:col :let={set} label="Label">{set.label}</:col>
+  <:col :let={set} label="Description">{set.description}</:col>
+  <:action :let={set}>
+    <.link navigate={~p"/sets/#{set}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/sets/#{set}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link href={~p"/sets/#{set}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+
+<div class="flex justify-center mt-8">
+  <.link href={~p"/sets/new"}>
+    <.button color="blue">New Set</.button>
+  </.link>
+</div>

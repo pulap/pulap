@@ -1,0 +1,9 @@
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">Edit Option</span>
+</.header>
+
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.option_form changeset={@changeset} action={~p"/sets/#{@set}/options/#{@option}"} set={@set} />
+  </div>
+</div>
