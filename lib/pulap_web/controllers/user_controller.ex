@@ -27,7 +27,6 @@ defmodule PulapWeb.UserController do
         |> redirect(to: ~p"/users/#{user}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        # IO.inspect(changeset.errors, label: "[DEBUG] User creation failed")
         render(conn, :new, changeset: changeset)
     end
   end

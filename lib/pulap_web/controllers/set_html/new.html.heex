@@ -1,0 +1,11 @@
+<.header class="justify-center text-center">
+  <span class="font-bold text-xl">New Set</span>
+</.header>
+
+<.flash_group flash={@flash} />
+
+<div class="flex justify-center">
+  <div class="w-full max-w-xl">
+    <.set_form changeset={@changeset} action={~p"/sets"} />
+  </div>
+</div>

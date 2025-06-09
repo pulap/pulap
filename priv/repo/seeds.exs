@@ -1,12 +1,6 @@
 alias Pulap.Accounts
 alias Pulap.Repo
 alias Pulap.Accounts.User
-alias Pulap.Org.Organization
-alias Pulap.Org.Team
-alias Pulap.Geo.Address
-alias Pulap.Estate.RealEstate
-alias Pulap.Dict.Dictionary
-alias Pulap.Dict.Entry
 
 random_password = fn length ->
   chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -51,12 +45,11 @@ if Repo.aggregate(User, :count, :id) == 0 do
   write_credentials.(email, password)
 end
 
-org_code = "def456"
-org_name = "Default Organization"
-org_description = "The default organization for the system."
+_org_code = "def456"
+_org_name = "Default Organization"
+_org_description = "The default organization for the system."
 
 user = Accounts.get_user_by_email(email)
-
 
 # ─── Roles ─────────────────────────────────────────────────────────────
 
@@ -76,7 +69,6 @@ roles = [
   {"Agent", true},
   {"Assistant", true}
 ]
-
 
 role_map =
   Enum.reduce(roles, %{}, fn {name, contextual}, acc ->
@@ -169,21 +161,28 @@ end
 assign.("Superadmin", false, Map.keys(perm_map))
 
 assign.("Org Admin", false, [
-  "Manage Users", "Assign Roles", "Manage Teams",
-  "View Organization Data", "Manage Organization"
+  "Manage Users",
+  "Assign Roles",
+  "Manage Teams",
+  "View Organization Data",
+  "Manage Organization"
 ])
 
 assign.("Broker Manager", false, [
-  "Manage Properties", "Approve Listings", "Manage Transactions",
+  "Manage Properties",
+  "Approve Listings",
+  "Manage Transactions",
   "View Organization Data"
 ])
 
 assign.("Finance", false, [
-  "View Financials", "Manage Financials"
+  "View Financials",
+  "Manage Financials"
 ])
 
 assign.("Support", false, [
-  "Export Data", "Send Mass Notifications"
+  "Export Data",
+  "Send Mass Notifications"
 ])
 
 assign.("Auditor", false, [
@@ -195,18 +194,28 @@ assign.("Viewer", false, [
 ])
 
 assign.("Team Lead", true, [
-  "Create Property", "Edit Property Data", "Create Listing",
-  "Assign Property Agent", "Schedule Visit", "Close Deal",
+  "Create Property",
+  "Edit Property Data",
+  "Create Listing",
+  "Assign Property Agent",
+  "Schedule Visit",
+  "Close Deal",
   "Generate Team Report"
 ])
 
 assign.("Agent", true, [
-  "Create Property", "Edit Property Data", "Edit Listing",
-  "Schedule Visit", "Record Client Interaction", "Close Deal"
+  "Create Property",
+  "Edit Property Data",
+  "Edit Listing",
+  "Schedule Visit",
+  "Record Client Interaction",
+  "Close Deal"
 ])
 
 assign.("Assistant", true, [
-  "Manage Property Media", "Tag Property Media", "Manage Visit Agenda"
+  "Manage Property Media",
+  "Tag Property Media",
+  "Manage Visit Agenda"
 ])
 
 # ─── Grant All Global Permissions to Superadmin User ───────────────────

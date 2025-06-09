@@ -1,0 +1,28 @@
+<.header>
+  Options for <span class="font-bold">{@set.name}</span>
+</.header>
+
+<.table id="options" rows={@options} row_click={&JS.navigate(~p"/sets/#{@set}/options/#{&1}")}> 
+  <:col :let={option} label="Key">
+    <.link navigate={~p"/sets/#{@set}/options/#{option}"} class="text-blue-600 hover:underline">{option.key}</.link>
+  </:col>
+  <:col :let={option} label="Label">{option.label}</:col>
+  <:col :let={option} label="Description">{option.description}</:col>
+  <:action :let={option}>
+    <.link navigate={~p"/sets/#{@set}/options/#{option}"}>
+      <.button color="blue">Show</.button>
+    </.link>
+    <.link navigate={~p"/sets/#{@set}/options/#{option}/edit"}>
+      <.button color="yellow">Edit</.button>
+    </.link>
+    <.link href={~p"/sets/#{@set}/options/#{option}"} method="delete" data-confirm="Are you sure?">
+      <.button color="red">Delete</.button>
+    </.link>
+  </:action>
+</.table>
+
+<div class="flex justify-center mt-8">
+  <.link navigate={~p"/sets/#{@set}/options/new"}>
+    <.button color="blue">New Option</.button>
+  </.link>
+</div>

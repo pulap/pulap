@@ -112,10 +112,10 @@ defmodule PulapWeb.Router do
 
     resources "/real-estates", RealEstateController
 
-    resources "/dictionaries", DictionaryController do
-      resources "/entries", EntryController,
-        only: [:index, :new, :create, :edit, :update, :delete],
-        as: :entry
+    resources "/sets", SetController do
+      resources "/options", OptionController,
+        only: [:index, :new, :create, :edit, :update, :delete, :show],
+        as: :option
     end
 
     get "/users/:id/roles", UserController, :roles

@@ -1,11 +1,11 @@
 <.header class="justify-center text-center">
-  <span class="font-bold text-xl">Edit Dictionary</span>
+  <span class="font-bold text-xl">Edit Set {@set.key}</span>
 </.header>
 
 <.flash_group flash={@flash} />
 
 <div class="flex justify-center">
   <div class="w-full max-w-xl">
-    <.dictionary_form changeset={@changeset} action={~p"/dictionaries/#{@dictionary}"} />
+    <.set_form changeset={@changeset} action={~p"/sets/#{@set}"} />
   </div>
 </div>

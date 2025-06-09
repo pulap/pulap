@@ -228,15 +228,18 @@ defmodule PulapWeb.CoreComponents do
   slot :inner_block, required: true
 
   def button(assigns) do
-    color_classes = case assigns[:color] do
-      "blue" -> "bg-blue-600 hover:bg-blue-700 text-white"
-      "yellow" -> "bg-yellow-400 hover:bg-yellow-500 text-white"
-      "green" -> "bg-green-600 hover:bg-green-700 text-white"
-      "red" -> "bg-red-600 hover:bg-red-700 text-white"
-      "gray" -> "bg-gray-400 hover:bg-gray-500 text-white"
-      _ -> "bg-zinc-900 hover:bg-zinc-700 text-white"
-    end
+    color_classes =
+      case assigns[:color] do
+        "blue" -> "bg-blue-600 hover:bg-blue-700 text-white"
+        "yellow" -> "bg-yellow-400 hover:bg-yellow-500 text-white"
+        "green" -> "bg-green-600 hover:bg-green-700 text-white"
+        "red" -> "bg-red-600 hover:bg-red-700 text-white"
+        "gray" -> "bg-gray-400 hover:bg-gray-500 text-white"
+        _ -> "bg-zinc-900 hover:bg-zinc-700 text-white"
+      end
+
     assigns = assign(assigns, :color_classes, color_classes)
+
     ~H"""
     <button
       type={@type}
@@ -285,7 +288,7 @@ defmodule PulapWeb.CoreComponents do
 
   attr :type, :string,
     default: "text",
-    values: ~w(checkbox color date datetime-local email file month number password
+    values: ~w(checkbox color date datetime-local email file hidden month number password
                range search select tel text textarea time url week)
 
   attr :field, Phoenix.HTML.FormField,
@@ -488,7 +491,9 @@ defmodule PulapWeb.CoreComponents do
       <table class="w-[40rem] mt-11 sm:w-full">
         <thead class="text-sm text-left leading-6 text-zinc-500">
           <tr>
-            <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal" style={Map.get(col, :style)}>{col[:label]}</th>
+            <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal" style={Map.get(col, :style)}>
+              {col[:label]}
+            </th>
             <th :if={@action != []} class="relative p-0 pb-4">
               <span class="sr-only">{gettext("Actions")}</span>
             </th>
