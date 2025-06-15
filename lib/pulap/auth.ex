@@ -505,7 +505,53 @@ defmodule Pulap.Auth do
     Organization.changeset(organization, attrs)
   end
 
+  @doc """
+  Adds a user as an owner to an organization.
+  """
+  def add_organization_owner(%Organization{} = organization, %Pulap.Accounts.User{} = user) do
+    changeset = Pulap.Org.OrganizationOwner.creation_changeset(organization, user)
+
+    case Repo.insert(changeset) do
+      {:ok, _owner_link} ->
+        {:ok, organization}
+
+      {:error, cs} ->
+        # Check if the error is due to the unique constraint
+        if Enum.any?(cs.errors, fn {field, {_message, constraints}} ->
+             (field == :organization_id || field == :user_id) &&
+               Enum.any?(constraints, fn {constraint_name, _} -> constraint_name == :unique end)
+           end) do
+          # Translate unique constraint error to :already_owner
+          {:error, :already_owner}
+        else
+          # Return other errors as is
+          {:error, cs}
+        end
+    end
+  end
+
+  @doc """
+  Removes a user as an owner from an organization.
+  """
+  def remove_organization_owner(%Organization{} = organization, %Pulap.Accounts.User{} = user) do
+    case Repo.get_by(Pulap.Org.OrganizationOwner,
+           organization_id: organization.id,
+           user_id: user.id
+         ) do
+      nil ->
+        {:error, :not_an_owner}
+
+      owner_link ->
+        case Repo.delete(owner_link) do
+          # Return the organization on success
+          {:ok, _owner_link} -> {:ok, organization}
+          {:error, changeset} -> {:error, changeset}
+        end
+    end
+  end
+
   alias Pulap.Org.Team
+  alias Pulap.Accounts.User
 
   @doc """
   Returns the list of teams.
@@ -600,4 +646,24 @@ defmodule Pulap.Auth do
   def change_team(%Team{} = team, attrs \\ %{}) do
     Team.changeset(team, attrs)
   end
+
+  @doc """
+  Returns the list of users.
+
+  ## Examples
+
+      iex> list_users()
+      [%User{}, ...]
+
+  """
+  def list_users do
+    Repo.all(User)
+  end
+
+  @doc """
+  Gets a single user.
+
+  Raises `Ecto.NoResultsError` if the User does not exist.
+  """
+  def get_user!(id), do: Repo.get!(User, id)
 end
