@@ -226,4 +226,186 @@ Enum.each(perm_map, fn {_name, perm} ->
   Pulap.Auth.assign_permission_to_user(user.id, perm.id)
 end)
 
-IO.puts("\n✅ Roles, permissions and assignments completed.")
+# --- Default Organization and Teams ---
+IO.puts("\nCreating default organization and teams...")
+
+# The 'user' variable from earlier (superadmin) is used here.
+if user do
+  # 1. Create Organization
+  org_params = %{
+    # Updated Name
+    name: "Owners for Real Estate Agency",
+    short_description: "The primary real estate agency.",
+    # description: "Detailed description of the agency.", # Optional, can be added/edited later
+    created_by: user.id
+  }
+
+  case Pulap.Auth.create_organization(org_params) do
+    # Renamed to avoid confusion
+    {:ok, org_from_insert} ->
+      IO.puts("- Created Organization: #{org_from_insert.name} (ID: #{org_from_insert.id})")
+
+      IO.puts(
+        "  NOTE: Superadmin user (#{user.email}) created this organization via created_by field."
+      )
+
+      # Preload the :owners association before attempting to modify it
+      org = Pulap.Repo.preload(org_from_insert, :owners)
+
+      # Associate the superadmin user as an owner
+      if user do
+        # Now org.owners will be an empty list []
+        org_with_owner_changeset =
+          Ecto.Changeset.change(org)
+          |> Ecto.Changeset.put_assoc(:owners, [user])
+
+        case Pulap.Repo.update(org_with_owner_changeset) do
+          {:ok, updated_org} ->
+            IO.puts(
+              "  - Successfully associated #{user.email} as an owner to #{updated_org.name}."
+            )
+
+          {:error, owner_changeset} ->
+            IO.inspect(owner_changeset, label: "Error associating owner to organization")
+        end
+      else
+        IO.puts("  - Superadmin user not found, cannot associate as owner.")
+      end
+
+      IO.puts(
+        "  The 'created_by' field links the superadmin. For 'sole ownership', ensure application logic or roles reflect this."
+      )
+
+      # 2. Create Teams
+      teams_to_create = [
+        %{name: "Sales Team A", description: "Primary sales team"},
+        %{name: "Sales Team B", description: "Secondary sales team"}
+      ]
+
+      Enum.each(teams_to_create, fn team_attrs ->
+        team_full_attrs =
+          Map.merge(team_attrs, %{
+            organization_id: org.id,
+            created_by: user.id
+          })
+
+        case Pulap.Auth.create_team(team_full_attrs) do
+          {:ok, team} ->
+            IO.puts("  - Created Team: #{team.name} for Org ID: #{org.id}")
+
+          {:error, changeset} ->
+            IO.inspect(changeset, label: "Error creating team #{team_attrs.name}")
+        end
+      end)
+
+    {:error, changeset} ->
+      IO.inspect(changeset, label: "Error creating organization")
+  end
+else
+  IO.puts("Superadmin user (variable 'user') not found. Skipping organization and team creation.")
+end
+
+IO.puts("\nCreating sample users for roles and teams...")
+
+create_and_assign_role_for_user = fn email_prefix,
+                                     full_name,
+                                     role_name_string,
+                                     role_contextual_flag ->
+  user_email = "#{email_prefix}@example.com"
+
+  base_password = email_prefix
+
+  user_password =
+    if String.length(base_password) < 12 do
+      base_password <> String.duplicate("0", 12 - String.length(base_password))
+    else
+      base_password
+    end
+
+  # Using email prefix as username for simplicity
+  user_username = email_prefix
+
+  role_tuple = {role_name_string, role_contextual_flag}
+
+  unless Accounts.get_user_by_email(user_email) do
+    case Accounts.register_user(%{
+           email: user_email,
+           username: user_username,
+           name: full_name,
+           password: user_password,
+           password_confirmation: user_password
+         }) do
+      {:ok, new_user_for_role} ->
+        write_credentials.(user_email, user_password)
+
+        # Ensure role exists in role_map
+        case Map.get(role_map, role_tuple) do
+          nil ->
+            IO.puts(
+              "Error: Role '#{role_name_string}' (contextual: #{role_contextual_flag}) not found in role_map. Skipping role assignment for #{user_email}."
+            )
+
+          role_to_assign ->
+            Pulap.Auth.assign_role_to_user(new_user_for_role.id, role_to_assign.id)
+            IO.puts("- Created user: #{user_email} with role: #{role_name_string}")
+        end
+
+      {:error, changeset} ->
+        IO.inspect(changeset, label: "Error creating user #{user_email}")
+    end
+  else
+    IO.puts("- User #{user_email} already exists, attempting to assign role if not already.")
+    # Optionally, assign role if user exists but role might not be assigned.
+    # For simplicity in seeds, we'll skip if user exists to avoid complex checks.
+  end
+end
+
+# Global Role Users
+global_role_users_to_create = [
+  {"orgadmin", "Org Admin User", "Org Admin", false},
+  {"brokermanager", "Broker Manager User", "Broker Manager", false},
+  {"financeuser", "Finance User", "Finance", false},
+  {"supportuser", "Support User", "Support", false},
+  {"auditoruser", "Auditor User", "Auditor", false},
+  {"propertyowner", "Property Owner User", "Property Owner", false},
+  {"clientuser", "Client User", "Client", false},
+  {"vieweruser", "Viewer User", "Viewer", false}
+]
+
+Enum.each(global_role_users_to_create, fn {email_p, name_f, role_n, role_c} ->
+  create_and_assign_role_for_user.(email_p, name_f, role_n, role_c)
+end)
+
+# Team A Users
+team_a_users_to_create = [
+  {"team_a_lead", "Team A Lead", "Team Lead", true},
+  {"team_a_agent1", "Team A Agent 1", "Agent", true},
+  {"team_a_agent2", "Team A Agent 2", "Agent", true},
+  {"team_a_agent3", "Team A Agent 3", "Agent", true},
+  {"team_a_assistant", "Team A Assistant", "Assistant", true}
+]
+
+IO.puts("\nCreating Team A users...")
+
+Enum.each(team_a_users_to_create, fn {email_p, name_f, role_n, role_c} ->
+  create_and_assign_role_for_user.(email_p, name_f, role_n, role_c)
+end)
+
+# Team B Users
+team_b_users_to_create = [
+  {"team_b_lead", "Team B Lead", "Team Lead", true},
+  {"team_b_agent1", "Team B Agent 1", "Agent", true},
+  {"team_b_agent2", "Team B Agent 2", "Agent", true},
+  {"team_b_agent3", "Team B Agent 3", "Agent", true},
+  {"team_b_assistant", "Team B Assistant", "Assistant", true}
+]
+
+IO.puts("\nCreating Team B users...")
+
+Enum.each(team_b_users_to_create, fn {email_p, name_f, role_n, role_c} ->
+  create_and_assign_role_for_user.(email_p, name_f, role_n, role_c)
+end)
+
+IO.puts(
+  "\n✅ Seeding completed (Users, Roles, Permissions, Default Organization & Teams, Sample Users)."
+)

@@ -1,7 +1,7 @@
 <h1 class="text-2xl font-bold mb-4">New Organization</h1>
-<.simple_form for={@changeset} action={~p"/organizations"} method="post">
-  <.input field={@changeset[:name]} label="Name" />
-  <.input field={@changeset[:short_description]} label="Short Description" />
+<.simple_form :let={f} for={@changeset} action={~p"/organizations"} method="post">
+  <.input field={f[:name]} label="Name" />
+  <.input field={f[:short_description]} label="Short Description" />
   <div class="mt-4">
     <.button type="submit">Create Organization</.button>
     <.link navigate={~p"/organizations"} class="ml-4 text-blue-600 hover:underline">Back</.link>

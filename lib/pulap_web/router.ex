@@ -106,9 +106,12 @@ defmodule PulapWeb.Router do
     end
 
     get "/organizations/default", OrganizationController, :show_single
-    resources "/organizations", OrganizationController
 
-    get "/organizations/show", OrganizationController, :show_single
+    resources "/organizations", OrganizationController, except: [:new, :create] do
+      get "/owners", OrganizationController, :owners
+      post "/assign_owner", OrganizationController, :assign_owner
+      delete "/owners/:id", OrganizationController, :revoke_owner
+    end
 
     resources "/real-estates", RealEstateController
 

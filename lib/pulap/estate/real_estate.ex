@@ -37,9 +37,9 @@ defmodule Pulap.Estate.RealEstate do
       :lat,
       :lng,
       :alt,
+      :address_id,
       :created_by,
-      :updated_by,
-      :address_id
+      :updated_by
     ])
     |> validate_required([
       :name,
