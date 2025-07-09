@@ -6,6 +6,14 @@
 
 <div class="flex justify-center">
   <div class="w-full max-w-xl">
-    <.real_estate_form changeset={@changeset} action={~p"/real-estates"} />
+    <.real_estate_form
+      changeset={@changeset}
+      action={@action}
+      categories={@categories}
+      types={@types}
+      subtypes={@subtypes}
+      selected_category={@selected_category}
+      selected_type={@selected_type}
+    />
   </div>
-</div> 
+</div>

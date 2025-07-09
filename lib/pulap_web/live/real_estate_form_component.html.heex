@@ -1,0 +1,85 @@
+<div>
+  <.form :let={f} for={@changeset} phx-submit="save" class="space-y-4">
+    <div>
+      <label for="real_estate_category" class="block text-sm font-medium text-gray-700">Category</label>
+      <select name="real_estate[category]" id="real_estate_category" phx-change="select_category" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+        <option value="">Select category</option>
+        <%= for {label, _id} <- @categories do %>
+      <option value={label} selected={@selected_category == label}><%= label %></option>
+    <% end %>
+  </select>
+</div>
+
+<%= if @selected_category do %>
+  <div>
+    <label for="real_estate_type" class="block text-sm font-medium text-gray-700">Type</label>
+    <select name="real_estate[type]" id="real_estate_type" phx-change="select_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+      <option value="">Select type</option>
+      <%= for {label, _id} <- @types do %>
+        <option value={label} selected={@selected_type == label}><%= label %></option>
+      <% end %>
+    </select>
+  </div>
+<% end %>
+
+<%= if @selected_type do %>
+  <div>
+    <label for="real_estate_subtype" class="block text-sm font-medium text-gray-700">Subtype</label>
+    <select name="real_estate[subtype]" id="real_estate_subtype" phx-change="select_subtype" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+      <option value="">Select subtype</option>
+      <%= for {label, _id} <- @subtypes do %>
+        <option value={label} selected={@selected_subtype == label}><%= label %></option>
+      <% end %>
+    </select>
+  </div>
+    <% end %>
+
+    <.input field={f[:name]} type="text" label="Name" />
+    <.input field={f[:description]} type="textarea" label="Description" />
+
+    <div id="address-search-wrapper" class="relative" phx-update="ignore">
+      <label for="address_search" class="block text-sm font-medium text-gray-700">Street Search</label>
+      <input type="text" id="address_search" phx-hook="AddressAutocomplete" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" placeholder="Start typing an address..." />
+      <div id="address_suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg hidden"></div>
+    </div>
+
+    <div phx-click="toggle_geo_data_manual" class="cursor-pointer text-blue-600 hover:underline">
+      <%= if @show_manual_coords, do: "Hide geo data manual", else: "Enter geo data manual" %>
+    </div>
+
+    <%= if @show_manual_coords do %>
+      <div>
+        <.input field={f[:street]} type="text" label="Street" />
+        <.input field={f[:number]} type="text" label="Number" />
+        <.input field={f[:floor]} type="text" label="Floor" />
+        <.input field={f[:apartment]} type="text" label="Apartment" />
+        <.input field={f[:city]} type="text" label="City" />
+        <.input field={f[:state]} type="text" label="State/Province" />
+        <.input field={f[:postal_code]} type="text" label="Postal Code" />
+        <.input field={f[:country]} type="text" label="Country" />
+        <.input field={f[:admin_level_0]} type="text" label="Admin Level 0 (Country)" />
+        <.input field={f[:admin_level_1]} type="text" label="Admin Level 1 (State/Province)" />
+        <.input field={f[:admin_level_2]} type="text" label="Admin Level 2 (County/Region)" />
+        <.input field={f[:admin_level_3]} type="text" label="Admin Level 3 (City/Town)" />
+        <.input field={f[:admin_level_4]} type="text" label="Admin Level 4 (Neighborhood/Suburb)" />
+        <.input field={f[:geohash]} type="text" label="Geohash" />
+        <.input field={f[:lat]} type="number" label="Latitude" step="0.000001" />
+        <.input field={f[:lng]} type="number" label="Longitude" step="0.000001" />
+        <.input field={f[:alt]} type="number" label="Altitude (m)" step="0.01" />
+      </div>
+    <% end %>
+
+    <.input field={f[:surface_total]} type="number" label="Total Surface (m²)" step="0.01" />
+    <.input field={f[:surface_covered]} type="number" label="Covered Surface (m²)" step="0.01" />
+    <.input field={f[:built_year]} type="number" label="Built Year" />
+
+    <div class="flex justify-center gap-2 mt-8">
+      <.link navigate={~p"/real-estates"} class="bg-gray-400 hover:bg-gray-500 text-white rounded-lg py-2 px-3 text-sm font-semibold leading-6 flex items-center justify-center">
+        Back
+      </.link>
+      <.button color="green">
+        <%= if @changeset.data.id, do: "Update", else: "Save" %>
+      </.button>
+    </div>
+  </.form>
+</div>

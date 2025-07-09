@@ -11,7 +11,10 @@ defmodule Pulap.Repo.Migrations.CreateOptions do
       add :value, :string, null: false
       add :order, :integer, default: 0
       add :active, :boolean, default: true
+
       add :set_id, references(:sets, type: :binary_id, on_delete: :delete_all), null: false
+      add :parent_id, references(:options, type: :binary_id, on_delete: :nilify_all)
+
       add :created_by, :uuid
       add :updated_by, :uuid
 
@@ -19,6 +22,7 @@ defmodule Pulap.Repo.Migrations.CreateOptions do
     end
 
     create index(:options, [:set_id])
+    create index(:options, [:parent_id])
     create unique_index(:options, [:short_code, :set_id])
     create unique_index(:options, [:key, :set_id])
   end

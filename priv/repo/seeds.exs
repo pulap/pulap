@@ -409,3 +409,311 @@ end)
 IO.puts(
   "\n✅ Seeding completed (Users, Roles, Permissions, Default Organization & Teams, Sample Users)."
 )
+
+# --- Real Estate Categories, Types, and Subtypes ---
+IO.puts("\nCreating real estate categories, types, and subtypes...")
+
+estate_category_set =
+  Pulap.Repo.get_by(Pulap.Set.Set, key: "estate_category") ||
+    Pulap.Set.Set.changeset(%Pulap.Set.Set{}, %{
+      id: Ecto.UUID.generate(),
+      key: "estate_category",
+      label: "Estate Category",
+      description: "Top-level real estate categories",
+      created_by: user.id,
+      updated_by: user.id
+    })
+    |> Pulap.Repo.insert!()
+
+estate_type_set =
+  Pulap.Repo.get_by(Pulap.Set.Set, key: "estate_type") ||
+    Pulap.Set.Set.changeset(%Pulap.Set.Set{}, %{
+      id: Ecto.UUID.generate(),
+      key: "estate_type",
+      label: "Estate Type",
+      description: "Real estate types",
+      created_by: user.id,
+      updated_by: user.id
+    })
+    |> Pulap.Repo.insert!()
+
+estate_subtype_set =
+  Pulap.Repo.get_by(Pulap.Set.Set, key: "estate_subtype") ||
+    Pulap.Set.Set.changeset(%Pulap.Set.Set{}, %{
+      id: Ecto.UUID.generate(),
+      key: "estate_subtype",
+      label: "Estate Subtype",
+      description: "Real estate subtypes",
+      created_by: user.id,
+      updated_by: user.id
+    })
+    |> Pulap.Repo.insert!()
+
+categories = %{
+  "Residential" => %{
+    "House" => [
+      "Detached house",
+      "Semi-detached house",
+      "Bungalow",
+      "Ranch-style home",
+      "Cottage",
+      "Chalet",
+      "Cabin",
+      "Eco-home",
+      "Smart home"
+    ],
+    "Apartment" => [
+      "Studio apartment",
+      "Basement apartment",
+      "Penthouse",
+      "Loft",
+      "Condominium",
+      "Co-op unit"
+    ],
+    "Multi-unit" => [
+      "Duplex",
+      "Triplex",
+      "Fourplex",
+      "Townhouse",
+      "Row house"
+    ],
+    "Mobile/Modular" => [
+      "Mobile home",
+      "Modular home",
+      "Park model home",
+      "Tiny house"
+    ],
+    "Other" => [
+      "Floating home",
+      "Houseboat",
+      "Yurt",
+      "Treehouse"
+    ]
+  },
+  "Commercial" => %{
+    "Office" => [
+      "Office building",
+      "Executive suite",
+      "Co-working space"
+    ],
+    "Retail" => [
+      "Retail store",
+      "Shopping mall",
+      "Strip mall",
+      "Showroom"
+    ],
+    "Hospitality" => [
+      "Hotel",
+      "Motel",
+      "Bed and breakfast",
+      "Hostel",
+      "Boutique hotel"
+    ],
+    "Food & Beverage" => [
+      "Restaurant",
+      "Café",
+      "Bar",
+      "Nightclub"
+    ],
+    "Medical" => [
+      "Medical office",
+      "Dental clinic",
+      "Veterinary clinic",
+      "Wellness center"
+    ],
+    "Industrial" => [
+      "Warehouse",
+      "Factory",
+      "Cold storage",
+      "Distribution center",
+      "Workshop"
+    ],
+    "Special" => [
+      "Gym",
+      "Studio",
+      "Bank",
+      "Data center",
+      "Car dealership",
+      "Funeral home",
+      "Religious facility",
+      "School",
+      "Government building"
+    ]
+  },
+  "Land" => %{
+    "Urban" => [
+      "Residential lot",
+      "Commercial lot",
+      "Corner lot",
+      "Infill lot"
+    ],
+    "Rural" => [
+      "Agricultural land",
+      "Timberland",
+      "Grazing land",
+      "Undeveloped land"
+    ],
+    "Waterfront" => [
+      "Beachfront lot",
+      "Lakefront lot",
+      "Riverfront lot"
+    ],
+    "Special" => [
+      "Mountain land",
+      "Desert land",
+      "Raw land",
+      "Improved land"
+    ]
+  },
+  "Agricultural" => %{
+    "Farm" => [
+      "Crop farm",
+      "Mixed farm",
+      "Organic farm"
+    ],
+    "Ranch" => [
+      "Cattle ranch",
+      "Horse ranch",
+      "Working ranch"
+    ],
+    "Specialty" => [
+      "Orchard",
+      "Vineyard",
+      "Greenhouse",
+      "Fishery",
+      "Equestrian estate"
+    ]
+  },
+  "Mixed-use" => %{
+    "Live/work" => [
+      "Shop-house",
+      "Live/work unit"
+    ],
+    "Mixed building" => [
+      "Residential + Commercial",
+      "Retail + Office",
+      "Office + Industrial"
+    ]
+  },
+  "Special Purpose" => %{
+    "Transportation" => [
+      "Marina",
+      "Boat slip",
+      "Dock",
+      "Hangar",
+      "Railway property",
+      "Parking lot",
+      "Garage"
+    ],
+    "Utility / Infrastructure" => [
+      "Power station",
+      "Water tower",
+      "Wind farm",
+      "Solar farm",
+      "Telecom tower"
+    ],
+    "Institutional" => [
+      "Military facility",
+      "Correctional facility",
+      "Religious building",
+      "Embassy",
+      "Library",
+      "Post office"
+    ],
+    "Recreational" => [
+      "Event venue",
+      "Conference center",
+      "Amusement facility"
+    ]
+  }
+}
+
+Enum.each(categories, fn {category, types} ->
+  category_key = String.downcase(String.replace(category, ~r/[^a-zA-Z0-9]/, "_"))
+
+  {:ok, category_opt} =
+    Pulap.Set.Option.changeset(%Pulap.Set.Option{}, %{
+      id: Ecto.UUID.generate(),
+      set_id: estate_category_set.id,
+      key: category_key,
+      label: category,
+      value: category,
+      parent_id: nil,
+      created_by: user.id,
+      updated_by: user.id
+    })
+    |> Pulap.Repo.insert()
+
+  Enum.each(types, fn {type, subtypes} ->
+    type_key = category_key <> "_" <> String.downcase(String.replace(type, ~r/[^a-zA-Z0-9]/, "_"))
+    type_value = String.downcase(String.replace(type, ~r/[^a-zA-Z0-9]/, "_"))
+    type_short_code = "estate-" <> type_value
+    type_label = type
+    type_option_key = "estate_type_" <> category_key <> "_" <> type_value
+
+    type_descriptions = %{
+      "House" =>
+        "Standalone residential property, usually with private land and no shared walls.",
+      "Apartment" => "A self-contained housing unit in a building with other such units.",
+      "Multi-unit" => "A building divided into multiple separate housing units.",
+      "Mobile/Modular" => "Homes that are manufactured off-site and moved to their location.",
+      "Other" => "Other residential property types not covered above.",
+      "Office" => "Commercial property used for business and administrative work.",
+      "Retail" => "Property used for selling goods or services directly to consumers.",
+      "Hospitality" => "Property for lodging, food, and guest services.",
+      "Food & Beverage" => "Property for restaurants, cafes, bars, and similar uses.",
+      "Medical" => "Property for healthcare services, clinics, and medical offices.",
+      "Industrial" => "Property for manufacturing, storage, or distribution.",
+      "Special" => "Specialized commercial property types.",
+      "Urban" => "Land located within a city or town, often developed.",
+      "Rural" => "Land located outside cities, often used for agriculture or open space.",
+      "Waterfront" => "Land adjacent to a body of water.",
+      "Farm" => "Land used for growing crops or raising animals.",
+      "Ranch" => "Large land area for raising grazing livestock.",
+      "Specialty" => "Specialized agricultural property types.",
+      "Live/work" => "Mixed-use property for both living and working.",
+      "Mixed building" => "Buildings with multiple uses, such as residential and commercial.",
+      "Transportation" => "Property used for transport infrastructure.",
+      "Utility / Infrastructure" => "Property for utilities and infrastructure.",
+      "Institutional" => "Property for public or institutional use.",
+      "Recreational" => "Property for recreation and events."
+    }
+
+    type_description = Map.get(type_descriptions, type_label, type_label)
+    type_order = Enum.find_index(Map.keys(types), fn t -> t == type end) + 1
+
+    {:ok, type_opt} =
+      Pulap.Set.Option.changeset(%Pulap.Set.Option{}, %{
+        id: Ecto.UUID.generate(),
+        set_id: estate_type_set.id,
+        short_code: type_short_code,
+        key: type_option_key,
+        label: type_label,
+        description: type_description,
+        value: type_value,
+        order: type_order,
+        active: true,
+        parent_id: category_opt.id,
+        created_by: user.id,
+        updated_by: user.id
+      })
+      |> Pulap.Repo.insert()
+
+    Enum.each(subtypes, fn subtype ->
+      subtype_key =
+        type_key <> "_" <> String.downcase(String.replace(subtype, ~r/[^a-zA-Z0-9]/, "_"))
+
+      Pulap.Set.Option.changeset(%Pulap.Set.Option{}, %{
+        id: Ecto.UUID.generate(),
+        set_id: estate_subtype_set.id,
+        key: subtype_key,
+        label: subtype,
+        value: subtype,
+        parent_id: type_opt.id,
+        created_by: user.id,
+        updated_by: user.id
+      })
+      |> Pulap.Repo.insert()
+    end)
+  end)
+end)

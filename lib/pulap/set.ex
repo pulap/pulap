@@ -38,6 +38,21 @@ defmodule Pulap.Set do
   def get_set!(id), do: Repo.get!(Set, id)
 
   @doc """
+  Gets a set by key.
+
+  Raises if the Set does not exist.
+
+  ## Examples
+
+      iex> get_set_by_key!("some_key")
+      %Set{}
+
+  """
+  def get_set_by_key!(key) do
+    Repo.get_by!(Set, key: key)
+  end
+
+  @doc """
   Creates a set.
 
   ## Examples
