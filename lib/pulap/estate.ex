@@ -20,7 +20,6 @@ defmodule Pulap.Estate do
   def list_real_estates do
     RealEstate
     |> Repo.all()
-    |> Repo.preload(:address)
   end
 
   @doc """
@@ -40,7 +39,6 @@ defmodule Pulap.Estate do
   def get_real_estate!(id) do
     RealEstate
     |> Repo.get!(id)
-    |> Repo.preload(:address)
   end
 
   @doc """

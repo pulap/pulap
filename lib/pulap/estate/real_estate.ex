@@ -8,7 +8,9 @@ defmodule Pulap.Estate.RealEstate do
   schema "real_estates" do
     field :short_code, :string
     field :name, :string
+    field :category, :string
     field :type, :string
+    field :subtype, :string
     field :description, :string
     field :surface_total, :float
     field :surface_covered, :float
@@ -16,10 +18,19 @@ defmodule Pulap.Estate.RealEstate do
     field :lat, :float
     field :lng, :float
     field :alt, :float
+    field :street, :string
+    field :number, :string
+    field :floor, :string
+    field :apartment, :string
+    field :postal_code, :string
+    field :admin_level_0, :string
+    field :admin_level_1, :string
+    field :admin_level_2, :string
+    field :admin_level_3, :string
+    field :admin_level_4, :string
+    field :geohash, :string
     field :created_by, Ecto.UUID
     field :updated_by, Ecto.UUID
-
-    belongs_to :address, Pulap.Geo.Address
 
     timestamps(type: :utc_datetime)
   end
@@ -29,7 +40,9 @@ defmodule Pulap.Estate.RealEstate do
     real_estate
     |> cast(attrs, [
       :name,
+      :category,
       :type,
+      :subtype,
       :description,
       :surface_total,
       :surface_covered,
@@ -37,21 +50,29 @@ defmodule Pulap.Estate.RealEstate do
       :lat,
       :lng,
       :alt,
-      :address_id,
+      :street,
+      :number,
+      :floor,
+      :apartment,
+      :postal_code,
+      :admin_level_0,
+      :admin_level_1,
+      :admin_level_2,
+      :admin_level_3,
+      :admin_level_4,
+      :geohash,
       :created_by,
       :updated_by
     ])
     |> validate_required([
       :name,
+      :category,
       :type,
+      :subtype,
       :description,
       :surface_total,
       :surface_covered,
-      :built_year,
-      :lat,
-      :lng,
-      :created_by,
-      :updated_by
+      :built_year
     ])
     |> put_short_code(:short_code)
   end

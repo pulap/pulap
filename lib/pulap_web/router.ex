@@ -113,13 +113,6 @@ defmodule PulapWeb.Router do
       delete "/owners/:id", OrganizationController, :revoke_owner
     end
 
-    resources "/real-estates", RealEstateController
-
-    resources "/sets", SetController do
-      resources "/options", OptionController,
-        only: [:index, :new, :create, :edit, :update, :delete, :show],
-        as: :option
-    end
 
     get "/users/:id/roles", UserController, :roles
     get "/users/:id/permissions", UserController, :permissions
@@ -137,5 +130,15 @@ defmodule PulapWeb.Router do
     get "/resources/:id/permissions", ResourceController, :permissions
     post "/resources/:id/assign_permission", ResourceController, :assign_permission
     delete "/resources/:id/permissions/:permission_id", ResourceController, :revoke_permission
+    
+    resources "/sets", SetController do
+      resources "/options", OptionController,
+        only: [:index, :new, :create, :edit, :update, :delete, :show],
+        as: :option
+    end
+    
+    resources "/real-estates", RealEstateController, except: [:new, :show]
+    live "/real-estates/new", RealEstateFormLive, :new
+    get "/real-estates/:id", RealEstateController, :show
   end
 end

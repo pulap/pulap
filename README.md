@@ -2,16 +2,17 @@
 
 # Pulap - Real Estate Manager
 
-Pulap is a project for real estate management. The current focus is on completing authentication and authorization interfaces, as well as team and role management features.
+Pulap is a project for real estate management. 
 
 ## Current Status
 - Authentication and authorization interfaces in progress
 - Team and role management features in progress
 - Basic web interface
+- Basic Real Estate creation and listing
 
 ## Example View
 
-![User list](docs/img/gallery/list-users.png)
+![User list](docs/img/gallery/list-real-estate.png)
 
 ## Quick Setup
 

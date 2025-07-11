@@ -6,11 +6,11 @@
   <:col :let={estate} label="Name">
     <.link navigate={~p"/real-estates/#{estate}"} class="text-blue-600 hover:underline">{estate.name}</.link>
   </:col>
+  <:col :let={estate} label="Category">{estate.category}</:col>
   <:col :let={estate} label="Type">{estate.type}</:col>
+  <:col :let={estate} label="Subtype">{estate.subtype}</:col>
   <:col :let={estate} label="Address">
-    <%= if estate.address do %>
-      <%= estate.address.street %>, <%= estate.address.city %>
-    <% end %>
+    <%= estate.admin_level_3 %>
   </:col>
   <:col :let={estate} label="Total Surface">{estate.surface_total} m²</:col>
   <:col :let={estate} label="Covered Surface">{estate.surface_covered} m²</:col>

@@ -2,8 +2,10 @@
   <.error :if={@changeset.action}>
     Oops, something went wrong! Please check the errors below.
   </.error>
+  <.input field={f[:category]} type="select" label="Category" options={@categories || []} disabled={false} />
+  <.input field={f[:type]} type="select" label="Type" options={@types || []} disabled={!@selected_category} />
+  <.input field={f[:subtype]} type="select" label="Subtype" options={@subtypes || []} disabled={!@selected_type} />
   <.input field={f[:name]} type="text" label="Name" />
-  <.input field={f[:type]} type="select" label="Type" options={["house", "apartment", "commercial", "land"]} />
   <.input field={f[:description]} type="textarea" label="Description" />
   <.input field={f[:surface_total]} type="number" label="Total Surface (m²)" step="0.01" />
   <.input field={f[:surface_covered]} type="number" label="Covered Surface (m²)" step="0.01" />
@@ -19,4 +21,4 @@
       <%= if @changeset.data.id, do: "Update", else: "Save" %>
     </.button>
   </div>
-</.simple_form> 
+</.simple_form>

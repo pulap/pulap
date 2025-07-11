@@ -14,31 +14,28 @@ defmodule PulapWeb.RealEstateController do
 
   def new(conn, _params) do
     changeset = Estate.change_real_estate(%RealEstate{})
-    render(conn, :new, changeset: changeset)
+    set = Pulap.Set.get_set_by_key!("estate_category") |> Pulap.Repo.preload(:options)
+    categories = Enum.map(set.options, &{&1.label, &1.id})
+    types = []
+    subtypes = []
+    selected_category = nil
+    selected_type = nil
+
+    render(conn, :new,
+      changeset: changeset,
+      categories: categories,
+      types: types,
+      subtypes: subtypes,
+      selected_category: selected_category,
+      selected_type: selected_type,
+      action: "/real-estates",
+      __changed__: nil
+    )
   end
 
   def create(conn, %{"real_estate" => real_estate_params}) do
     params = AuditHelpers.maybe_put_created_by(real_estate_params, conn)
     params = Map.put(params, "updated_by", params["created_by"])
-
-    # WIP: Temporary solution to handle the required address_id field until the proper address
-    # selection/creation flow is implemented in the UI
-    params = case Map.get(params, "address_id") do
-      nil ->
-        {:ok, address} = Pulap.Geo.create_address(%{
-          name: "Default Address",
-          street: "Default Street",
-          number: "1",
-          city: "Default City",
-          state: "Default State",
-          country: "Default Country",
-          postal_code: "00000",
-          created_by: params["created_by"],
-          updated_by: params["updated_by"]
-        })
-        Map.put(params, "address_id", address.id)
-      _ -> params
-    end
 
     case Estate.create_real_estate(params) do
       {:ok, real_estate} ->
@@ -47,8 +44,22 @@ defmodule PulapWeb.RealEstateController do
         |> redirect(to: ~p"/real-estates/#{real_estate}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors, label: "[DEBUG] Real estate creation failed")
-        render(conn, :new, changeset: changeset)
+        set = Pulap.Set.get_set_by_key!("estate_category") |> Pulap.Repo.preload(:options)
+        categories = Enum.map(set.options, &{&1.label, &1.id})
+        types = []
+        subtypes = []
+        selected_category = nil
+        selected_type = nil
+
+        render(conn, :new,
+          changeset: changeset,
+          categories: categories,
+          types: types,
+          subtypes: subtypes,
+          selected_category: selected_category,
+          selected_type: selected_type,
+          action: "/real-estates"
+        )
     end
   end
 
