@@ -1,0 +1,20 @@
+# Default configuration for the authz service.
+# Values can be overridden by environment variables or command-line flags.
+
+server:
+  # The port the server will listen on.
+  # Env: AUTHZ_SERVER_PORT
+  port: ":8083"
+
+database:
+  # Path to the SQLite database file.
+  # Env: AUTHZ_DATABASE_PATH
+  path: "./authz.db"
+  
+  # MongoDB connection string.
+  # Env: AUTHZ_DATABASE_MONGO_URL
+  mongo_url: "${AUTHZ_DATABASE_MONGO_URL:-mongodb://localhost:27017}"
+  
+  # MongoDB database name.
+  # Env: AUTHZ_DATABASE_MONGO_DATABASE  
+  mongo_database: "${AUTHZ_DATABASE_MONGO_DATABASE:-authz}"

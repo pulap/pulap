@@ -1,0 +1,12 @@
+# Default configuration for the service.
+# Values can be overridden by environment variables or command-line flags.
+
+server:
+  # The port the server will estateen on.
+  # Env: ESTATE_SERVER_PORT
+  port: ":8085"
+
+database:
+  # Path to the SQLite database file.
+  # Env: ESTATE_DATABASE_PATH
+  path: "./app.db"

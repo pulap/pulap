@@ -1,0 +1,53 @@
+{{define "base.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Pulap Admin</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+    <script src="/static/js/main.js" defer></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">Pulap Admin</a>
+                <div class="nav-section">
+                    <nav>
+                        <ul>
+                            <li><a href="/list-users" {{if eq .ActiveNav "users"}}class="active"{{end}}>Users</a></li>
+                            <li><a href="/list-roles" {{if eq .ActiveNav "roles"}}class="active"{{end}}>Roles</a></li>
+                            <li><a href="/list-permissions" {{if eq .ActiveNav "permissions"}}class="active"{{end}}>Permissions</a></li>
+                        </ul>
+                    </nav>
+                    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {{if .Flash}}
+            <div class="flash flash-{{.Flash.Type}}">
+                {{.Flash.Message}}
+            </div>
+            {{end}}
+            
+            {{if eq .Template "new-user"}}{{template "new-user" .}}{{else if eq .Template "edit-user"}}{{template "edit-user" .}}{{else if eq .Template "show-user"}}{{template "show-user" .}}{{else}}{{template "content" .}}{{end}}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Pulap Admin. System Administration Panel.</p>
+        </div>
+    </footer>
+</body>
+</html>
+{{end}}
