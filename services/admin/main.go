@@ -46,12 +46,14 @@ func main() {
 	fileServer := core.NewFileServer(assetsFS, logger)
 	deps = append(deps, fileServer)
 
-	tmplMgr := core.NewTemplateManager(assetsFS, xparams.Log)
+	tmplMgr := core.NewTemplateManager(assetsFS, logger)
 	deps = append(deps, tmplMgr)
 
 	userRepo := admin.NewFakeUserRepo()
+	roleRepo := admin.NewFakeRoleRepo()
+	grantRepo := admin.NewFakeGrantRepo(userRepo, roleRepo)
 
-	adminHandler := admin.NewAdminHandler(tmplMgr, userRepo, xparams)
+	adminHandler := admin.NewAdminHandler(tmplMgr, userRepo, roleRepo, grantRepo, xparams)
 	deps = append(deps, adminHandler)
 
 	starts, stops := core.Setup(ctx, router, deps...)

@@ -10,6 +10,7 @@
     --success: #3fae96;
     --danger: #c9482d;
     --warning: #ffc107;
+    --manage: #d4a574;         /* Ocre cálido para gestionar colecciones */
 }
 
 /* Dark theme variables */
@@ -218,6 +219,14 @@ main {
     background: var(--accent-medium);
     color: var(--white);
 }
+.btn-manage {
+    background: var(--manage);
+    color: var(--white);
+}
+.btn-manage:hover {
+    background: #c4955f;
+    color: var(--white);
+}
 
 .btn-sm {
     padding: 0.25rem 0.75rem;
@@ -286,8 +295,13 @@ th {
     color: var(--primary);
 }
 
-tr:hover {
-    background: var(--bg-secondary);
+tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background: rgba(200, 243, 217, 0.3);
 }
 
 .actions {
@@ -335,8 +349,8 @@ tr:hover {
 :root[data-theme="dark"] th {
     background: #1e2230;
 }
-:root[data-theme="dark"] tr:hover {
-    background: #202434;
+:root[data-theme="dark"] tbody tr:hover {
+    background: rgba(122, 162, 247, 0.1);
 }
 
 :root[data-theme="dark"] .btn-primary {

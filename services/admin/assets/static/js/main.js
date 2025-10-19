@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize other functionality
     initializeDeleteButtons();
     initializeSearchFilters();
+    initializeClickableRows();
 });
 
 // Delete button confirmation
@@ -66,6 +67,23 @@ function initializeDeleteButtons() {
                     }
                 }
             }
+        }
+    });
+}
+
+// Make table rows clickable to view details
+function initializeClickableRows() {
+    document.addEventListener('click', function(e) {
+        const row = e.target.closest('tbody tr');
+        if (!row) return;
+        
+        // Don't trigger if clicking on buttons or links
+        if (e.target.closest('button, a')) return;
+        
+        // Find the View button in the row
+        const viewButton = row.querySelector('.btn-view');
+        if (viewButton) {
+            window.location.href = viewButton.getAttribute('href');
         }
     });
 }

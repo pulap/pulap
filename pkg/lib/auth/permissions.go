@@ -2,6 +2,126 @@ package auth
 
 import "time"
 
+type Permission string
+
+const (
+	PermSystemAdmin Permission = "system:admin"
+
+	PermUsersRead   Permission = "users:read"
+	PermUsersWrite  Permission = "users:write"
+	PermUsersDelete Permission = "users:delete"
+
+	PermRolesRead   Permission = "roles:read"
+	PermRolesWrite  Permission = "roles:write"
+	PermRolesDelete Permission = "roles:delete"
+	PermRolesManage Permission = "roles:manage"
+
+	PermGrantsRead   Permission = "grants:read"
+	PermGrantsWrite  Permission = "grants:write"
+	PermGrantsDelete Permission = "grants:delete"
+	PermGrantsManage Permission = "grants:manage"
+
+	PermEstatesRead   Permission = "estates:read"
+	PermEstatesWrite  Permission = "estates:write"
+	PermEstatesDelete Permission = "estates:delete"
+	PermEstatesManage Permission = "estates:manage"
+
+	PermEstateItemsRead  Permission = "estates:items:read"
+	PermEstateItemsWrite Permission = "estates:items:write"
+
+	PermEstateTagsRead  Permission = "estates:tags:read"
+	PermEstateTagsWrite Permission = "estates:tags:write"
+)
+
+type PermissionCategory struct {
+	Name        string
+	Permissions []PermissionInfo
+}
+
+type PermissionInfo struct {
+	Code        Permission
+	Name        string
+	Description string
+}
+
+var PermissionRegistry = []PermissionCategory{
+	{
+		Name: "System",
+		Permissions: []PermissionInfo{
+			{PermSystemAdmin, "System Administrator", "Full system access"},
+		},
+	},
+	{
+		Name: "Users",
+		Permissions: []PermissionInfo{
+			{PermUsersRead, "Read Users", "View user information"},
+			{PermUsersWrite, "Write Users", "Create and update users"},
+			{PermUsersDelete, "Delete Users", "Remove users from the system"},
+		},
+	},
+	{
+		Name: "Roles",
+		Permissions: []PermissionInfo{
+			{PermRolesRead, "Read Roles", "View role definitions"},
+			{PermRolesWrite, "Write Roles", "Create and update roles"},
+			{PermRolesDelete, "Delete Roles", "Remove roles"},
+			{PermRolesManage, "Manage Roles", "Full role management"},
+		},
+	},
+	{
+		Name: "Access Control",
+		Permissions: []PermissionInfo{
+			{PermGrantsRead, "Read Grants", "View permission assignments"},
+			{PermGrantsWrite, "Write Grants", "Assign permissions to users"},
+			{PermGrantsDelete, "Delete Grants", "Revoke permissions"},
+			{PermGrantsManage, "Manage Grants", "Full grant management"},
+		},
+	},
+	{
+		Name: "Estates",
+		Permissions: []PermissionInfo{
+			{PermEstatesRead, "Read Estates", "View estate information"},
+			{PermEstatesWrite, "Write Estates", "Create and update estates"},
+			{PermEstatesDelete, "Delete Estates", "Remove estates"},
+			{PermEstatesManage, "Manage Estates", "Full estate management"},
+			{PermEstateItemsRead, "Read Estate Items", "View estate items"},
+			{PermEstateItemsWrite, "Write Estate Items", "Manage estate items"},
+			{PermEstateTagsRead, "Read Estate Tags", "View estate tags"},
+			{PermEstateTagsWrite, "Write Estate Tags", "Manage estate tags"},
+		},
+	},
+}
+
+func AllPermissions() []Permission {
+	var perms []Permission
+	for _, cat := range PermissionRegistry {
+		for _, p := range cat.Permissions {
+			perms = append(perms, p.Code)
+		}
+	}
+	return perms
+}
+
+func AllPermissionStrings() []string {
+	perms := AllPermissions()
+	result := make([]string, len(perms))
+	for i, p := range perms {
+		result[i] = string(p)
+	}
+	return result
+}
+
+func GetPermissionInfo(code Permission) *PermissionInfo {
+	for _, cat := range PermissionRegistry {
+		for _, p := range cat.Permissions {
+			if p.Code == code {
+				return &p
+			}
+		}
+	}
+	return nil
+}
+
 func EvaluatePermissions(grants []Grant, roles []Role, permission string, scope Scope, now time.Time) bool {
 	for _, grant := range grants {
 		if grant.ExpiresAt != nil && grant.ExpiresAt.Before(now) {

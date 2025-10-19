@@ -19,7 +19,6 @@
                         <ul>
                             <li><a href="/list-users" {{if eq .ActiveNav "users"}}class="active"{{end}}>Users</a></li>
                             <li><a href="/list-roles" {{if eq .ActiveNav "roles"}}class="active"{{end}}>Roles</a></li>
-                            <li><a href="/list-permissions" {{if eq .ActiveNav "permissions"}}class="active"{{end}}>Permissions</a></li>
                         </ul>
                     </nav>
                     <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
@@ -39,7 +38,7 @@
             </div>
             {{end}}
             
-            {{if eq .Template "new-user"}}{{template "new-user" .}}{{else if eq .Template "edit-user"}}{{template "edit-user" .}}{{else if eq .Template "show-user"}}{{template "show-user" .}}{{else}}{{template "content" .}}{{end}}
+            {{if eq .Template "new-user"}}{{template "new-user" .}}{{else if eq .Template "edit-user"}}{{template "edit-user" .}}{{else if eq .Template "show-user"}}{{template "show-user" .}}{{else if eq .Template "new-role"}}{{template "new-role" .}}{{else if eq .Template "edit-role"}}{{template "edit-role" .}}{{else if eq .Template "show-role"}}{{template "show-role" .}}{{else if eq .Template "user-grants"}}{{template "user-grants" .}}{{else if eq .Template "users-content"}}{{template "users-content" .}}{{else if eq .Template "roles-content"}}{{template "roles-content" .}}{{else}}{{template "content" .}}{{end}}
         </div>
     </main>
 
