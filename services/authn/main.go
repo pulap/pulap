@@ -39,14 +39,28 @@ func main() {
 	router := chi.NewRouter()
 
 	var deps []any
-	UserRepo := mongo.NewUserMongoRepo(xparams)
-	deps = append(deps, UserRepo)
 
-	UserHandler := authn.NewUserHandler(UserRepo, xparams)
+	// Auto-select repository based on configuration
+	var userRepo authn.UserRepo
+	if cfg.Database.MongoURL != "" {
+		userRepo = mongo.NewUserMongoRepo(xparams)
+		logger.Infof("Using MongoDB repository: %s", cfg.Database.MongoURL)
+	} else {
+		// TODO: Add SQLite repo when needed
+		userRepo = mongo.NewUserMongoRepo(xparams)
+		logger.Infof("SQLite not implemented yet, falling back to MongoDB")
+	}
+	deps = append(deps, userRepo)
+
+	UserHandler := authn.NewUserHandler(userRepo, xparams)
 	deps = append(deps, UserHandler)
 
-	AuthHandler := authn.NewAuthHandler(UserRepo, xparams)
+	AuthHandler := authn.NewAuthHandler(userRepo, xparams)
 	deps = append(deps, AuthHandler)
+
+	// Register system handler so bootstrap endpoints are exposed
+	systemHandler := authn.NewSystemHandler(userRepo, xparams)
+	deps = append(deps, systemHandler)
 
 	starts, stops := core.Setup(ctx, router, deps...)
 

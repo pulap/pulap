@@ -44,12 +44,12 @@ type LogConfig struct {
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port: ":8080",
+			Port: ":8081",
 		},
 		Services: ServicesConfig{
-			AuthnURL:  "http://localhost:8081",
-			AuthzURL:  "http://localhost:8082",
-			EstateURL: "http://localhost:8083",
+			AuthnURL:  "http://localhost:8082",
+			AuthzURL:  "http://localhost:8083",
+			EstateURL: "http://localhost:8084",
 		},
 		Auth: AuthConfig{
 			CacheTTL:      "5m",
@@ -71,10 +71,10 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 
 	// Setup pflag
 	fs := pflag.NewFlagSet(args[0], pflag.ExitOnError)
-	fs.String("server.port", ":8080", "Server listen address")
-	fs.String("services.authn_url", "http://localhost:8081", "Authn service URL")
-	fs.String("services.authz_url", "http://localhost:8082", "Authz service URL")
-	fs.String("services.estate_url", "http://localhost:8083", "Estate service URL")
+	fs.String("server.port", ":8081", "Server listen address")
+	fs.String("services.authn_url", "http://localhost:8082", "Authn service URL")
+	fs.String("services.authz_url", "http://localhost:8083", "Authz service URL")
+	fs.String("services.estate_url", "http://localhost:8084", "Estate service URL")
 	fs.String("auth.cache_ttl", "5m", "Auth cache TTL")
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
 	fs.String("log.level", "info", "Log level (debug, info, error)")

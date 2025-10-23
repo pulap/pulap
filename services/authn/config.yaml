@@ -8,34 +8,34 @@ server:
 
 database:
   # Path to the SQLite database file.
-  # Env: AUTH_DATABASE_PATH
-  path: "./auth.db"
+  # Env: AUTHN_DATABASE_PATH
+  path: "./authn.db"
   
   # MongoDB connection string.
-  # Env: AUTH_DATABASE_MONGO_URL
-  mongo_url: "${AUTH_DATABASE_MONGO_URL:-mongodb://localhost:27017}"
+  # Env: AUTHN_DATABASE_MONGO_URL
+  mongo_url: "${AUTHN_DATABASE_MONGO_URL:-mongodb://localhost:27017}"
   
   # MongoDB database name.
-  # Env: AUTH_DATABASE_MONGO_DATABASE  
-  mongo_database: "${AUTH_DATABASE_MONGO_DATABASE:-auth}"
+  # Env: AUTHN_DATABASE_MONGO_DATABASE  
+  mongo_database: "${AUTHN_DATABASE_MONGO_DATABASE:-authn}"
 
 auth:
   # AES-GCM encryption key for PII data (32 bytes).
   # Env: AUTH_ENCRYPTION_KEY
-  encryption_key: "${AUTH_ENCRYPTION_KEY:-change-me-32-byte-key-for-aes-gcm}"
+  encryption_key: "12345678901234567890123456789012"
   
   # HMAC signing key for lookup hashes.
   # Env: AUTH_SIGNING_KEY  
-  signing_key: "${AUTH_SIGNING_KEY:-change-me-signing-key-for-hmac}"
+  signing_key: "change-me-signing-key-for-hmac"
   
   # Session TTL duration.
   # Env: AUTH_SESSION_TTL
-  session_ttl: "${AUTH_SESSION_TTL:-24h}"
+  session_ttl: "24h"
   
-  # Ed25519 private key for signing tokens (base64 encoded).
+  # RSA private key for token signing (PEM format).
   # Env: AUTH_TOKEN_PRIVATE_KEY
-  token_private_key: "${AUTH_TOKEN_PRIVATE_KEY:-}"
+  token_private_key: ""
   
-  # Ed25519 public key for verifying tokens (base64 encoded).
+  # RSA public key for token verification (PEM format).
   # Env: AUTH_TOKEN_PUBLIC_KEY  
-  token_public_key: "${AUTH_TOKEN_PUBLIC_KEY:-}"
+  token_public_key: ""

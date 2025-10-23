@@ -40,11 +40,22 @@ func main() {
 
 	var deps []any
 
-	// Repository setup
-	roleRepo := mongo.NewRoleMongoRepo(xparams)
-	deps = append(deps, roleRepo)
+	// Auto-select repository based on configuration
+	var roleRepo authz.RoleRepo
+	var grantRepo authz.GrantRepo
 
-	grantRepo := mongo.NewGrantMongoRepo(xparams)
+	if cfg.Database.MongoURL != "" {
+		roleRepo = mongo.NewRoleMongoRepo(xparams)
+		grantRepo = mongo.NewGrantMongoRepo(xparams)
+		logger.Infof("Using MongoDB repository: %s", cfg.Database.MongoURL)
+	} else {
+		// TODO: Add SQLite repo when needed
+		roleRepo = mongo.NewRoleMongoRepo(xparams)
+		grantRepo = mongo.NewGrantMongoRepo(xparams)
+		logger.Infof("SQLite not implemented yet, falling back to MongoDB")
+	}
+
+	deps = append(deps, roleRepo)
 	deps = append(deps, grantRepo)
 
 	// Policy engine setup
@@ -65,6 +76,17 @@ func main() {
 	if err := core.Start(ctx, starts, stops); err != nil {
 		logger.Errorf("Cannot start %s(%s): %v", name, version, err)
 		log.Fatal(err)
+	}
+
+	// Bootstrap service setup
+	bootstrapService := authz.NewBootstrapService(roleRepo, grantRepo, xparams)
+
+	// Run bootstrap process (log but don't fail startup)
+	if err := bootstrapService.Bootstrap(ctx); err != nil {
+		logger.Errorf("Bootstrap failed: %v", err)
+		// don't fail startup
+	} else {
+		logger.Infof("Bootstrap completed successfully")
 	}
 
 	logger.Infof("%s(%s) started successfully", name, version)

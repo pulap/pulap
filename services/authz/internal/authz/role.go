@@ -1,10 +1,11 @@
 package authz
 
 import (
+	"strings"
 	"time"
 
-	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/google/uuid"
+	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 )
 
 // Role represents a role aggregate in the authorization domain
@@ -57,9 +58,39 @@ func (r *Role) IsActive() bool {
 // HasPermission checks if role has a specific permission
 func (r *Role) HasPermission(permission string) bool {
 	for _, p := range r.Permissions {
-		if p == permission {
+		if matchesPermission(p, permission) {
 			return true
 		}
 	}
+	return false
+}
+
+func matchesPermission(granted, requested string) bool {
+	if granted == "" {
+		return false
+	}
+
+	if granted == "*:*" || granted == "*" {
+		return true
+	}
+
+	if granted == requested {
+		return true
+	}
+
+	grantedParts := strings.SplitN(granted, ":", 2)
+	requestedParts := strings.SplitN(requested, ":", 2)
+
+	if len(grantedParts) != 2 || len(requestedParts) != 2 {
+		return false
+	}
+
+	grResource, grAction := strings.TrimSpace(grantedParts[0]), strings.TrimSpace(grantedParts[1])
+	reqResource, reqAction := strings.TrimSpace(requestedParts[0]), strings.TrimSpace(requestedParts[1])
+
+	if (grResource == "*" || grResource == reqResource) && (grAction == "*" || grAction == reqAction) {
+		return true
+	}
+
 	return false
 }

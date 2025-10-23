@@ -5,6 +5,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/posflag"
@@ -35,11 +36,12 @@ type LogConfig struct {
 }
 
 type AuthConfig struct {
-	EncryptionKey   string `koanf:"encryption.key"`
-	SigningKey      string `koanf:"signing.key"`
-	SessionTTL      string `koanf:"session.ttl"`
-	TokenPrivateKey string `koanf:"token.private.key"`
-	TokenPublicKey  string `koanf:"token.public.key"`
+	EncryptionKey   string `koanf:"encryption_key"`
+	SigningKey      string `koanf:"signing_key"`
+	SessionTTL      string `koanf:"session_ttl"`
+	TokenPrivateKey string `koanf:"token_private_key"`
+	TokenPublicKey  string `koanf:"token_public_key"`
+	AuthNURL        string `koanf:"authn_url"`
 }
 
 func New() *Config {
@@ -87,7 +89,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read config file: %w", err)
 	}
-	expanded := []byte(os.ExpandEnv(string(raw)))
+	expanded := []byte(expandEnvWithDefaults(string(raw)))
 	if err := k.Load(rawbytes.Provider(expanded), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("cannot parse yaml: %w", err)
 	}
@@ -103,6 +105,15 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 
 	// Manual environment variable override (Koanf precedence is unreliable)
+	if val := os.Getenv("AUTHZ_DATABASE_MONGO_URL"); val != "" {
+		cfg.Database.MongoURL = val
+	}
+	if val := os.Getenv("AUTHZ_DATABASE_MONGO_DATABASE"); val != "" {
+		cfg.Database.MongoDatabase = val
+	}
+	if val := os.Getenv("AUTHZ_DATABASE_PATH"); val != "" {
+		cfg.Database.Path = val
+	}
 	if val := os.Getenv("AUTHZ_ENCRYPTION_KEY"); val != "" {
 		cfg.Auth.EncryptionKey = val
 	}
@@ -120,4 +131,25 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// expandEnvWithDefaults expands environment variables with support for ${VAR:-default} syntax
+func expandEnvWithDefaults(s string) string {
+	// Match ${VAR:-default} or ${VAR}
+	re := regexp.MustCompile(`\$\{([^}:]+)(:-([^}]*))?\}`)
+	return re.ReplaceAllStringFunc(s, func(match string) string {
+		submatches := re.FindStringSubmatch(match)
+		if len(submatches) < 2 {
+			return match
+		}
+		varName := submatches[1]
+		defaultVal := ""
+		if len(submatches) > 3 {
+			defaultVal = submatches[3]
+		}
+		if val := os.Getenv(varName); val != "" {
+			return val
+		}
+		return defaultVal
+	})
 }

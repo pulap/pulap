@@ -3,8 +3,15 @@
 # Variables
 PROJECT_NAME=pulap
 SERVICES=authn authz estate admin
-BASE_PORTS=8081 8082 8083 8080
+BASE_PORTS=8080 8081 8082 8083 8084
 PKG_LIBS=auth core fake
+
+MONGO_URL?=mongodb://localhost:27017
+AUTHN_DB?=authn
+AUTHZ_DB?=authz
+TAIL_LINES?=0
+FRESH_LOG_LINES?=200
+LOG_STREAM?=clean-log
 
 # Go related commands
 GOFUMPT=gofumpt
@@ -15,7 +22,7 @@ GO_VET=go vet
 GO_VULNCHECK=govulncheck
 
 # Phony targets
-.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all
+.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all reset-dev-data clean-dev-db fresh-start raw-log clean-log logs logs-clean
 
 all: build-all
 
@@ -38,6 +45,7 @@ help:
 	@echo "  fmt          - Format all Go code"
 	@echo "  vet          - Run go vet on all code"
 	@echo "  clean        - Clean all generated files and binaries"
+	@echo "  reset-dev-data - Drop AuthN users and AuthZ roles/grants collections (dev helper)"
 	@echo "  check        - Run all quality checks"
 	@echo "  ci           - Run CI pipeline with strict checks"
 	@echo ""
@@ -73,6 +81,41 @@ build-estate:
 build-admin:
 	@echo "📦 Building admin service..."
 	@cd services/admin && go build -o admin .
+
+raw-log:
+	@echo "📜 Streaming raw logs from all services..."
+	@tail -n $(TAIL_LINES) -F services/*/*.log | \
+	awk '{
+		if ($$0 ~ /^==> .* <==$$/) next;
+		printf "%s %s\n", strftime("[%H:%M:%S]"), $$0;
+	}'
+
+clean-log:
+	@echo "📜 Streaming condensed logs (time | level | message)..."
+	@tail -n $(TAIL_LINES) -F services/*/*.log | scripts/log_clean.awk
+
+logs: raw-log
+logs-clean: clean-log
+
+clear-logs:
+	@echo "🧹 Clearing all service logs..."
+	@find services -type f -name '*.log' -exec rm -f {} +
+	@echo "✅ All logs removed."
+
+clean-dev-db:
+	@echo "🗑  Removing local development databases..."
+	@rm -f services/authn/authn.db services/authz/authz.db services/estate/app.db
+	@echo "✅ Local development databases removed."
+
+fresh-start:
+	@echo "♻️  Resetting development environment..."
+	@$(MAKE) stop-all
+	@$(MAKE) clear-logs
+	@$(MAKE) clean-dev-db
+	@$(MAKE) reset-dev-data
+	@$(MAKE) run-all
+	@echo "📜 Tailing consolidated logs (last $(FRESH_LOG_LINES) lines)..."
+	@TAIL_LINES=$(FRESH_LOG_LINES) $(MAKE) $(LOG_STREAM)
 
 # Test all components
 test:
@@ -210,21 +253,22 @@ run-all:
 	@$(MAKE) stop-all
 	@$(MAKE) build-all
 	@echo "🚀 Starting services..."
-	@echo "   📦 Starting AuthN on :8081..."
-	@cd services/authn && nohup ./authn > authn.log 2>&1 & echo $$! > authn.pid; sleep 2
-	@echo "   📦 Starting AuthZ on :8082..."
-	@cd services/authz && nohup ./authz > authz.log 2>&1 & echo $$! > authz.pid; sleep 2
-	@echo "   📦 Starting Estate on :8083..."
-	@cd services/estate && nohup ./estate > estate.log 2>&1 & echo $$! > estate.pid; sleep 2
-	@echo "   📦 Starting Admin on :8080..."
+	@echo "   📦 Starting Admin on :8081..."
 	@cd services/admin && nohup ./admin > admin.log 2>&1 & echo $$! > admin.pid; sleep 2
+	@echo "   📦 Starting AuthN on :8082..."
+	@cd services/authn && nohup ./authn > authn.log 2>&1 & echo $$! > authn.pid; sleep 2
+	@echo "   📦 Starting AuthZ on :8083..."
+	@cd services/authz && nohup ./authz > authz.log 2>&1 & echo $$! > authz.pid; sleep 2
+	@echo "   📦 Starting Estate on :8084..."
+	@cd services/estate && nohup ./estate > estate.log 2>&1 & echo $$! > estate.pid; sleep 2
 	@echo ""
 	@echo "🎉 All Pulap services started!"
 	@echo "📡 Services running:"
-	@echo "   • Admin:  http://localhost:8080 (web interface)"
-	@echo "   • AuthN:  http://localhost:8081 (authentication)"
-	@echo "   • AuthZ:  http://localhost:8082 (authorization)"
-	@echo "   • Estate: http://localhost:8083 (real estate)"
+	@echo "   • Portal (external): http://localhost:8080"
+	@echo "   • Admin:  http://localhost:8081 (business admin)"
+	@echo "   • AuthN:  http://localhost:8082 (authentication)"
+	@echo "   • AuthZ:  http://localhost:8083 (authorization)"
+	@echo "   • Estate: http://localhost:8084 (real estate)"
 	@echo ""
 	@echo "🛑 To stop all services: make stop-all"
 
@@ -243,7 +287,7 @@ run-admin: build-admin
 
 stop-all:
 	@echo "🛑 Stopping all Pulap services..."
-	@for port in 8080 8081 8082 8083 8084 8085; do \
+	@for port in 8080 8081 8082 8083 8084; do \
 		if lsof -ti:$$port >/dev/null 2>&1; then \
 			echo "🛑 Stopping process on port $$port"; \
 			lsof -ti:$$port | xargs -r kill -9 || true; \
@@ -286,6 +330,20 @@ dev-deps:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install golang.org/x/vuln/cmd/govulncheck@latest
 	@echo "✅ Development dependencies installed"
+
+reset-dev-data:
+	@command -v mongosh >/dev/null 2>&1 || { echo "❌ mongosh not found. Install MongoDB Shell or set MONGO_URL."; exit 1; }
+	@echo "🧹 Clearing AuthN users collection ($(AUTHN_DB).users)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);'
+	@if [ "$(AUTHN_DB)" != "auth" ]; then \
+		echo "🧹 Also clearing legacy AuthN database (auth.users)..."; \
+		mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("auth"); result = db.users.deleteMany({}); printjson(result);'; \
+	fi
+	@echo "🧹 Clearing AuthZ roles collection ($(AUTHZ_DB).roles)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);'
+	@echo "🧹 Clearing AuthZ grants collection ($(AUTHZ_DB).grants)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);'
+	@echo "✅ Development Mongo collections cleared."
 
 # Tidy all modules
 tidy:

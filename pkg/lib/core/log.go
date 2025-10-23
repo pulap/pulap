@@ -53,7 +53,8 @@ func NewLogger(logLevelStr string) Logger {
 
 func (l *slogLogger) Debug(v ...any) {
 	if l.logLevel <= DebugLevel {
-		l.logger.Debug(fmt.Sprint(v...))
+		msg, attrs := normalizeArgs(v...)
+		l.logger.Debug(msg, attrs...)
 	}
 }
 
@@ -65,12 +66,8 @@ func (l *slogLogger) Debugf(format string, a ...any) {
 
 func (l *slogLogger) Info(v ...any) {
 	if l.logLevel <= InfoLevel {
-		if len(v) > 1 {
-			msg := fmt.Sprint(v[0])
-			l.logger.Info(msg, v[1:]...)
-		} else {
-			l.logger.Info(fmt.Sprint(v...))
-		}
+		msg, attrs := normalizeArgs(v...)
+		l.logger.Info(msg, attrs...)
 	}
 }
 
@@ -82,12 +79,8 @@ func (l *slogLogger) Infof(format string, a ...any) {
 
 func (l *slogLogger) Error(v ...any) {
 	if l.logLevel <= ErrorLevel {
-		if len(v) > 1 {
-			msg := fmt.Sprint(v[0])
-			l.logger.Error(msg, v[1:]...)
-		} else {
-			l.logger.Error(fmt.Sprint(v...))
-		}
+		msg, attrs := normalizeArgs(v...)
+		l.logger.Error(msg, attrs...)
 	}
 }
 
@@ -152,4 +145,44 @@ func slogLevel(level LogLevel) slog.Level {
 
 func isTerminal() bool {
 	return os.Getenv("LOG_FORMAT") != "json"
+}
+
+func normalizeArgs(args ...any) (string, []any) {
+	if len(args) == 0 {
+		return "", nil
+	}
+
+	msg := fmt.Sprint(args[0])
+	if len(args) == 1 {
+		return msg, nil
+	}
+
+	rest := args[1:]
+	if len(rest) == 0 {
+		return msg, nil
+	}
+
+	if attrs := toAttrsIfPossible(rest); attrs != nil {
+		return msg, attrs
+	}
+
+	if len(rest)%2 != 0 {
+		// Fallback to plain message if key/value pairs are malformed
+		return fmt.Sprint(args...), nil
+	}
+
+	return msg, rest
+}
+
+func toAttrsIfPossible(args []any) []any {
+	attrs := make([]any, len(args))
+	for i, arg := range args {
+		if attr, ok := arg.(slog.Attr); ok {
+			attrs[i] = attr
+			continue
+		}
+		// If we encounter something that isn't an Attr, bail out
+		return nil
+	}
+	return attrs
 }

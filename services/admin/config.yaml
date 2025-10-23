@@ -1,10 +1,10 @@
 server:
-  port: ":8080"
+  port: ":8081"
 
 services:
-  authn_url: "http://localhost:8081"
-  authz_url: "http://localhost:8082"
-  estate_url: "http://localhost:8083"
+  authn_url: "http://localhost:8082"
+  authz_url: "http://localhost:8083"
+  estate_url: "http://localhost:8084"
 
 auth:
   cache_ttl: "5m"

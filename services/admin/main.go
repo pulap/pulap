@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
-
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/admin/internal/admin"
 	"github.com/pulap/pulap/services/admin/internal/config"
@@ -49,11 +48,24 @@ func main() {
 	tmplMgr := core.NewTemplateManager(assetsFS, logger)
 	deps = append(deps, tmplMgr)
 
-	userRepo := admin.NewFakeUserRepo()
+	authnClient := core.NewServiceClient(cfg.Services.AuthnURL)
+	userRepo := admin.NewAPIUserRepo(authnClient)
 	roleRepo := admin.NewFakeRoleRepo()
 	grantRepo := admin.NewFakeGrantRepo(userRepo, roleRepo)
 
-	adminHandler := admin.NewAdminHandler(tmplMgr, userRepo, roleRepo, grantRepo, xparams)
+	repos := admin.Repos{
+		UserRepo:  userRepo,
+		RoleRepo:  roleRepo,
+		GrantRepo: grantRepo,
+	}
+
+	adminService := admin.NewDefaultService(repos, xparams)
+	deps = append(deps, adminService)
+
+	authZClient := core.NewAuthZHTTPClient(cfg.Services.AuthzURL)
+	deps = append(deps, authZClient)
+
+	adminHandler := admin.NewHandler(tmplMgr, adminService, authZClient, authnClient, xparams)
 	deps = append(deps, adminHandler)
 
 	starts, stops := core.Setup(ctx, router, deps...)

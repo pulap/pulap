@@ -25,6 +25,8 @@ func Setup(ctx context.Context, r chi.Router, comps ...any) (
 	starts []func(context.Context) error,
 	stops []func(context.Context) error,
 ) {
+	RegisterProbes(r)
+
 	for _, c := range comps {
 		if rr, ok := c.(RouteRegistrar); ok {
 			rr.RegisterRoutes(r)

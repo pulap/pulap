@@ -35,11 +35,11 @@ type LogConfig struct {
 }
 
 type AuthConfig struct {
-	EncryptionKey   string `koanf:"encryption.key"`
-	SigningKey      string `koanf:"signing.key"`
-	SessionTTL      string `koanf:"session.ttl"`
-	TokenPrivateKey string `koanf:"token.private.key"`
-	TokenPublicKey  string `koanf:"token.public.key"`
+	EncryptionKey   string `koanf:"encryption_key"`
+	SigningKey      string `koanf:"signing_key"`
+	SessionTTL      string `koanf:"session_ttl"`
+	TokenPrivateKey string `koanf:"token_private_key"`
+	TokenPublicKey  string `koanf:"token_public_key"`
 }
 
 func New() *Config {
@@ -103,6 +103,15 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 
 	// Manual environment variable override (Koanf precedence is unreliable)
+	if val := os.Getenv("AUTHN_DATABASE_MONGO_URL"); val != "" {
+		cfg.Database.MongoURL = val
+	}
+	if val := os.Getenv("AUTHN_DATABASE_MONGO_DATABASE"); val != "" {
+		cfg.Database.MongoDatabase = val
+	}
+	if val := os.Getenv("AUTHN_DATABASE_PATH"); val != "" {
+		cfg.Database.Path = val
+	}
 	if val := os.Getenv("AUTHN_ENCRYPTION_KEY"); val != "" {
 		cfg.Auth.EncryptionKey = val
 	}
