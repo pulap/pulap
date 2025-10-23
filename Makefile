@@ -5,6 +5,10 @@ PROJECT_NAME=pulap
 SERVICES=authn authz estate admin
 BASE_PORTS=8080 8081 8082 8083 8084
 PKG_LIBS=auth core fake
+COMPOSE_FILE?=docker-compose.yml
+COMPOSE_LOG_FILTER?=pulap-mongodb
+COMPOSE_MONGO_USER?=admin
+COMPOSE_MONGO_PASS?=password
 
 MONGO_URL?=mongodb://localhost:27017
 AUTHN_DB?=authn
@@ -22,7 +26,7 @@ GO_VET=go vet
 GO_VULNCHECK=govulncheck
 
 # Phony targets
-.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all reset-dev-data clean-dev-db fresh-start raw-log clean-log logs logs-clean
+.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all reset-dev-data reset-compose-data clean-dev-db fresh-start raw-log clean-log logs logs-clean run-compose run-compose-neat stop-compose
 
 all: build-all
 
@@ -45,6 +49,10 @@ help:
 	@echo "  fmt          - Format all Go code"
 	@echo "  vet          - Run go vet on all code"
 	@echo "  clean        - Clean all generated files and binaries"
+	@echo "  run-compose  - Launch docker compose stack defined in $(COMPOSE_FILE)"
+	@echo "  run-compose-neat - Launch compose stack while filtering $(COMPOSE_LOG_FILTER) logs"
+	@echo "  stop-compose - Stop the compose stack defined in $(COMPOSE_FILE)"
+	@echo "  reset-compose-data - Drop MongoDB databases inside the compose stack"
 	@echo "  reset-dev-data - Drop AuthN users and AuthZ roles/grants collections (dev helper)"
 	@echo "  check        - Run all quality checks"
 	@echo "  ci           - Run CI pipeline with strict checks"
@@ -54,6 +62,47 @@ help:
 	@echo "  test-<service>   - Test specific service"
 	@echo "  lint-<service>   - Lint specific service"
 	@echo "  run-<service>    - Run specific service"
+
+run-compose:
+	@if [ ! -f "$(COMPOSE_FILE)" ]; then \
+		echo "❌ docker compose file '$(COMPOSE_FILE)' not found. Override COMPOSE_FILE=path/to/compose.yml"; \
+		exit 1; \
+	fi
+	@echo "Starting docker compose using $(COMPOSE_FILE)..."
+	@docker compose -f $(COMPOSE_FILE) up --build
+
+run-compose-neat:
+	@if [ ! -f "$(COMPOSE_FILE)" ]; then \
+		echo "❌ docker compose file '$(COMPOSE_FILE)' not found. Override COMPOSE_FILE=path/to/compose.yml"; \
+		exit 1; \
+	fi
+	@echo "Starting docker compose using $(COMPOSE_FILE) (filter: $(COMPOSE_LOG_FILTER))..."
+	@if [ -z "$(COMPOSE_LOG_FILTER)" ]; then \
+		docker compose -f $(COMPOSE_FILE) up --build; \
+	else \
+		docker compose -f $(COMPOSE_FILE) up --build 2>&1 | grep -v '^$(COMPOSE_LOG_FILTER)'; \
+	fi
+
+stop-compose:
+	@if [ ! -f "$(COMPOSE_FILE)" ]; then \
+		echo "❌ docker compose file '$(COMPOSE_FILE)' not found. Override COMPOSE_FILE=path/to/compose.yml"; \
+		exit 1; \
+	fi
+	@echo "Stopping docker compose using $(COMPOSE_FILE)..."
+	@docker compose -f $(COMPOSE_FILE) down
+
+reset-compose-data:
+	@if [ ! -f "$(COMPOSE_FILE)" ]; then \
+		echo "❌ docker compose file '$(COMPOSE_FILE)' not found. Override COMPOSE_FILE=path/to/compose.yml"; \
+		exit 1; \
+	fi
+	@if ! docker compose -f $(COMPOSE_FILE) ps --status running mongodb >/dev/null 2>&1; then \
+		echo "❌ compose MongoDB service is not running. Start it first (make run-compose)."; \
+		exit 1; \
+	fi
+	@echo "🧹 Clearing MongoDB databases inside compose (AuthN=$(AUTHN_DB), AuthZ=$(AUTHZ_DB))..."
+	@docker compose -f $(COMPOSE_FILE) exec mongodb mongosh --quiet --username $(COMPOSE_MONGO_USER) --password $(COMPOSE_MONGO_PASS) --authenticationDatabase admin --eval 'const dbs = ["$(AUTHN_DB)", "$(AUTHZ_DB)"]; dbs.forEach(name => { const res = db.getSiblingDB(name).dropDatabase(); printjson({db: name, dropped: res.ok === 1}); });'
+	@echo "✅ Compose MongoDB databases cleared."
 
 # Build all services
 build-all:

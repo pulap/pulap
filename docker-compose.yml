@@ -1,0 +1,152 @@
+networks:
+  internal:
+    driver: bridge
+    internal: false
+  public:
+    driver: bridge
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: pulap-mongodb
+    ports:
+      - "27017"
+    networks:
+      - internal
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    restart: unless-stopped
+    logging:
+      driver: "none"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  authn:
+    build:
+      context: .
+      dockerfile: ./services/authn/Dockerfile
+    container_name: pulap-authn
+    ports:
+      - "8082"
+    networks:
+      - internal
+    environment:
+      - AUTHN_SERVER_PORT=:8082
+      - AUTHN_DATABASE_PATH=/data/authn.db
+      - AUTHN_DATABASE_MONGO_URL=mongodb://admin:password@mongodb:27017/authn?authSource=admin
+      - AUTHN_DATABASE_MONGO_DATABASE=authn
+    volumes:
+      - authn-data:/data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/healthz", "-O", "/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  authz:
+    build:
+      context: .
+      dockerfile: ./services/authz/Dockerfile
+    container_name: pulap-authz
+    ports:
+      - "8083"
+    networks:
+      - internal
+    environment:
+      - AUTHZ_SERVER_PORT=:8083
+      - AUTHZ_DATABASE_PATH=/data/authz.db
+      - AUTHZ_DATABASE_MONGO_URL=mongodb://admin:password@mongodb:27017/authz?authSource=admin
+      - AUTHZ_DATABASE_MONGO_DATABASE=authz
+      - AUTHZ_AUTHN_URL=http://authn:8082
+    volumes:
+      - authz-data:/data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/healthz", "-O", "/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  estate:
+    build:
+      context: .
+      dockerfile: ./services/estate/Dockerfile
+    container_name: pulap-estate
+    ports:
+      - "8084"
+    networks:
+      - internal
+    environment:
+      - ESTATE_SERVER_PORT=:8084
+      - ESTATE_DATABASE_PATH=/data/estate.db
+    volumes:
+      - estate-data:/data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/healthz", "-O", "/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: ./services/admin/Dockerfile
+    container_name: pulap-admin
+    ports:
+      - "8081:8081"
+    networks:
+      - internal
+      - public
+    environment:
+      - ADMIN_SERVER_PORT=:8081
+      - ADMIN_SERVICES_AUTHN_URL=http://authn:8082
+      - ADMIN_SERVICES_AUTHZ_URL=http://authz:8083
+      - ADMIN_SERVICES_ESTATE_URL=http://estate:8084
+      - ADMIN_AUTH_SESSION_SECRET=change-this-in-production
+    volumes:
+      - admin-data:/data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      authn:
+        condition: service_started
+      authz:
+        condition: service_started
+      estate:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/healthz", "-O", "/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  mongodb-data:
+  authn-data:
+  authz-data:
+  estate-data:
+  admin-data:
+

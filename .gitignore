@@ -1,0 +1,22 @@
+# Build artifacts
+services/*/bin/
+services/*/*.log
+services/*/*.pid
+services/*/*.db
+services/*/authn
+services/*/authz
+services/*/admin
+services/*/estate
+services/*/todo
+
+# Root level runtime files
+*.pid
+*.log
+
+# Editor / IDE
+.idea/
+.vscode/
+
+# Temporary
+/tmp/
+.DS_Store

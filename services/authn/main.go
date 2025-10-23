@@ -40,7 +40,8 @@ func main() {
 
 	var deps []any
 
-	// Auto-select repository based on configuration
+	// WIP: Temporary repository selector.
+	// A single implementation will remain later.
 	var userRepo authn.UserRepo
 	if cfg.Database.MongoURL != "" {
 		userRepo = mongo.NewUserMongoRepo(xparams)

@@ -106,5 +106,28 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 		return nil, fmt.Errorf("cannot unmarshal config: %w", err)
 	}
 
+	// Manual environment variable overrides (flattened keys don't play well with nested paths)
+	if val := os.Getenv("ADMIN_SERVER_PORT"); val != "" {
+		cfg.Server.Port = val
+	}
+	if val := os.Getenv("ADMIN_SERVICES_AUTHN_URL"); val != "" {
+		cfg.Services.AuthnURL = val
+	}
+	if val := os.Getenv("ADMIN_SERVICES_AUTHZ_URL"); val != "" {
+		cfg.Services.AuthzURL = val
+	}
+	if val := os.Getenv("ADMIN_SERVICES_ESTATE_URL"); val != "" {
+		cfg.Services.EstateURL = val
+	}
+	if val := os.Getenv("ADMIN_AUTH_SESSION_SECRET"); val != "" {
+		cfg.Auth.SessionSecret = val
+	}
+	if val := os.Getenv("ADMIN_AUTH_CACHE_TTL"); val != "" {
+		cfg.Auth.CacheTTL = val
+	}
+	if val := os.Getenv("ADMIN_LOG_LEVEL"); val != "" {
+		cfg.Log.Level = val
+	}
+
 	return cfg, nil
 }

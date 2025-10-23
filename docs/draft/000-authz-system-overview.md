@@ -876,7 +876,7 @@ All grants include `created_by`, `created_at`, `updated_by`, `updated_at` for au
 
 ## Conclusion
 
-The Pulap authorization system provides a flexible, performant, and secure way to control access to resources using:
+The Pulap authorization system provides a flexible way to control access to resources using:
 
 1. **Permissions** - Atomic capabilities (strings)
 2. **Roles** - Named bundles of permissions (database entities)

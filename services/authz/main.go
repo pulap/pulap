@@ -40,7 +40,8 @@ func main() {
 
 	var deps []any
 
-	// Auto-select repository based on configuration
+	// WIP: Temporary repository selector.
+	// A single implementation will remain later.
 	var roleRepo authz.RoleRepo
 	var grantRepo authz.GrantRepo
 

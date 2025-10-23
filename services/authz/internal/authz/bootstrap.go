@@ -86,7 +86,7 @@ func (s *BootstrapService) Bootstrap(ctx context.Context) error {
 func (s *BootstrapService) getBootstrapStatus(ctx context.Context) (*BootstrapStatusResponse, error) {
 	authNURL := s.xparams.Cfg.Auth.AuthNURL
 	url := authNURL + "/system/bootstrap-status"
-	s.xparams.Log.Info("#####" + url)
+	s.xparams.Log.Info("AuthN URL: " + url)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

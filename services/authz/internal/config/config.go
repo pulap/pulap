@@ -129,6 +129,9 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	if val := os.Getenv("AUTHZ_TOKEN_PUBLIC_KEY"); val != "" {
 		cfg.Auth.TokenPublicKey = val
 	}
+	if val := os.Getenv("AUTHZ_AUTHN_URL"); val != "" {
+		cfg.Auth.AuthNURL = val
+	}
 
 	return cfg, nil
 }
