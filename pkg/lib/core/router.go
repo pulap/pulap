@@ -28,6 +28,7 @@ func NewRouterWithOptions(opts StackOptions, xparams StackParams) *chi.Mux {
 		opts.Errors = xparams.ErrorReporter()
 	}
 	ApplyStack(r, xparams.Log(), opts)
+	RegisterDebugRoutes(r)
 	return r
 }
 

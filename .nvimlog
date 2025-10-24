@@ -1,0 +1,1 @@
+WRN 2025-10-24T19:01:26.410 ?.1259721  server_start:193: Failed to start server: operation not permitted: /run/user/1000/nvim.1259721.0
