@@ -27,7 +27,7 @@ Later, when an API Gateway is introduced, it becomes the new top-level generator
 
 #### Middleware for Request ID
 
-**File:** `pkg/lib/core/requestid_middleware.go`
+**File:** `pkg/lib/core/requestidmiddleware.go`
 
 ```go
 package middleware
