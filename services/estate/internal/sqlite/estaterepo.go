@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/estate/internal/config"
 	"github.com/pulap/pulap/services/estate/internal/estate"
 )
@@ -29,7 +30,7 @@ func NewEstateSQLiteRepo(xparams config.XParams) *EstateSQLiteRepo {
 
 // Start opens the database connection and pings it.
 func (r *EstateSQLiteRepo) Start(ctx context.Context) error {
-	appCfg := r.xparams.Cfg
+	appCfg := r.xparams.Cfg()
 
 	dbPath := appCfg.Database.Path
 
@@ -617,4 +618,16 @@ func (r *EstateSQLiteRepo) computeTagDiff(current, new []estate.Tag) (toInsert, 
 	}
 
 	return toInsert, toUpdate, toDelete
+}
+
+func (r *EstateSQLiteRepo) Log() core.Logger {
+	return r.xparams.Log()
+}
+
+func (r *EstateSQLiteRepo) Cfg() *config.Config {
+	return r.xparams.Cfg()
+}
+
+func (r *EstateSQLiteRepo) Trace() core.Tracer {
+	return r.xparams.Tracer()
 }

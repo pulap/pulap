@@ -169,11 +169,23 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 // Helper methods following same patterns as ListHandler
 
 func (h *UserHandler) logForRequest(r *http.Request) core.Logger {
-	return h.xparams.Log.With(
+	return h.Log().With(
 		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,
 	)
+}
+
+func (h *UserHandler) Log() core.Logger {
+	return h.xparams.Log()
+}
+
+func (h *UserHandler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *UserHandler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }
 
 func (h *UserHandler) parseIDParam(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {

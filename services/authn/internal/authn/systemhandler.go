@@ -55,7 +55,7 @@ func (h *SystemHandler) RegisterRoutes(r chi.Router) {
 
 // GetBootstrapStatus checks if the system needs bootstrap
 func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Request) {
-	signingKey := []byte(h.xparams.Cfg.Auth.SigningKey)
+	signingKey := []byte(h.Cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
 	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 
@@ -80,8 +80,8 @@ func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Reques
 
 // Bootstrap creates the superadmin user if it doesn't exist
 func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
-	encKey := []byte(h.xparams.Cfg.Auth.EncryptionKey)
-	signingKey := []byte(h.xparams.Cfg.Auth.SigningKey)
+	encKey := []byte(h.Cfg().Auth.EncryptionKey)
+	signingKey := []byte(h.Cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
 	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 
@@ -188,5 +188,13 @@ func generateSecurePassword(length int) string {
 }
 
 func (h *SystemHandler) Log() core.Logger {
-	return h.xparams.Log
+	return h.xparams.Log()
+}
+
+func (h *SystemHandler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *SystemHandler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }

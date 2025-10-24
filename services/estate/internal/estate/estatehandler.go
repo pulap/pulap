@@ -696,11 +696,19 @@ func ensureEstateSingleJSONValue(dec *json.Decoder) error {
 }
 
 func (h *EstateHandler) Log() core.Logger {
-	return h.xparams.Log
+	return h.xparams.Log()
+}
+
+func (h *EstateHandler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *EstateHandler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }
 
 func (h *EstateHandler) logForRequest(r *http.Request) core.Logger {
-	return h.xparams.Log.With(
+	return h.Log().With(
 		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,

@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/pulap/pulap/services/estate/internal/config"
 	"github.com/pulap/pulap/services/estate/internal/estate"
 )
@@ -114,13 +113,11 @@ func setupRepo(t *testing.T, db *sql.DB) *EstateSQLiteRepo {
 	t.Helper()
 
 	// Mock xparams with test database configuration
-	xparams := config.XParams{
-		Cfg: &config.Config{
-			Database: config.DatabaseConfig{
-				Path: ":memory:", // Not used since we're injecting the db directly
-			},
+	xparams := config.NewXParams(nil, &config.Config{
+		Database: config.DatabaseConfig{
+			Path: ":memory:", // Not used since we're injecting the db directly
 		},
-	}
+	})
 
 	repo := NewEstateSQLiteRepo(xparams)
 	// Inject the test database directly (bypassing Start() method)

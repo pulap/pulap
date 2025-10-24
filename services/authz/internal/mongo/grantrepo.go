@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
+	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/authz/internal/authz"
 	"github.com/pulap/pulap/services/authz/internal/config"
 )
@@ -32,7 +33,7 @@ func NewGrantMongoRepo(xparams config.XParams) *GrantMongoRepo {
 
 // Start connects to MongoDB and initializes the collection
 func (r *GrantMongoRepo) Start(ctx context.Context) error {
-	appCfg := r.xparams.Cfg
+	appCfg := r.xparams.Cfg()
 
 	// Set default MongoDB configuration if not provided
 	connString := appCfg.Database.MongoURL
@@ -426,4 +427,16 @@ func (r *GrantMongoRepo) ListExpired(ctx context.Context) ([]*authz.Grant, error
 	}
 
 	return grants, nil
+}
+
+func (r *GrantMongoRepo) Log() core.Logger {
+	return r.xparams.Log()
+}
+
+func (r *GrantMongoRepo) Cfg() *config.Config {
+	return r.xparams.Cfg()
+}
+
+func (r *GrantMongoRepo) Trace() core.Tracer {
+	return r.xparams.Tracer()
 }
