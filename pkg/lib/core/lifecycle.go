@@ -24,8 +24,13 @@ type RouteRegistrar interface {
 func Setup(ctx context.Context, r chi.Router, comps ...any) (
 	starts []func(context.Context) error,
 	stops []func(context.Context) error,
+	health *HealthRegistry,
 ) {
-	RegisterProbes(r)
+	health = NewHealthRegistry()
+	RegisterProbes(r, health)
+
+	health.RegisterLiveness("core", func(context.Context) error { return nil })
+	health.RegisterReadiness("core", func(context.Context) error { return nil })
 
 	for _, c := range comps {
 		if rr, ok := c.(RouteRegistrar); ok {
@@ -36,6 +41,9 @@ func Setup(ctx context.Context, r chi.Router, comps ...any) (
 		}
 		if st, ok := c.(Stoppable); ok {
 			stops = append(stops, st.Stop)
+		}
+		if hp, ok := c.(HealthReporter); ok {
+			health.RegisterChecks(hp.HealthChecks())
 		}
 	}
 	return
