@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/pulap/pulap/pkg/lib/core"
-	coremw "github.com/pulap/pulap/pkg/lib/core/middleware"
 	"github.com/pulap/pulap/services/admin/internal/admin"
 	"github.com/pulap/pulap/services/admin/internal/config"
 )
@@ -39,8 +38,9 @@ func main() {
 	xparams := config.NewXParams(logger, cfg)
 
 	router := chi.NewRouter()
-	coremw.ApplyStack(router, logger, coremw.StackOptions{Timeout: 60 * time.Second})
+	core.ApplyStack(router, logger, core.StackOptions{Timeout: 60 * time.Second})
 	router.Use(chimiddleware.NoCache)
+	core.RedirectNotFound(router, "/")
 
 	var deps []any
 
