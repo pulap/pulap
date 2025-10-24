@@ -9,6 +9,7 @@ import (
 type StackParams interface {
 	Log() Logger
 	Metrics() Metrics
+	ErrorReporter() ErrorReporter
 }
 
 // NewRouter returns a chi router preconfigured with the standard middleware
@@ -22,6 +23,9 @@ func NewRouterWithOptions(opts StackOptions, xparams StackParams) *chi.Mux {
 	r := chi.NewRouter()
 	if opts.Metrics == nil {
 		opts.Metrics = xparams.Metrics()
+	}
+	if opts.Errors == nil {
+		opts.Errors = xparams.ErrorReporter()
 	}
 	ApplyStack(r, xparams.Log(), opts)
 	return r
@@ -37,6 +41,9 @@ func NewWebRouter(fallback string, xparams StackParams) *chi.Mux {
 func NewWebRouterWithOptions(fallback string, opts StackOptions, xparams StackParams) *chi.Mux {
 	if opts.Metrics == nil {
 		opts.Metrics = xparams.Metrics()
+	}
+	if opts.Errors == nil {
+		opts.Errors = xparams.ErrorReporter()
 	}
 	r := NewRouterWithOptions(opts, xparams)
 
