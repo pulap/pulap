@@ -9,8 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/admin/internal/admin"
 	"github.com/pulap/pulap/services/admin/internal/config"
@@ -37,10 +35,7 @@ func main() {
 
 	xparams := config.NewXParams(logger, cfg)
 
-	router := chi.NewRouter()
-	core.ApplyStack(router, logger, core.StackOptions{Timeout: 60 * time.Second})
-	router.Use(chimiddleware.NoCache)
-	core.RedirectNotFound(router, "/")
+	router := core.NewWebRouter(xparams, "/", core.StackOptions{Timeout: 60 * time.Second})
 
 	var deps []any
 
