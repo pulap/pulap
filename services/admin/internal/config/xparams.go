@@ -3,9 +3,10 @@ package config
 import "github.com/pulap/pulap/pkg/lib/core"
 
 type XParams struct {
-	log    core.Logger
-	cfg    *Config
-	tracer core.Tracer
+	log     core.Logger
+	cfg     *Config
+	tracer  core.Tracer
+	metrics core.Metrics
 }
 
 func NewXParams(log core.Logger, cfg *Config) XParams {
@@ -13,9 +14,10 @@ func NewXParams(log core.Logger, cfg *Config) XParams {
 		log = core.NewNoopLogger()
 	}
 	return XParams{
-		log:    log,
-		cfg:    cfg,
-		tracer: core.NoopTracer(),
+		log:     log,
+		cfg:     cfg,
+		tracer:  core.NoopTracer(),
+		metrics: core.NewNoopMetrics(),
 	}
 }
 
@@ -36,4 +38,15 @@ func (xp *XParams) SetTracer(tracer core.Tracer) {
 		tracer = core.NoopTracer()
 	}
 	xp.tracer = tracer
+}
+
+func (xp XParams) Metrics() core.Metrics {
+	return xp.metrics
+}
+
+func (xp *XParams) SetMetrics(metrics core.Metrics) {
+	if metrics == nil {
+		metrics = core.NewNoopMetrics()
+	}
+	xp.metrics = metrics
 }

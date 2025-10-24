@@ -8,6 +8,7 @@ import (
 // StackParams exposes the minimum surface required by the router helpers.
 type StackParams interface {
 	Log() Logger
+	Metrics() Metrics
 }
 
 // NewRouter returns a chi router preconfigured with the standard middleware
@@ -19,6 +20,9 @@ func NewRouter(xparams StackParams) *chi.Mux {
 // NewRouterWithOptions behaves like NewRouter but allows customising the stack.
 func NewRouterWithOptions(opts StackOptions, xparams StackParams) *chi.Mux {
 	r := chi.NewRouter()
+	if opts.Metrics == nil {
+		opts.Metrics = xparams.Metrics()
+	}
 	ApplyStack(r, xparams.Log(), opts)
 	return r
 }
@@ -31,6 +35,9 @@ func NewWebRouter(fallback string, xparams StackParams) *chi.Mux {
 
 // NewWebRouterWithOptions mirrors NewRouterWithOptions for web frontends.
 func NewWebRouterWithOptions(fallback string, opts StackOptions, xparams StackParams) *chi.Mux {
+	if opts.Metrics == nil {
+		opts.Metrics = xparams.Metrics()
+	}
 	r := NewRouterWithOptions(opts, xparams)
 
 	r.Use(chimiddleware.NoCache)
