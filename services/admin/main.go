@@ -7,10 +7,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/pulap/pulap/pkg/lib/core"
-	"github.com/pulap/pulap/pkg/lib/core/middleware"
+	coremw "github.com/pulap/pulap/pkg/lib/core/middleware"
 	"github.com/pulap/pulap/services/admin/internal/admin"
 	"github.com/pulap/pulap/services/admin/internal/config"
 )
@@ -40,7 +42,8 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Use(middleware.RequestIDMiddleware)
+	coremw.ApplyStack(router, logger, coremw.StackOptions{Timeout: 60 * time.Second})
+	router.Use(chimiddleware.NoCache)
 
 	var deps []any
 
