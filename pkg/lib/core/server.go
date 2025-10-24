@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -71,47 +70,4 @@ func Serve(router *chi.Mux, opts ServerOpts, stops []func(context.Context) error
 // ServerOpts holds server-related options.
 type ServerOpts struct {
 	Port string
-}
-
-// ProbeResponse represents the JSON response for probe endpoints.
-type ProbeResponse struct {
-	Status    string `json:"status"`
-	Timestamp string `json:"timestamp"`
-}
-
-// RegisterProbes adds standard probe endpoints to the router.
-// Note: Current implementation provides basic liveness/readiness checks.
-// Future enhancement: aggregate health status from all dependencies (database, external services, etc.)
-func RegisterProbes(r chi.Router) {
-	r.Get("/healthz", healthzHandler)
-	r.Get("/readyz", readyzHandler)
-	r.Get("/livez", livezHandler)
-	r.Get("/ping", notImplementedHandler)
-	r.Get("/metrics", notImplementedHandler)
-	r.Get("/version", notImplementedHandler)
-}
-
-func healthzHandler(w http.ResponseWriter, r *http.Request) {
-	respondProbe(w, http.StatusOK, "ok")
-}
-
-func readyzHandler(w http.ResponseWriter, r *http.Request) {
-	respondProbe(w, http.StatusOK, "ready")
-}
-
-func livezHandler(w http.ResponseWriter, r *http.Request) {
-	respondProbe(w, http.StatusOK, "alive")
-}
-
-func notImplementedHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-func respondProbe(w http.ResponseWriter, status int, statusMsg string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(ProbeResponse{
-		Status:    statusMsg,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	})
 }

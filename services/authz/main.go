@@ -73,7 +73,7 @@ func main() {
 	policyHandler := authz.NewPolicyHandler(policyEngine, xparams)
 	deps = append(deps, policyHandler)
 
-	starts, stops := core.Setup(ctx, router, deps...)
+	starts, stops, _ := core.Setup(ctx, router, deps...)
 
 	if err := core.Start(ctx, starts, stops); err != nil {
 		logger.Errorf("Cannot start %s(%s): %v", name, version, err)
