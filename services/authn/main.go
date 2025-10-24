@@ -68,7 +68,7 @@ func main() {
 
 	if err := core.Start(ctx, starts, stops); err != nil {
 		logger.Errorf("Cannot start %s(%s): %v", name, version, err)
-		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	logger.Infof("%s(%s) started successfully", name, version)
