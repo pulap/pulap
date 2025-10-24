@@ -110,6 +110,10 @@ func (c *HTTPClient) do(ctx context.Context, method, path string, body interface
 	}
 	req.Header.Set("Accept", "application/json")
 
+	if reqID := RequestIDFrom(ctx); reqID != "" {
+		req.Header.Set(RequestIDHeader, reqID)
+	}
+
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
@@ -186,6 +190,10 @@ func (c *HTTPClient) Ping(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", c.BaseURL+"/healthz", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create ping request: %w", err)
+	}
+
+	if reqID := RequestIDFrom(ctx); reqID != "" {
+		req.Header.Set(RequestIDHeader, reqID)
 	}
 
 	resp, err := c.HTTPClient.Do(req)
