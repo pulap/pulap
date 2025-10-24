@@ -6,11 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/pulap/pulap/pkg/lib/core"
-	"github.com/pulap/pulap/pkg/lib/core/middleware"
+	coremw "github.com/pulap/pulap/pkg/lib/core/middleware"
 	"github.com/pulap/pulap/services/estate/internal/config"
 	"github.com/pulap/pulap/services/estate/internal/estate"
 	"github.com/pulap/pulap/services/estate/internal/sqlite"
@@ -38,7 +39,12 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Use(middleware.RequestIDMiddleware)
+	corsOpts := coremw.DefaultCORSOptions()
+	corsOpts.AllowCredentials = true
+	coremw.ApplyStack(router, logger, coremw.StackOptions{
+		Timeout: 60 * time.Second,
+		CORS:    &corsOpts,
+	})
 
 	var deps []any
 	EstateRepo := sqlite.NewEstateSQLiteRepo(xparams)
