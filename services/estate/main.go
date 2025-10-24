@@ -8,8 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/estate/internal/config"
 	"github.com/pulap/pulap/services/estate/internal/estate"
@@ -34,10 +32,9 @@ func main() {
 
 	xparams := config.NewXParams(logger, cfg)
 
-	router := chi.NewRouter()
 	corsOpts := core.DefaultCORSOptions()
 	corsOpts.AllowCredentials = true
-	core.ApplyStack(router, logger, core.StackOptions{
+	router := core.NewRouter(xparams, core.StackOptions{
 		Timeout: 60 * time.Second,
 		CORS:    &corsOpts,
 	})
