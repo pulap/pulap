@@ -1,12 +1,11 @@
-package middleware
+package core
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-
-	"github.com/pulap/pulap/pkg/lib/core"
 )
 
 // StackOptions controls how the shared middleware stack behaves across
@@ -20,9 +19,9 @@ type StackOptions struct {
 // ApplyStack wires the shared middleware set onto the provided router. It keeps
 // the ordering consistent so request tracing, logging, and panic recovery behave
 // predictably in every service.
-func ApplyStack(r *chi.Mux, logger core.Logger, opts StackOptions) {
+func ApplyStack(r *chi.Mux, logger Logger, opts StackOptions) {
 	if logger == nil {
-		logger = core.NewNoopLogger()
+		logger = NewNoopLogger()
 	}
 	if opts.Timeout <= 0 {
 		opts.Timeout = 30 * time.Second
@@ -39,4 +38,20 @@ func ApplyStack(r *chi.Mux, logger core.Logger, opts StackOptions) {
 	if opts.CORS != nil {
 		r.Use(CORSMiddleware(*opts.CORS))
 	}
+}
+
+// RedirectNotFound configures the router to send unknown routes to a fallback
+// endpoint. Useful for web frontends where a generic NOT FOUND page feels too raw.
+func RedirectNotFound(r *chi.Mux, target string) {
+	if target == "" {
+		target = "/"
+	}
+
+	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, target, http.StatusFound)
+	})
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, target, http.StatusFound)
+	})
 }
