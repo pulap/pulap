@@ -15,7 +15,7 @@ AUTHN_DB?=authn
 AUTHZ_DB?=authz
 TAIL_LINES?=0
 FRESH_LOG_LINES?=200
-LOG_STREAM?=clean-log
+LOG_STREAM?=log-clean
 
 # Go related commands
 GOFUMPT=gofumpt
@@ -26,7 +26,7 @@ GO_VET=go vet
 GO_VULNCHECK=govulncheck
 
 # Phony targets
-.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all reset-dev-data reset-compose-data clean-dev-db fresh-start raw-log clean-log logs logs-clean run-compose run-compose-neat stop-compose
+.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all db-reset-dev reset-compose-data db-clean-dev fresh-start log-raw log-clean logs logs-clean run-compose run-compose-neat stop-compose
 
 all: build-all
 
@@ -53,7 +53,7 @@ help:
 	@echo "  run-compose-neat - Launch compose stack while filtering $(COMPOSE_LOG_FILTER) logs"
 	@echo "  stop-compose - Stop the compose stack defined in $(COMPOSE_FILE)"
 	@echo "  reset-compose-data - Drop MongoDB databases inside the compose stack"
-	@echo "  reset-dev-data - Drop AuthN users and AuthZ roles/grants collections (dev helper)"
+	@echo "  db-reset-dev - Drop AuthN users and AuthZ roles/grants collections (dev helper)"
 	@echo "  check        - Run all quality checks"
 	@echo "  ci           - Run CI pipeline with strict checks"
 	@echo ""
@@ -131,7 +131,7 @@ build-admin:
 	@echo "📦 Building admin service..."
 	@cd services/admin && go build -o admin .
 
-raw-log:
+log-raw:
 	@echo "📜 Streaming raw logs from all services..."
 	@tail -n $(TAIL_LINES) -F services/*/*.log | \
 	awk '{
@@ -139,19 +139,18 @@ raw-log:
 		printf "%s %s\n", strftime("[%H:%M:%S]"), $$0;
 	}'
 
-clean-log:
+logs-clean:
 	@echo "📜 Streaming condensed logs (time | level | message)..."
 	@tail -n $(TAIL_LINES) -F services/*/*.log | scripts/log_clean.awk
 
-logs: raw-log
-logs-clean: clean-log
+logs: log-raw
 
-clear-logs:
+log-clear:
 	@echo "🧹 Clearing all service logs..."
 	@find services -type f -name '*.log' -exec rm -f {} +
 	@echo "✅ All logs removed."
 
-clean-dev-db:
+db-clean-dev:
 	@echo "🗑  Removing local development databases..."
 	@rm -f services/authn/authn.db services/authz/authz.db services/estate/app.db
 	@echo "✅ Local development databases removed."
@@ -159,9 +158,9 @@ clean-dev-db:
 fresh-start:
 	@echo "♻️  Resetting development environment..."
 	@$(MAKE) stop-all
-	@$(MAKE) clear-logs
-	@$(MAKE) clean-dev-db
-	@$(MAKE) reset-dev-data
+	@$(MAKE) log-clear
+	@$(MAKE) db-clean-dev
+	@$(MAKE) db-reset-dev
 	@$(MAKE) run-all
 	@echo "📜 Tailing consolidated logs (last $(FRESH_LOG_LINES) lines)..."
 	@TAIL_LINES=$(FRESH_LOG_LINES) $(MAKE) $(LOG_STREAM)
@@ -380,7 +379,7 @@ dev-deps:
 	@go install golang.org/x/vuln/cmd/govulncheck@latest
 	@echo "✅ Development dependencies installed"
 
-reset-dev-data:
+db-reset-dev:
 	@command -v mongosh >/dev/null 2>&1 || { echo "❌ mongosh not found. Install MongoDB Shell or set MONGO_URL."; exit 1; }
 	@echo "🧹 Clearing AuthN users collection ($(AUTHN_DB).users)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);'

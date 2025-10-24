@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/core/middleware"
 	"github.com/pulap/pulap/services/admin/internal/admin"
 	"github.com/pulap/pulap/services/admin/internal/config"
 )
@@ -39,6 +40,7 @@ func main() {
 	}
 
 	router := chi.NewRouter()
+	router.Use(middleware.RequestIDMiddleware)
 
 	var deps []any
 
