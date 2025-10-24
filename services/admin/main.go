@@ -35,7 +35,7 @@ func main() {
 
 	xparams := config.NewXParams(logger, cfg)
 
-	router := core.NewWebRouter(xparams, "/", core.StackOptions{Timeout: 60 * time.Second})
+	router := core.NewWebRouterWithOptions("/", core.StackOptions{Timeout: 60 * time.Second}, xparams)
 
 	var deps []any
 
