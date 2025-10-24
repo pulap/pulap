@@ -10,6 +10,7 @@ import (
 
 	"github.com/pulap/pulap/pkg/lib/auth"
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
+	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/authz/internal/config"
 )
 
@@ -28,7 +29,7 @@ func NewUserSQLiteRepo(xparams config.XParams) *UserSQLiteRepo {
 
 // Start opens the database connection and pings it.
 func (r *UserSQLiteRepo) Start(ctx context.Context) error {
-	appCfg := r.xparams.Cfg
+	appCfg := r.xparams.Cfg()
 
 	dbPath := appCfg.Database.Path
 
@@ -389,4 +390,16 @@ func (r *UserSQLiteRepo) ListByStatus(ctx context.Context, status string) ([]*au
 	}
 
 	return users, nil
+}
+
+func (r *UserSQLiteRepo) Log() core.Logger {
+	return r.xparams.Log()
+}
+
+func (r *UserSQLiteRepo) Cfg() *config.Config {
+	return r.xparams.Cfg()
+}
+
+func (r *UserSQLiteRepo) Trace() core.Tracer {
+	return r.xparams.Tracer()
 }

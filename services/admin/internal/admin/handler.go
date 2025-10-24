@@ -918,7 +918,15 @@ func (h *Handler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Log() core.Logger {
-	return h.xparams.Log
+	return h.xparams.Log()
+}
+
+func (h *Handler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *Handler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }
 
 // SetSessionValidator overrides the default session validation logic.

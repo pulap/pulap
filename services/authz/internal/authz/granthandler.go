@@ -277,9 +277,21 @@ func (h *GrantHandler) ListExpiredGrants(w http.ResponseWriter, r *http.Request)
 // Helper methods
 
 func (h *GrantHandler) logForRequest(r *http.Request) core.Logger {
-	return h.xparams.Log.With(
+	return h.Log().With(
 		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,
 	)
+}
+
+func (h *GrantHandler) Log() core.Logger {
+	return h.xparams.Log()
+}
+
+func (h *GrantHandler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *GrantHandler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }

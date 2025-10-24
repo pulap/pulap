@@ -31,10 +31,7 @@ func setupAuthHandler() (*AuthHandler, *mockUserRepo) {
 		},
 	}
 
-	xparams := config.XParams{
-		Log: log,
-		Cfg: cfg,
-	}
+	xparams := config.NewXParams(log, cfg)
 
 	handler := NewAuthHandler(repo, xparams)
 	return handler, repo
@@ -147,7 +144,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 			if tt.existingUser != nil {
 				// Create lookup hash for existing user
 				normalizedEmail := authpkg.NormalizeEmail("existing@example.com")
-				signingKey := []byte(handler.xparams.Cfg.Auth.SigningKey)
+				signingKey := []byte(handler.xparams.Cfg().Auth.SigningKey)
 				emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 				tt.existingUser.EmailLookup = emailLookup
 				repo.users[tt.existingUser.ID] = tt.existingUser
@@ -186,7 +183,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 	// Create a valid test user
 	validUserID := uuid.New()
 	normalizedEmail := authpkg.NormalizeEmail("test@example.com")
-	signingKey := []byte(handler.xparams.Cfg.Auth.SigningKey)
+	signingKey := []byte(handler.xparams.Cfg().Auth.SigningKey)
 	emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 	salt := authpkg.GeneratePasswordSalt()
 	passwordHash := authpkg.HashPassword([]byte("ValidPassword123!"), salt)
@@ -302,7 +299,7 @@ func TestAuthHandler_SignOut(t *testing.T) {
 
 func TestAuthHandler_decodeSignUpPayload(t *testing.T) {
 	handler, _ := setupAuthHandler()
-	log := handler.xparams.Log
+	log := handler.xparams.Log()
 
 	tests := []struct {
 		name     string
@@ -379,7 +376,7 @@ func TestAuthHandler_decodeSignUpPayload(t *testing.T) {
 
 func TestAuthHandler_decodeSignInPayload(t *testing.T) {
 	handler, _ := setupAuthHandler()
-	log := handler.xparams.Log
+	log := handler.xparams.Log()
 
 	tests := []struct {
 		name     string
@@ -475,8 +472,8 @@ func TestAuthHandler_generateSessionToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config for this test
-			handler.xparams.Cfg.Auth.SessionTTL = tt.sessionTTL
-			handler.xparams.Cfg.Auth.TokenPrivateKey = tt.tokenKey
+			handler.xparams.Cfg().Auth.SessionTTL = tt.sessionTTL
+			handler.xparams.Cfg().Auth.TokenPrivateKey = tt.tokenKey
 
 			token, err := handler.generateSessionToken(tt.userID)
 
@@ -525,7 +522,7 @@ func TestAuthHandler_getTokenPrivateKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler.xparams.Cfg.Auth.TokenPrivateKey = tt.configuredKey
+			handler.xparams.Cfg().Auth.TokenPrivateKey = tt.configuredKey
 
 			privateKey, err := handler.getTokenPrivateKey()
 

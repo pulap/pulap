@@ -104,7 +104,7 @@ func (m *mockUserRepo) ListByStatus(ctx context.Context, status string) ([]*User
 func setupUserHandler() (*UserHandler, *mockUserRepo) {
 	repo := newMockUserRepo()
 	log := core.NewNoopLogger()
-	xparams := config.XParams{Log: log}
+	xparams := config.NewXParams(log, &config.Config{})
 	handler := NewUserHandler(repo, xparams)
 	return handler, repo
 }
