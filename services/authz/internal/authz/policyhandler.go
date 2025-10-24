@@ -178,9 +178,21 @@ func (h *PolicyHandler) GetUserPermissions(w http.ResponseWriter, r *http.Reques
 // Helper methods
 
 func (h *PolicyHandler) logForRequest(r *http.Request) core.Logger {
-	return h.xparams.Log.With(
+	return h.Log().With(
 		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,
 	)
+}
+
+func (h *PolicyHandler) Log() core.Logger {
+	return h.xparams.Log()
+}
+
+func (h *PolicyHandler) Cfg() *config.Config {
+	return h.xparams.Cfg()
+}
+
+func (h *PolicyHandler) Trace() core.Tracer {
+	return h.xparams.Tracer()
 }

@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
+	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/authn/internal/authn"
 	"github.com/pulap/pulap/services/authn/internal/config"
 )
@@ -32,7 +33,7 @@ func NewUserMongoRepo(xparams config.XParams) *UserMongoRepo {
 
 // Start connects to MongoDB and initializes the collection.
 func (r *UserMongoRepo) Start(ctx context.Context) error {
-	appCfg := r.xparams.Cfg
+	appCfg := r.xparams.Cfg()
 
 	// Set default MongoDB configuration if not provided
 	connString := appCfg.Database.MongoURL
@@ -341,4 +342,16 @@ func (r *UserMongoRepo) ListByStatus(ctx context.Context, status string) ([]*aut
 	}
 
 	return users, nil
+}
+
+func (r *UserMongoRepo) Log() core.Logger {
+	return r.xparams.Log()
+}
+
+func (r *UserMongoRepo) Cfg() *config.Config {
+	return r.xparams.Cfg()
+}
+
+func (r *UserMongoRepo) Trace() core.Tracer {
+	return r.xparams.Tracer()
 }

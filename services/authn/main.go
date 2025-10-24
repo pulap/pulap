@@ -33,10 +33,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	xparams := config.XParams{
-		Log: logger,
-		Cfg: cfg,
-	}
+	xparams := config.NewXParams(logger, cfg)
 
 	router := chi.NewRouter()
 	corsOpts := coremw.DefaultCORSOptions()

@@ -36,10 +36,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	xparams := config.XParams{
-		Log: logger,
-		Cfg: cfg,
-	}
+	xparams := config.NewXParams(logger, cfg)
 
 	router := chi.NewRouter()
 	coremw.ApplyStack(router, logger, coremw.StackOptions{Timeout: 60 * time.Second})

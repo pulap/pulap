@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/admin/internal/config"
 )
 
@@ -125,4 +126,16 @@ func (s *defaultService) ListGrants(ctx context.Context) ([]*Grant, error) {
 
 func (s *defaultService) DeleteGrant(ctx context.Context, id uuid.UUID) error {
 	return s.repos.GrantRepo.Delete(ctx, id)
+}
+
+func (s *defaultService) Log() core.Logger {
+	return s.xparams.Log()
+}
+
+func (s *defaultService) Cfg() *config.Config {
+	return s.xparams.Cfg()
+}
+
+func (s *defaultService) Trace() core.Tracer {
+	return s.xparams.Tracer()
 }
