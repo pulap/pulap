@@ -15,6 +15,7 @@ type StackOptions struct {
 	Timeout time.Duration
 	CORS    *CORSOptions
 	Metrics Metrics
+	Errors  ErrorReporter
 }
 
 // ApplyStack wires the shared middleware set onto the provided router. It keeps
@@ -30,11 +31,15 @@ func ApplyStack(r *chi.Mux, logger Logger, opts StackOptions) {
 	if opts.Metrics == nil {
 		opts.Metrics = NewNoopMetrics()
 	}
+	if opts.Errors == nil {
+		opts.Errors = NewNoopErrorReporter()
+	}
 
 	r.Use(RequestIDMiddleware)
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Compress(5))
 	r.Use(chimiddleware.Recoverer)
+	r.Use(NewErrorReportingMiddleware(opts.Errors))
 	r.Use(chimiddleware.Timeout(opts.Timeout))
 	r.Use(NewRequestLogger(logger))
 	r.Use(NewMetricsMiddleware(opts.Metrics))
