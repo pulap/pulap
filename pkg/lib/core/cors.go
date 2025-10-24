@@ -1,18 +1,13 @@
-package middleware
+package core
 
 import (
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pulap/pulap/pkg/lib/core"
 )
 
-// CORSOptions describes the configuration for the lightweight CORS middleware
-// bundled with the core package. It intentionally mirrors the most common
-// options from github.com/go-chi/cors so we can swap implementations later if
-// needed.
+// CORSOptions describes the configuration for the lightweight CORS middleware.
 type CORSOptions struct {
 	AllowedOrigins   []string
 	AllowedMethods   []string
@@ -28,8 +23,8 @@ func DefaultCORSOptions() CORSOptions {
 	return CORSOptions{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-Requested-With", "User-Agent", core.RequestIDHeader},
-		ExposedHeaders: []string{"Content-Length", core.RequestIDHeader},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-Requested-With", "User-Agent", RequestIDHeader},
+		ExposedHeaders: []string{"Content-Length", RequestIDHeader},
 		MaxAge:         10 * time.Minute,
 	}
 }

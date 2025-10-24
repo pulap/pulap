@@ -1,4 +1,4 @@
-package middleware
+package core
 
 import (
 	"fmt"
@@ -6,26 +6,24 @@ import (
 	"time"
 
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-
-	"github.com/pulap/pulap/pkg/lib/core"
 )
 
 // NewRequestLogger returns a chi RequestLogger middleware that emits structured
 // logs using the provided application logger.
-func NewRequestLogger(logger core.Logger) func(http.Handler) http.Handler {
+func NewRequestLogger(logger Logger) func(http.Handler) http.Handler {
 	if logger == nil {
-		logger = core.NewNoopLogger()
+		logger = NewNoopLogger()
 	}
 
 	return chimiddleware.RequestLogger(&structuredLogFormatter{logger: logger})
 }
 
 type structuredLogFormatter struct {
-	logger core.Logger
+	logger Logger
 }
 
 func (f *structuredLogFormatter) NewLogEntry(r *http.Request) chimiddleware.LogEntry {
-	reqID := core.RequestIDFrom(r.Context())
+	reqID := RequestIDFrom(r.Context())
 	entryLogger := f.logger.With(
 		"request_id", reqID,
 		"method", r.Method,
@@ -47,7 +45,7 @@ func (f *structuredLogFormatter) NewLogEntry(r *http.Request) chimiddleware.LogE
 }
 
 type structuredLogEntry struct {
-	logger core.Logger
+	logger Logger
 	req    *http.Request
 	start  time.Time
 }
