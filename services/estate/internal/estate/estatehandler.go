@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
@@ -702,7 +701,7 @@ func (h *EstateHandler) Log() core.Logger {
 
 func (h *EstateHandler) logForRequest(r *http.Request) core.Logger {
 	return h.xparams.Log.With(
-		"request_id", middleware.GetReqID(r.Context()),
+		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,
 	)

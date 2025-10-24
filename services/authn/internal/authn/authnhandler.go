@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
@@ -212,7 +211,7 @@ func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) logForRequest(r *http.Request) core.Logger {
 	return h.xparams.Log.With(
-		"request_id", middleware.GetReqID(r.Context()),
+		"request_id", core.RequestIDFrom(r.Context()),
 		"method", r.Method,
 		"path", r.URL.Path,
 	)
