@@ -11,24 +11,27 @@ type StackParams interface {
 }
 
 // NewRouter returns a chi router preconfigured with the standard middleware
-// stack. Optional StackOptions can be provided to tweak defaults (timeout,
-// CORS, …).
-func NewRouter(params StackParams, opts ...StackOptions) *chi.Mux {
+// stack using default StackOptions.
+func NewRouter(xparams StackParams) *chi.Mux {
+	return NewRouterWithOptions(StackOptions{}, xparams)
+}
+
+// NewRouterWithOptions behaves like NewRouter but allows customising the stack.
+func NewRouterWithOptions(opts StackOptions, xparams StackParams) *chi.Mux {
 	r := chi.NewRouter()
-
-	var stack StackOptions
-	if len(opts) > 0 {
-		stack = opts[0]
-	}
-
-	ApplyStack(r, params.Log(), stack)
+	ApplyStack(r, xparams.Log(), opts)
 	return r
 }
 
 // NewWebRouter builds upon NewRouter with extra helpers suited for browser
-// frontends (no-cache headers + fallback redirect for unknown routes).
-func NewWebRouter(params StackParams, fallback string, opts ...StackOptions) *chi.Mux {
-	r := NewRouter(params, opts...)
+// frontends (NoCache + fallback redirect for unknown routes).
+func NewWebRouter(fallback string, xparams StackParams) *chi.Mux {
+	return NewWebRouterWithOptions(fallback, StackOptions{}, xparams)
+}
+
+// NewWebRouterWithOptions mirrors NewRouterWithOptions for web frontends.
+func NewWebRouterWithOptions(fallback string, opts StackOptions, xparams StackParams) *chi.Mux {
+	r := NewRouterWithOptions(opts, xparams)
 
 	r.Use(chimiddleware.NoCache)
 	RedirectNotFound(r, fallback)

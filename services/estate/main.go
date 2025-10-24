@@ -34,10 +34,10 @@ func main() {
 
 	corsOpts := core.DefaultCORSOptions()
 	corsOpts.AllowCredentials = true
-	router := core.NewRouter(xparams, core.StackOptions{
+	router := core.NewRouterWithOptions(core.StackOptions{
 		Timeout: 60 * time.Second,
 		CORS:    &corsOpts,
-	})
+	}, xparams)
 
 	var deps []any
 	EstateRepo := sqlite.NewEstateSQLiteRepo(xparams)
