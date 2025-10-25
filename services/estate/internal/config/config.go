@@ -19,6 +19,7 @@ type Config struct {
 	Log      LogConfig      `koanf:"log"`
 	Server   ServerConfig   `koanf:"server"`
 	Database DatabaseConfig `koanf:"database"`
+	Debug    DebugConfig    `koanf:"debug"`
 }
 
 type ServerConfig struct {
@@ -33,6 +34,10 @@ type LogConfig struct {
 	Level string `koanf:"level"`
 }
 
+type DebugConfig struct {
+	Routes bool `koanf:"routes"`
+}
+
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -43,6 +48,9 @@ func New() *Config {
 		},
 		Log: LogConfig{
 			Level: "info",
+		},
+		Debug: DebugConfig{
+			Routes: true,
 		},
 	}
 }
@@ -60,6 +68,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("server.port", ":8084", "Server estateen address")
 	fs.String("database.path", "./app.db", "Path to the SQLite database file")
 	fs.String("log.level", "info", "Log level (debug, info, error)")
+	fs.Bool("debug.routes", true, "Expose /debug/routes endpoint")
 	fs.Parse(args[1:])
 
 	raw, err := os.ReadFile(path)

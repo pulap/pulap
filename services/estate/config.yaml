@@ -10,3 +10,9 @@ database:
   # Path to the SQLite database file.
   # Env: ESTATE_DATABASE_PATH
   path: "./app.db"
+
+log:
+  level: "info"
+
+debug:
+  routes: true
