@@ -20,6 +20,7 @@ type Config struct {
 	Server   ServerConfig   `koanf:"server"`
 	Services ServicesConfig `koanf:"services"`
 	Auth     AuthConfig     `koanf:"auth"`
+	Debug    DebugConfig    `koanf:"debug"`
 }
 
 type ServerConfig struct {
@@ -41,6 +42,10 @@ type LogConfig struct {
 	Level string `koanf:"level"`
 }
 
+type DebugConfig struct {
+	Routes bool `koanf:"routes"`
+}
+
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -57,6 +62,9 @@ func New() *Config {
 		},
 		Log: LogConfig{
 			Level: "info",
+		},
+		Debug: DebugConfig{
+			Routes: true,
 		},
 	}
 }
@@ -78,6 +86,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("auth.cache_ttl", "5m", "Auth cache TTL")
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
 	fs.String("log.level", "info", "log level (debug, info, error)")
+	fs.Bool("debug.routes", true, "Expose /debug/routes endpoint")
 	fs.Parse(args[1:])
 
 	raw, err := os.ReadFile(path)
@@ -128,6 +137,17 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	if val := os.Getenv("ADMIN_LOG_LEVEL"); val != "" {
 		cfg.Log.Level = val
 	}
+	if val := os.Getenv("ADMIN_DEBUG_ROUTES"); val != "" {
+		cfg.Debug.Routes = parseBoolEnv(val)
+	}
 
 	return cfg, nil
+}
+
+func parseBoolEnv(val string) bool {
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
 }

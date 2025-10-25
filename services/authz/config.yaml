@@ -21,3 +21,9 @@ database:
 
 auth:
   authn_url: "http://localhost:8082"
+
+log:
+  level: "info"
+
+debug:
+  routes: true

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/posflag"
@@ -19,6 +20,7 @@ type Config struct {
 	Server   ServerConfig   `koanf:"server"`
 	Database DatabaseConfig `koanf:"database"`
 	Auth     AuthConfig     `koanf:"auth"`
+	Debug    DebugConfig    `koanf:"debug"`
 }
 
 type ServerConfig struct {
@@ -44,6 +46,10 @@ type AuthConfig struct {
 	AuthNURL        string `koanf:"authn_url"`
 }
 
+type DebugConfig struct {
+	Routes bool `koanf:"routes"`
+}
+
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -64,6 +70,9 @@ func New() *Config {
 			TokenPrivateKey: "",
 			TokenPublicKey:  "",
 		},
+		Debug: DebugConfig{
+			Routes: true,
+		},
 	}
 }
 
@@ -82,6 +91,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("auth.session_ttl", "24h", "Session TTL duration")
 	fs.String("auth.token_private_key", "", "Ed25519 private key for tokens (base64)")
 	fs.String("auth.token_public_key", "", "Ed25519 public key for tokens (base64)")
+	fs.Bool("debug.routes", true, "Expose /debug/routes endpoint")
 	fs.Parse(args[1:])
 
 	// Load YAML configuration first
@@ -132,6 +142,9 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	if val := os.Getenv("AUTHZ_AUTHN_URL"); val != "" {
 		cfg.Auth.AuthNURL = val
 	}
+	if val := os.Getenv("AUTHZ_DEBUG_ROUTES"); val != "" {
+		cfg.Debug.Routes = parseBoolEnv(val)
+	}
 
 	return cfg, nil
 }
@@ -155,4 +168,12 @@ func expandEnvWithDefaults(s string) string {
 		}
 		return defaultVal
 	})
+}
+
+func parseBoolEnv(val string) bool {
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
 }

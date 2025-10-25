@@ -35,8 +35,9 @@ func main() {
 	corsOpts := core.DefaultCORSOptions()
 	corsOpts.AllowCredentials = true
 	router := core.NewRouterWithOptions(core.StackOptions{
-		Timeout: 60 * time.Second,
-		CORS:    &corsOpts,
+		Timeout:     60 * time.Second,
+		CORS:        &corsOpts,
+		DebugRoutes: cfg.Debug.Routes,
 	}, xparams)
 
 	var deps []any
