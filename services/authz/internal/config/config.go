@@ -76,7 +76,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs := pflag.NewFlagSet(args[0], pflag.ExitOnError)
 	fs.String("server.port", ":8082", "Server listen address")
 	fs.String("database.path", "./auth.db", "Path to the SQLite database file")
-	fs.String("log.level", "info", "Log level (debug, info, error)")
+	fs.String("log.level", "info", "log level (debug, info, error)")
 	fs.String("auth.encryption_key", "change-me-32-byte-key-for-aes-gcm", "AES-GCM encryption key")
 	fs.String("auth.signing_key", "change-me-signing-key-for-hmac", "HMAC signing key")
 	fs.String("auth.session_ttl", "24h", "Session TTL duration")

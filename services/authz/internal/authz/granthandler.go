@@ -54,7 +54,7 @@ type GrantRequest struct {
 
 // ListGrants handles GET /authz/grants
 func (h *GrantHandler) ListGrants(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	// Parse query parameters
@@ -92,7 +92,7 @@ func (h *GrantHandler) ListGrants(w http.ResponseWriter, r *http.Request) {
 
 // CreateGrant handles POST /authz/grants
 func (h *GrantHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	var req GrantRequest
@@ -166,7 +166,7 @@ func (h *GrantHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 
 // GetGrant handles GET /authz/grants/{id}
 func (h *GrantHandler) GetGrant(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	idStr := chi.URLParam(r, "id")
@@ -195,7 +195,7 @@ func (h *GrantHandler) GetGrant(w http.ResponseWriter, r *http.Request) {
 
 // RevokeGrant handles DELETE /authz/grants/{id}
 func (h *GrantHandler) RevokeGrant(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	idStr := chi.URLParam(r, "id")
@@ -216,7 +216,7 @@ func (h *GrantHandler) RevokeGrant(w http.ResponseWriter, r *http.Request) {
 
 // ListUserGrants handles GET /authz/grants/users/{user_id}
 func (h *GrantHandler) ListUserGrants(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	userIDStr := chi.URLParam(r, "user_id")
@@ -250,7 +250,7 @@ func (h *GrantHandler) ListUserGrants(w http.ResponseWriter, r *http.Request) {
 
 // ListExpiredGrants handles GET /authz/grants/expired
 func (h *GrantHandler) ListExpiredGrants(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	grants, err := h.grantRepo.ListExpired(ctx)
@@ -276,22 +276,19 @@ func (h *GrantHandler) ListExpiredGrants(w http.ResponseWriter, r *http.Request)
 
 // Helper methods
 
-func (h *GrantHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
+func (h *GrantHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *GrantHandler) Log() core.Logger {
-	return h.xparams.Log()
-}
+func (h *GrantHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *GrantHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
-
-func (h *GrantHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
+func (h *GrantHandler) trace() core.Tracer { return h.xparams.Tracer() }

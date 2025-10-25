@@ -77,7 +77,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("services.estate_url", "http://localhost:8084", "Estate service URL")
 	fs.String("auth.cache_ttl", "5m", "Auth cache TTL")
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
-	fs.String("log.level", "info", "Log level (debug, info, error)")
+	fs.String("log.level", "info", "log level (debug, info, error)")
 	fs.Parse(args[1:])
 
 	raw, err := os.ReadFile(path)

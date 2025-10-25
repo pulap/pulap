@@ -41,17 +41,7 @@ func main() {
 
 	var deps []any
 
-	// WIP: Temporary repository selector.
-	// A single implementation will remain later.
-	var userRepo authn.UserRepo
-	if cfg.Database.MongoURL != "" {
-		userRepo = mongo.NewUserMongoRepo(xparams)
-		logger.Infof("Using MongoDB repository: %s", cfg.Database.MongoURL)
-	} else {
-		// TODO: Add SQLite repo when needed
-		userRepo = mongo.NewUserMongoRepo(xparams)
-		logger.Infof("SQLite not implemented yet, falling back to MongoDB")
-	}
+	userRepo := mongo.NewUserMongoRepo(xparams)
 	deps = append(deps, userRepo)
 
 	UserHandler := authn.NewUserHandler(userRepo, xparams)
@@ -60,7 +50,6 @@ func main() {
 	AuthHandler := authn.NewAuthHandler(userRepo, xparams)
 	deps = append(deps, AuthHandler)
 
-	// Register system handler so bootstrap endpoints are exposed
 	systemHandler := authn.NewSystemHandler(userRepo, xparams)
 	deps = append(deps, systemHandler)
 

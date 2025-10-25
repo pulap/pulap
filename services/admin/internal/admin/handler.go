@@ -43,7 +43,7 @@ func NewHandler(
 
 // RegisterRoutes registers all admin routes using Commands/Queries pattern
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	h.Log().Info("Registering admin routes...")
+	h.log().Info("Registering admin routes...")
 
 	r.Get("/signin", h.ShowSignIn)
 	r.Post("/signin", h.HandleSignIn)
@@ -54,7 +54,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Use(SessionMiddleware(h.sessionValidator))
 
-		h.Log().Info("Registering user management routes...")
+		h.log().Info("Registering user management routes...")
 		r.Get("/", h.Home)
 
 		r.Get("/list-users", h.ListUsers)
@@ -65,7 +65,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/update-user/{id}", h.UpdateUser)
 		r.Post("/delete-user/{id}", h.DeleteUser)
 
-		h.Log().Info("Registering role management routes...")
+		h.log().Info("Registering role management routes...")
 		r.Get("/list-roles", h.ListRoles)
 		r.Get("/new-role", h.NewRole)
 		r.Post("/create-role", h.CreateRole)
@@ -74,13 +74,13 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/update-role/{id}", h.UpdateRole)
 		r.Post("/delete-role/{id}", h.DeleteRole)
 
-		h.Log().Info("Registering grant management routes...")
+		h.log().Info("Registering grant management routes...")
 		r.Get("/user-grants/{userId}", h.UserGrants)
 		r.Post("/create-grant", h.CreateGrant)
 		r.Post("/delete-grant/{id}", h.DeleteGrant)
 	})
 
-	h.Log().Info("Admin routes registered successfully")
+	h.log().Info("Admin routes registered successfully")
 }
 
 func (h *Handler) ShowSignIn(w http.ResponseWriter, r *http.Request) {
@@ -97,13 +97,13 @@ func (h *Handler) ShowSignIn(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	if h.authnClient == nil {
-		h.Log().Error("authn client not configured")
+		h.log(r).Error("authn client not configured")
 		http.Error(w, "Authentication service unavailable", http.StatusInternalServerError)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		h.Log().Error("error parsing signin form", "error", err)
+		h.log(r).Error("error parsing signin form", "error", err)
 		h.renderSignInWithError(w, r, "Could not parse credentials")
 		return
 	}
@@ -129,14 +129,14 @@ func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp == nil {
-		h.Log().Error("authn signin returned empty response")
+		h.log(r).Error("authn signin returned empty response")
 		h.renderSignInWithError(w, r, "Authentication service error")
 		return
 	}
 
 	userData, userID, err := extractUserID(resp.Data)
 	if err != nil {
-		h.Log().Error("cannot extract user from signin response", "error", err, "user_data", userData)
+		h.log(r).Error("cannot extract user from signin response", "error", err, "user_data", userData)
 		http.Error(w, "Authentication service error", http.StatusInternalServerError)
 		return
 	}
@@ -149,7 +149,7 @@ func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	h.Log().Info("user signed in", "user_id", userID, "email", email)
+	h.log(r).Info("user signed in", "user_id", userID, "email", email)
 
 	target := sanitizeRedirect(nextURL)
 	http.Redirect(w, r, target, http.StatusFound)
@@ -157,7 +157,7 @@ func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HandleSignOut(w http.ResponseWriter, r *http.Request) {
 	clearSessionCookie(w)
-	h.Log().Debug("user signed out")
+	h.log(r).Debug("user signed out")
 	http.Redirect(w, r, "/signin", http.StatusFound)
 }
 
@@ -178,13 +178,13 @@ func (h *Handler) HandleSignUp(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) renderTemplate(w http.ResponseWriter, templateName, layout string, data map[string]interface{}) {
 	tmpl, err := h.tmplMgr.Get(templateName)
 	if err != nil {
-		h.Log().Error("error loading template", "error", err, "template", templateName)
+		h.log().Error("error loading template", "error", err, "template", templateName)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	if err := tmpl.ExecuteTemplate(w, layout, data); err != nil {
-		h.Log().Error("error rendering template", "error", err, "layout", layout)
+		h.log().Error("error rendering template", "error", err, "layout", layout)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -205,7 +205,7 @@ func (h *Handler) renderSignInWithError(w http.ResponseWriter, r *http.Request, 
 
 func (h *Handler) handleSignInError(w http.ResponseWriter, r *http.Request, err error) {
 	if httpErr, ok := err.(*core.HTTPError); ok {
-		h.Log().Debug("authn signin failed", "status", httpErr.StatusCode, "message", httpErr.Message)
+		h.log(r).Debug("authn signin failed", "status", httpErr.StatusCode, "message", httpErr.Message)
 
 		switch httpErr.StatusCode {
 		case http.StatusUnauthorized, http.StatusForbidden:
@@ -220,7 +220,7 @@ func (h *Handler) handleSignInError(w http.ResponseWriter, r *http.Request, err 
 		}
 	}
 
-	h.Log().Error("authn signin request failed", "error", err)
+	h.log(r).Error("authn signin request failed", "error", err)
 	h.renderSignInWithError(w, r, "Authentication service error")
 }
 
@@ -274,7 +274,7 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := h.tmplMgr.Get("home.html")
 	if err != nil {
-		h.Log().Error("error getting home template", "error", err)
+		h.log(r).Error("error getting home template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -285,7 +285,7 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
-		h.Log().Error("error executing home template", "error", err)
+		h.log(r).Error("error executing home template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -298,14 +298,14 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := h.tmplMgr.Get("users.html")
 	if err != nil {
-		h.Log().Error("error getting users template", "error", err)
+		h.log(r).Error("error getting users template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	users, err := h.service.ListUsers(r.Context())
 	if err != nil {
-		h.Log().Error("error fetching users", "error", err)
+		h.log(r).Error("error fetching users", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -318,7 +318,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing users template", "error", err)
+		h.log(r).Error("error executing users template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -331,7 +331,7 @@ func (h *Handler) NewUser(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := h.tmplMgr.Get("new-user.html")
 	if err != nil {
-		h.Log().Error("error getting new-user template", "error", err)
+		h.log(r).Error("error getting new-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -343,7 +343,7 @@ func (h *Handler) NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing base template", "error", err)
+		h.log(r).Error("error executing base template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -355,7 +355,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseForm(); err != nil {
-		h.Log().Error("error parsing form", "error", err)
+		h.log(r).Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -373,12 +373,12 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.CreateUser(r.Context(), req)
 	if err != nil {
-		h.Log().Error("error creating user", "error", err)
+		h.log(r).Error("error creating user", "error", err)
 		http.Error(w, "Cannot create user: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.Log().Info("User created successfully", "id", user.ID, "email", user.Email)
+	h.log(r).Info("User created successfully", "id", user.ID, "email", user.Email)
 
 	w.Header().Set("HX-Redirect", "/list-users")
 	w.WriteHeader(http.StatusOK)
@@ -403,14 +403,14 @@ func (h *Handler) ShowUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.GetUser(r.Context(), id)
 	if err != nil {
-		h.Log().Error("error fetching user", "error", err, "id", id)
+		h.log(r).Error("error fetching user", "error", err, "id", id)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("show-user.html")
 	if err != nil {
-		h.Log().Error("error getting show-user template", "error", err)
+		h.log(r).Error("error getting show-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -423,7 +423,7 @@ func (h *Handler) ShowUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing template", "error", err)
+		h.log(r).Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -447,14 +447,14 @@ func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.GetUser(r.Context(), id)
 	if err != nil {
-		h.Log().Error("error fetching user", "error", err, "id", id)
+		h.log(r).Error("error fetching user", "error", err, "id", id)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("edit-user.html")
 	if err != nil {
-		h.Log().Error("error getting edit-user template", "error", err)
+		h.log(r).Error("error getting edit-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -467,7 +467,7 @@ func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing template", "error", err)
+		h.log(r).Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -498,12 +498,12 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.UpdateUser(r.Context(), id, req)
 	if err != nil {
-		h.Log().Error("error updating user", "error", err)
+		h.log(r).Error("error updating user", "error", err)
 		http.Error(w, "Cannot update user: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.Log().Info("User updated successfully", "id", user.ID)
+	h.log(r).Info("User updated successfully", "id", user.ID)
 	w.Header().Set("HX-Redirect", "/list-users")
 	w.WriteHeader(http.StatusOK)
 }
@@ -521,13 +521,13 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		h.Log().Error("invalid user ID", "error", err, "id", idStr)
+		h.log(r).Error("invalid user ID", "error", err, "id", idStr)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.DeleteUser(r.Context(), id); err != nil {
-		h.Log().Error("error deleting user", "error", err, "id", id)
+		h.log(r).Error("error deleting user", "error", err, "id", id)
 		http.Error(w, "Cannot delete user", http.StatusInternalServerError)
 		return
 	}
@@ -543,14 +543,14 @@ func (h *Handler) ListRoles(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := h.tmplMgr.Get("roles.html")
 	if err != nil {
-		h.Log().Error("error getting roles template", "error", err)
+		h.log(r).Error("error getting roles template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	roles, err := h.service.ListRoles(r.Context())
 	if err != nil {
-		h.Log().Error("error fetching roles", "error", err)
+		h.log(r).Error("error fetching roles", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -563,7 +563,7 @@ func (h *Handler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing roles template", "error", err)
+		h.log(r).Error("error executing roles template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -576,7 +576,7 @@ func (h *Handler) NewRole(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := h.tmplMgr.Get("new-role.html")
 	if err != nil {
-		h.Log().Error("error getting new-role template", "error", err)
+		h.log(r).Error("error getting new-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -589,7 +589,7 @@ func (h *Handler) NewRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing base template", "error", err)
+		h.log(r).Error("error executing base template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -601,7 +601,7 @@ func (h *Handler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseForm(); err != nil {
-		h.Log().Error("error parsing form", "error", err)
+		h.log(r).Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -619,12 +619,12 @@ func (h *Handler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.service.CreateRole(r.Context(), req)
 	if err != nil {
-		h.Log().Error("error creating role", "error", err)
+		h.log(r).Error("error creating role", "error", err)
 		http.Error(w, "Cannot create role: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.Log().Info("Role created successfully", "id", role.ID, "name", role.Name)
+	h.log(r).Info("Role created successfully", "id", role.ID, "name", role.Name)
 
 	w.Header().Set("HX-Redirect", "/list-roles")
 	w.WriteHeader(http.StatusOK)
@@ -649,14 +649,14 @@ func (h *Handler) ShowRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.service.GetRole(r.Context(), id)
 	if err != nil {
-		h.Log().Error("error fetching role", "error", err, "id", id)
+		h.log(r).Error("error fetching role", "error", err, "id", id)
 		http.Error(w, "Role not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("show-role.html")
 	if err != nil {
-		h.Log().Error("error getting show-role template", "error", err)
+		h.log(r).Error("error getting show-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -669,7 +669,7 @@ func (h *Handler) ShowRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing template", "error", err)
+		h.log(r).Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -693,14 +693,14 @@ func (h *Handler) EditRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.service.GetRole(r.Context(), id)
 	if err != nil {
-		h.Log().Error("error fetching role", "error", err, "id", id)
+		h.log(r).Error("error fetching role", "error", err, "id", id)
 		http.Error(w, "Role not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("edit-role.html")
 	if err != nil {
-		h.Log().Error("error getting edit-role template", "error", err)
+		h.log(r).Error("error getting edit-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -714,7 +714,7 @@ func (h *Handler) EditRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing template", "error", err)
+		h.log(r).Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -746,12 +746,12 @@ func (h *Handler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.service.UpdateRole(r.Context(), id, req)
 	if err != nil {
-		h.Log().Error("error updating role", "error", err)
+		h.log(r).Error("error updating role", "error", err)
 		http.Error(w, "Cannot update role: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.Log().Info("Role updated successfully", "id", role.ID)
+	h.log(r).Info("Role updated successfully", "id", role.ID)
 	w.Header().Set("HX-Redirect", "/list-roles")
 	w.WriteHeader(http.StatusOK)
 }
@@ -769,13 +769,13 @@ func (h *Handler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		h.Log().Error("invalid role ID", "error", err, "id", idStr)
+		h.log(r).Error("invalid role ID", "error", err, "id", idStr)
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.DeleteRole(r.Context(), id); err != nil {
-		h.Log().Error("error deleting role", "error", err, "id", id)
+		h.log(r).Error("error deleting role", "error", err, "id", id)
 		http.Error(w, "Cannot delete role", http.StatusInternalServerError)
 		return
 	}
@@ -802,28 +802,28 @@ func (h *Handler) UserGrants(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.GetUser(r.Context(), userID)
 	if err != nil {
-		h.Log().Error("error fetching user", "error", err)
+		h.log(r).Error("error fetching user", "error", err)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	grants, err := h.service.ListGrants(r.Context())
 	if err != nil {
-		h.Log().Error("error fetching grants", "error", err)
+		h.log(r).Error("error fetching grants", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	roles, err := h.service.ListRoles(r.Context())
 	if err != nil {
-		h.Log().Error("error fetching roles", "error", err)
+		h.log(r).Error("error fetching roles", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("user-grants.html")
 	if err != nil {
-		h.Log().Error("error getting user-grants template", "error", err)
+		h.log(r).Error("error getting user-grants template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -839,14 +839,14 @@ func (h *Handler) UserGrants(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.Log().Error("error executing template", "error", err)
+		h.log(r).Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		h.Log().Error("error parsing form", "error", err)
+		h.log(r).Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -879,12 +879,12 @@ func (h *Handler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 
 	grant, err := h.service.CreateGrant(r.Context(), req)
 	if err != nil {
-		h.Log().Error("error creating grant", "error", err)
+		h.log(r).Error("error creating grant", "error", err)
 		http.Error(w, "Cannot create grant: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.Log().Info("Grant created successfully", "id", grant.ID, "user_id", grant.UserID)
+	h.log(r).Info("Grant created successfully", "id", grant.ID, "user_id", grant.UserID)
 
 	w.Header().Set("HX-Redirect", "/user-grants/"+userID.String())
 	w.WriteHeader(http.StatusOK)
@@ -903,13 +903,13 @@ func (h *Handler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(grantIDStr)
 	if err != nil {
-		h.Log().Error("invalid grant ID", "error", err, "id", grantIDStr)
+		h.log(r).Error("invalid grant ID", "error", err, "id", grantIDStr)
 		http.Error(w, "Invalid grant ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.DeleteGrant(r.Context(), id); err != nil {
-		h.Log().Error("error deleting grant", "error", err, "id", id)
+		h.log(r).Error("error deleting grant", "error", err, "id", id)
 		http.Error(w, "Cannot delete grant", http.StatusInternalServerError)
 		return
 	}
@@ -917,15 +917,24 @@ func (h *Handler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) Log() core.Logger {
-	return h.xparams.Log()
+func (h *Handler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *Handler) Cfg() *config.Config {
+func (h *Handler) cfg() *config.Config {
 	return h.xparams.Cfg()
 }
 
-func (h *Handler) Trace() core.Tracer {
+func (h *Handler) trace() core.Tracer {
 	return h.xparams.Tracer()
 }
 
