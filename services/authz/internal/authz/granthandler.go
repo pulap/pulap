@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authz/internal/config"
 )
 
@@ -17,6 +18,7 @@ type GrantHandler struct {
 	grantRepo GrantRepo
 	roleRepo  RoleRepo
 	xparams   config.XParams
+	tlm       *telemetry.HTTP
 }
 
 // NewGrantHandler creates a new GrantHandler
@@ -25,6 +27,10 @@ func NewGrantHandler(grantRepo GrantRepo, roleRepo RoleRepo, xparams config.XPar
 		grantRepo: grantRepo,
 		roleRepo:  roleRepo,
 		xparams:   xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
@@ -54,6 +60,9 @@ type GrantRequest struct {
 
 // ListGrants handles GET /authz/grants
 func (h *GrantHandler) ListGrants(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.ListGrants")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -92,6 +101,9 @@ func (h *GrantHandler) ListGrants(w http.ResponseWriter, r *http.Request) {
 
 // CreateGrant handles POST /authz/grants
 func (h *GrantHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.CreateGrant")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -166,6 +178,9 @@ func (h *GrantHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 
 // GetGrant handles GET /authz/grants/{id}
 func (h *GrantHandler) GetGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.GetGrant")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -195,6 +210,9 @@ func (h *GrantHandler) GetGrant(w http.ResponseWriter, r *http.Request) {
 
 // RevokeGrant handles DELETE /authz/grants/{id}
 func (h *GrantHandler) RevokeGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.RevokeGrant")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -216,6 +234,9 @@ func (h *GrantHandler) RevokeGrant(w http.ResponseWriter, r *http.Request) {
 
 // ListUserGrants handles GET /authz/grants/users/{user_id}
 func (h *GrantHandler) ListUserGrants(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.ListUserGrants")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -250,6 +271,9 @@ func (h *GrantHandler) ListUserGrants(w http.ResponseWriter, r *http.Request) {
 
 // ListExpiredGrants handles GET /authz/grants/expired
 func (h *GrantHandler) ListExpiredGrants(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "GrantHandler.ListExpiredGrants")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 

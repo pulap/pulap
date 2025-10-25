@@ -15,6 +15,7 @@ import (
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authn/internal/config"
 )
 
@@ -43,12 +44,17 @@ func NewAuthHandler(repo UserRepo, xparams config.XParams) *AuthHandler {
 	return &AuthHandler{
 		repo:    repo,
 		xparams: xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
 type AuthHandler struct {
 	repo    UserRepo
 	xparams config.XParams
+	tlm     *telemetry.HTTP
 }
 
 func (h *AuthHandler) RegisterRoutes(r chi.Router) {
@@ -60,6 +66,9 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AuthHandler.SignUp")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -139,6 +148,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AuthHandler.SignIn")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -199,6 +211,9 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AuthHandler.SignOut")
+	defer finish()
+
 	log := h.log(r)
 
 	// TODO: Invalidate session token
@@ -208,24 +223,6 @@ func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper methods
-
-func (h *AuthHandler) log(req ...*http.Request) core.Logger {
-	logger := h.xparams.Log()
-	if len(req) > 0 && req[0] != nil {
-		r := req[0]
-		return logger.With(
-			"request_id", core.RequestIDFrom(r.Context()),
-			"method", r.Method,
-			"path", r.URL.Path,
-		)
-	}
-	return logger
-}
-
-func (h *AuthHandler) cfg() *config.Config { return h.xparams.Cfg() }
-
-func (h *AuthHandler) trace() core.Tracer { return h.xparams.Tracer() }
-
 func (h *AuthHandler) decodeSignUpPayload(w http.ResponseWriter, r *http.Request, log core.Logger) (SignUpRequest, bool) {
 	var req SignUpRequest
 
@@ -323,3 +320,20 @@ func (h *AuthHandler) decodeSignInPayload(w http.ResponseWriter, r *http.Request
 
 	return req, true
 }
+
+func (h *AuthHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
+}
+
+func (h *AuthHandler) cfg() *config.Config { return h.xparams.Cfg() }
+
+func (h *AuthHandler) trace() core.Tracer { return h.xparams.Tracer() }

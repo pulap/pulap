@@ -4,6 +4,7 @@ use (
 	./pkg/lib/auth
 	./pkg/lib/core
 	./pkg/lib/fake
+	./pkg/lib/telemetry
 	./services/admin
 	./services/authn
 	./services/authz

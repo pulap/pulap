@@ -8,10 +8,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/pulap/pulap/pkg/lib/core"
-	"github.com/pulap/pulap/services/admin/internal/config"
-
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
+	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
+	"github.com/pulap/pulap/services/admin/internal/config"
 )
 
 type Handler struct {
@@ -20,6 +20,7 @@ type Handler struct {
 	authZClt    *core.AuthzHTTPClient
 	authnClient *core.ServiceClient
 	xparams     config.XParams
+	http        *telemetry.HTTP
 
 	sessionValidator func(string) (string, error)
 }
@@ -32,11 +33,15 @@ func NewHandler(
 	xparams config.XParams,
 ) *Handler {
 	return &Handler{
-		tmplMgr:          tmplMgr,
-		service:          service,
-		authZClt:         autZClt,
-		authnClient:      authnClient,
-		xparams:          xparams,
+		tmplMgr:     tmplMgr,
+		service:     service,
+		authZClt:    autZClt,
+		authnClient: authnClient,
+		xparams:     xparams,
+		http: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 		sessionValidator: defaultSessionValidator(),
 	}
 }
@@ -84,6 +89,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *Handler) ShowSignIn(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ShowSignIn")
+	defer finish()
 	data := map[string]interface{}{
 		"Title":    "Sign In",
 		"Next":     r.URL.Query().Get("next"),
@@ -96,6 +103,8 @@ func (h *Handler) ShowSignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HandleSignIn")
+	defer finish()
 	if h.authnClient == nil {
 		h.log(r).Error("authn client not configured")
 		http.Error(w, "Authentication service unavailable", http.StatusInternalServerError)
@@ -156,12 +165,16 @@ func (h *Handler) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleSignOut(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HandleSignOut")
+	defer finish()
 	clearSessionCookie(w)
 	h.log(r).Debug("user signed out")
 	http.Redirect(w, r, "/signin", http.StatusFound)
 }
 
 func (h *Handler) ShowSignUp(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ShowSignUp")
+	defer finish()
 	data := map[string]interface{}{
 		"Title":    "Sign Up",
 		"Template": "signup",
@@ -172,6 +185,8 @@ func (h *Handler) ShowSignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleSignUp(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HandleSignUp")
+	defer finish()
 	http.Error(w, "Sign up is not available in this environment", http.StatusNotImplemented)
 }
 
@@ -267,6 +282,8 @@ func sanitizeRedirect(target string) string {
 
 // Home renders the admin dashboard
 func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.Home")
+	defer finish()
 	if code, err := h.pfc(r, "dashboard:read", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -291,6 +308,8 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ListUsers")
+	defer finish()
 	if code, err := h.pfc(r, "user:list", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -324,6 +343,8 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NewUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.NewUser")
+	defer finish()
 	if code, err := h.pfc(r, "user:create", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -349,6 +370,8 @@ func (h *Handler) NewUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.CreateUser")
+	defer finish()
 	if code, err := h.pfc(r, "user:create", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -385,6 +408,8 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ShowUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ShowUser")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -429,6 +454,8 @@ func (h *Handler) ShowUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.EditUser")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -473,6 +500,8 @@ func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.UpdateUser")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if code, err := h.pfc(r, "user:update", idStr); err != nil {
 		http.Error(w, err.Error(), code)
@@ -509,6 +538,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.DeleteUser")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -536,6 +567,8 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListRoles(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ListRoles")
+	defer finish()
 	if code, err := h.pfc(r, "role:list", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -569,6 +602,8 @@ func (h *Handler) ListRoles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NewRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.NewRole")
+	defer finish()
 	if code, err := h.pfc(r, "role:create", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -595,6 +630,8 @@ func (h *Handler) NewRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.CreateRole")
+	defer finish()
 	if code, err := h.pfc(r, "role:create", "*"); err != nil {
 		http.Error(w, err.Error(), code)
 		return
@@ -631,6 +668,8 @@ func (h *Handler) CreateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ShowRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.ShowRole")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -675,6 +714,8 @@ func (h *Handler) ShowRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) EditRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.EditRole")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -720,6 +761,8 @@ func (h *Handler) EditRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.UpdateRole")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if code, err := h.pfc(r, "role:update", idStr); err != nil {
 		http.Error(w, err.Error(), code)
@@ -757,6 +800,8 @@ func (h *Handler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.DeleteRole")
+	defer finish()
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -784,6 +829,8 @@ func (h *Handler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UserGrants(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.UserGrants")
+	defer finish()
 	userIDStr := chi.URLParam(r, "userId")
 	if userIDStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -845,6 +892,8 @@ func (h *Handler) UserGrants(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.CreateGrant")
+	defer finish()
 	if err := r.ParseForm(); err != nil {
 		h.log(r).Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
@@ -891,6 +940,8 @@ func (h *Handler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.DeleteGrant")
+	defer finish()
 	grantIDStr := chi.URLParam(r, "id")
 	if grantIDStr == "" {
 		http.Error(w, "Missing grant ID", http.StatusBadRequest)

@@ -128,14 +128,14 @@ func (s *defaultService) DeleteGrant(ctx context.Context, id uuid.UUID) error {
 	return s.repos.GrantRepo.Delete(ctx, id)
 }
 
-func (s *defaultService) Log() core.Logger {
+func (s *defaultService) log() core.Logger {
 	return s.xparams.Log()
 }
 
-func (s *defaultService) Cfg() *config.Config {
+func (s *defaultService) cfg() *config.Config {
 	return s.xparams.Cfg()
 }
 
-func (s *defaultService) Trace() core.Tracer {
+func (s *defaultService) trace() core.Tracer {
 	return s.xparams.Tracer()
 }

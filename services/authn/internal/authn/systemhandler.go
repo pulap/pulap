@@ -12,6 +12,7 @@ import (
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authn/internal/config"
 )
 
@@ -19,6 +20,7 @@ import (
 type SystemHandler struct {
 	userRepo UserRepo
 	xparams  config.XParams
+	tlm      *telemetry.HTTP
 }
 
 // BootstrapStatusResponse represents the current bootstrap status
@@ -40,6 +42,10 @@ func NewSystemHandler(userRepo UserRepo, xparams config.XParams) *SystemHandler 
 	return &SystemHandler{
 		userRepo: userRepo,
 		xparams:  xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
@@ -55,6 +61,11 @@ func (h *SystemHandler) RegisterRoutes(r chi.Router) {
 
 // GetBootstrapStatus checks if the system needs bootstrap
 func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "SystemHandler.GetBootstrapStatus")
+	defer finish()
+
+	log := h.log(r)
+
 	signingKey := []byte(h.cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
 	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
@@ -62,7 +73,7 @@ func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Reques
 	superadmin, err := h.userRepo.GetByEmailLookup(r.Context(), lookupHash)
 	if err != nil || superadmin == nil {
 		if err != nil {
-			h.log(r).Error("failed to check superadmin user", "error", err)
+			log.Error("failed to check superadmin user", "error", err)
 		}
 		response := BootstrapStatusResponse{
 			NeedsBootstrap: true,
@@ -80,6 +91,11 @@ func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Reques
 
 // Bootstrap creates the superadmin user if it doesn't exist
 func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "SystemHandler.Bootstrap")
+	defer finish()
+
+	log := h.log(r)
+
 	encKey := []byte(h.cfg().Auth.EncryptionKey)
 	signingKey := []byte(h.cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
@@ -98,7 +114,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		h.log(r).Error("failed to check existing superadmin", "error", err)
+		log.Error("failed to check existing superadmin", "error", err)
 		core.RespondError(w, http.StatusInternalServerError, "Failed to check bootstrap state")
 		return
 	}
@@ -107,7 +123,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 
 	encryptedEmail, err := authpkg.EncryptEmail(normalizedEmail, encKey)
 	if err != nil {
-		h.log(r).Error("failed to encrypt email", "error", err)
+		log.Error("failed to encrypt email", "error", err)
 		http.Error(w, "Failed to encrypt email", http.StatusInternalServerError)
 		return
 	}
@@ -132,7 +148,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 
 	err = h.userRepo.Create(r.Context(), user)
 	if err != nil {
-		h.log(r).Error("failed to create superadmin user", "error", err)
+		log.Error("failed to create superadmin user", "error", err)
 		http.Error(w, "Failed to create superadmin", http.StatusInternalServerError)
 		return
 	}
@@ -151,10 +167,10 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, line := range bannerLines {
-		h.log(r).Info(line)
+		log.Info(line)
 	}
 
-	h.log(r).Info("superadmin bootstrap credentials",
+	log.Info("superadmin bootstrap credentials",
 		"email", SuperadminEmail,
 		"user_id", user.ID,
 	)
@@ -162,7 +178,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 	// TODO: Write to file (optional)
 	// writeBootstrapFile(user.ID.String(), SuperadminEmail, password)
 
-	h.log(r).Info("superadmin created successfully", "id", user.ID)
+	log.Info("superadmin created successfully", "id", user.ID)
 
 	response := BootstrapResponse{
 		SuperadminID: user.ID.String(),

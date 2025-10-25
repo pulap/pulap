@@ -48,7 +48,7 @@ func NewBootstrapService(roleRepo RoleRepo, grantRepo GrantRepo, xparams config.
 
 // Bootstrap orchestrates the complete bootstrap process
 func (s *BootstrapService) Bootstrap(ctx context.Context) error {
-	s.Log().Info("Starting bootstrap process...")
+	s.log().Info("Starting bootstrap process...")
 
 	status, err := s.getBootstrapStatus(ctx)
 	if err != nil {
@@ -58,7 +58,7 @@ func (s *BootstrapService) Bootstrap(ctx context.Context) error {
 	var superadminID string
 
 	if status.NeedsBootstrap {
-		s.Log().Info("System needs bootstrap, triggering AuthN bootstrap...")
+		s.log().Info("System needs bootstrap, triggering AuthN bootstrap...")
 
 		response, err := s.triggerBootstrap(ctx)
 		if err != nil {
@@ -66,12 +66,12 @@ func (s *BootstrapService) Bootstrap(ctx context.Context) error {
 		}
 
 		superadminID = response.SuperadminID
-		s.Log().Info("Bootstrap triggered successfully",
+		s.log().Info("Bootstrap triggered successfully",
 			"superadmin_id", response.SuperadminID,
 			"email", response.Email,
 			"password", response.Password) // log credentials for initial setup
 	} else {
-		s.Log().Info("System already bootstrapped", "superadmin_id", status.SuperadminID)
+		s.log().Info("System already bootstrapped", "superadmin_id", status.SuperadminID)
 		superadminID = status.SuperadminID
 	}
 
@@ -79,15 +79,15 @@ func (s *BootstrapService) Bootstrap(ctx context.Context) error {
 		return fmt.Errorf("failed to bootstrap roles and grants: %w", err)
 	}
 
-	s.Log().Info("Bootstrap process completed successfully")
+	s.log().Info("Bootstrap process completed successfully")
 	return nil
 }
 
 // getBootstrapStatus calls AuthN to check bootstrap status
 func (s *BootstrapService) getBootstrapStatus(ctx context.Context) (*BootstrapStatusResponse, error) {
-	authNURL := s.Cfg().Auth.AuthNURL
+	authNURL := s.cfg().Auth.AuthNURL
 	url := authNURL + "/system/bootstrap-status"
-	s.Log().Info("AuthN URL: " + url)
+	s.log().Info("AuthN URL: " + url)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *BootstrapService) getBootstrapStatus(ctx context.Context) (*BootstrapSt
 
 // triggerBootstrap calls AuthN to create superadmin
 func (s *BootstrapService) triggerBootstrap(ctx context.Context) (*BootstrapResponse, error) {
-	authNURL := s.Cfg().Auth.AuthNURL
+	authNURL := s.cfg().Auth.AuthNURL
 	url := authNURL + "/system/bootstrap"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
@@ -206,7 +206,7 @@ func (s *BootstrapService) seedRoles(ctx context.Context) error {
 		// Check if role exists (idempotent)
 		existing, err := s.roleRepo.GetByName(ctx, roleData.Name)
 		if err == nil && existing != nil {
-			s.Log().Info("Role already exists, skipping", "name", roleData.Name)
+			s.log().Info("Role already exists, skipping", "name", roleData.Name)
 			continue
 		}
 
@@ -225,7 +225,7 @@ func (s *BootstrapService) seedRoles(ctx context.Context) error {
 			return fmt.Errorf("failed to create role %s: %w", roleData.Name, err)
 		}
 
-		s.Log().Info("Role created successfully", "name", roleData.Name, "id", role.ID)
+		s.log().Info("Role created successfully", "name", roleData.Name, "id", role.ID)
 	}
 
 	return nil
@@ -248,11 +248,11 @@ func (s *BootstrapService) ensureSuperadminGrant(ctx context.Context, superadmin
 	// Check if grant already exists (idempotent)
 	grants, err := s.grantRepo.ListByUserID(ctx, userID)
 	if err != nil {
-		s.Log().Error("Failed to check existing grants, proceeding anyway", "error", err)
+		s.log().Error("Failed to check existing grants, proceeding anyway", "error", err)
 	} else {
 		for _, g := range grants {
 			if g.GrantType == GrantTypeRole && g.Value == role.ID.String() {
-				s.Log().Info("Superadmin grant already exists", "grant_id", g.ID)
+				s.log().Info("Superadmin grant already exists", "grant_id", g.ID)
 				return nil
 			}
 		}
@@ -277,7 +277,7 @@ func (s *BootstrapService) ensureSuperadminGrant(ctx context.Context, superadmin
 		return fmt.Errorf("failed to create superadmin grant: %w", err)
 	}
 
-	s.Log().Info("Superadmin grant created successfully",
+	s.log().Info("Superadmin grant created successfully",
 		"grant_id", grant.ID,
 		"user_id", userID,
 		"role_id", role.ID)
@@ -285,14 +285,14 @@ func (s *BootstrapService) ensureSuperadminGrant(ctx context.Context, superadmin
 	return nil
 }
 
-func (s *BootstrapService) Log() core.Logger {
+func (s *BootstrapService) log() core.Logger {
 	return s.xparams.Log()
 }
 
-func (s *BootstrapService) Cfg() *config.Config {
+func (s *BootstrapService) cfg() *config.Config {
 	return s.xparams.Cfg()
 }
 
-func (s *BootstrapService) Trace() core.Tracer {
+func (s *BootstrapService) trace() core.Tracer {
 	return s.xparams.Tracer()
 }
