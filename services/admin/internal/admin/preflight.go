@@ -37,7 +37,7 @@ func (h *Handler) pfc(r *http.Request, permission, resourceID string) (int, erro
 
 	allowed, err := h.authZClt.CheckPermission(r.Context(), actor.ID, perm, resourceID)
 	if err != nil {
-		h.Log().Error("authz check failed", "error", err, "perm", perm, "resource", resourceID)
+		h.log(r).Error("authz check failed", "error", err, "perm", perm, "resource", resourceID)
 		return http.StatusInternalServerError, errors.New(http.StatusText(http.StatusInternalServerError))
 	}
 	if !allowed {

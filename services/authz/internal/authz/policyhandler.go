@@ -58,7 +58,7 @@ type UserPermissionsResponse struct {
 // EvaluatePermission handles POST /authz/policy/evaluate
 // This is the core endpoint that other services will call to check permissions
 func (h *PolicyHandler) EvaluatePermission(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	var req PermissionRequest
@@ -125,7 +125,7 @@ func (h *PolicyHandler) EvaluatePermission(w http.ResponseWriter, r *http.Reques
 // GetUserPermissions handles GET /authz/policy/users/{user_id}/permissions
 // Returns all permissions for a user in a given scope
 func (h *PolicyHandler) GetUserPermissions(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	userIDStr := chi.URLParam(r, "user_id")
@@ -177,22 +177,19 @@ func (h *PolicyHandler) GetUserPermissions(w http.ResponseWriter, r *http.Reques
 
 // Helper methods
 
-func (h *PolicyHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
+func (h *PolicyHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *PolicyHandler) Log() core.Logger {
-	return h.xparams.Log()
-}
+func (h *PolicyHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *PolicyHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
-
-func (h *PolicyHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
+func (h *PolicyHandler) trace() core.Tracer { return h.xparams.Tracer() }

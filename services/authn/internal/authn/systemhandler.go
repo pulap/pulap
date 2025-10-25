@@ -45,24 +45,24 @@ func NewSystemHandler(userRepo UserRepo, xparams config.XParams) *SystemHandler 
 
 // RegisterRoutes registers system management routes
 func (h *SystemHandler) RegisterRoutes(r chi.Router) {
-	h.Log().Info("Registering system routes...")
+	h.log().Info("Registering system routes...")
 
 	r.Get("/system/bootstrap-status", h.GetBootstrapStatus)
 	r.Post("/system/bootstrap", h.Bootstrap)
 
-	h.Log().Info("System routes registered successfully")
+	h.log().Info("System routes registered successfully")
 }
 
 // GetBootstrapStatus checks if the system needs bootstrap
 func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Request) {
-	signingKey := []byte(h.Cfg().Auth.SigningKey)
+	signingKey := []byte(h.cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
 	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 
 	superadmin, err := h.userRepo.GetByEmailLookup(r.Context(), lookupHash)
 	if err != nil || superadmin == nil {
 		if err != nil {
-			h.Log().Error("failed to check superadmin user", "error", err)
+			h.log(r).Error("failed to check superadmin user", "error", err)
 		}
 		response := BootstrapStatusResponse{
 			NeedsBootstrap: true,
@@ -80,8 +80,8 @@ func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Reques
 
 // Bootstrap creates the superadmin user if it doesn't exist
 func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
-	encKey := []byte(h.Cfg().Auth.EncryptionKey)
-	signingKey := []byte(h.Cfg().Auth.SigningKey)
+	encKey := []byte(h.cfg().Auth.EncryptionKey)
+	signingKey := []byte(h.cfg().Auth.SigningKey)
 	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
 	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 
@@ -98,7 +98,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		h.Log().Error("failed to check existing superadmin", "error", err)
+		h.log(r).Error("failed to check existing superadmin", "error", err)
 		core.RespondError(w, http.StatusInternalServerError, "Failed to check bootstrap state")
 		return
 	}
@@ -107,7 +107,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 
 	encryptedEmail, err := authpkg.EncryptEmail(normalizedEmail, encKey)
 	if err != nil {
-		h.Log().Error("failed to encrypt email", "error", err)
+		h.log(r).Error("failed to encrypt email", "error", err)
 		http.Error(w, "Failed to encrypt email", http.StatusInternalServerError)
 		return
 	}
@@ -132,7 +132,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 
 	err = h.userRepo.Create(r.Context(), user)
 	if err != nil {
-		h.Log().Error("failed to create superadmin user", "error", err)
+		h.log(r).Error("failed to create superadmin user", "error", err)
 		http.Error(w, "Failed to create superadmin", http.StatusInternalServerError)
 		return
 	}
@@ -151,10 +151,10 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, line := range bannerLines {
-		h.Log().Info(line)
+		h.log(r).Info(line)
 	}
 
-	h.Log().Info("superadmin bootstrap credentials",
+	h.log(r).Info("superadmin bootstrap credentials",
 		"email", SuperadminEmail,
 		"user_id", user.ID,
 	)
@@ -162,7 +162,7 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 	// TODO: Write to file (optional)
 	// writeBootstrapFile(user.ID.String(), SuperadminEmail, password)
 
-	h.Log().Info("superadmin created successfully", "id", user.ID)
+	h.log(r).Info("superadmin created successfully", "id", user.ID)
 
 	response := BootstrapResponse{
 		SuperadminID: user.ID.String(),
@@ -187,14 +187,19 @@ func generateSecurePassword(length int) string {
 	return string(b)
 }
 
-func (h *SystemHandler) Log() core.Logger {
-	return h.xparams.Log()
+func (h *SystemHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *SystemHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
+func (h *SystemHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *SystemHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
+func (h *SystemHandler) trace() core.Tracer { return h.xparams.Tracer() }

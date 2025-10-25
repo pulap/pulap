@@ -39,7 +39,7 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	req, ok := h.decodeUserCreatePayload(w, r)
@@ -71,7 +71,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r)
@@ -98,7 +98,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	users, err := h.repo.List(ctx)
@@ -113,7 +113,7 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r)
@@ -149,7 +149,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r)
@@ -168,25 +168,22 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 // Helper methods following same patterns as ListHandler
 
-func (h *UserHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
+func (h *UserHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *UserHandler) Log() core.Logger {
-	return h.xparams.Log()
-}
+func (h *UserHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *UserHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
-
-func (h *UserHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
+func (h *UserHandler) trace() core.Tracer { return h.xparams.Tracer() }
 
 func (h *UserHandler) parseIDParam(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	idStr := chi.URLParam(r, "id")

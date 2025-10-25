@@ -69,7 +69,7 @@ func (s *BootstrapService) Bootstrap(ctx context.Context) error {
 		s.Log().Info("Bootstrap triggered successfully",
 			"superadmin_id", response.SuperadminID,
 			"email", response.Email,
-			"password", response.Password) // Log credentials for initial setup
+			"password", response.Password) // log credentials for initial setup
 	} else {
 		s.Log().Info("System already bootstrapped", "superadmin_id", status.SuperadminID)
 		superadminID = status.SuperadminID

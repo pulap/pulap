@@ -664,14 +664,14 @@ func TestUserHandlerDecodeUserPayload(t *testing.T) {
 	}
 }
 
-func TestUserHandlerLogForRequest(t *testing.T) {
+func TestUserHandler_log(t *testing.T) {
 	handler, _ := setupUserHandler()
 
 	req := httptest.NewRequest(http.MethodGet, "/users/123", nil)
-	log := handler.logForRequest(req)
+	log := handler.log(req)
 
 	if log == nil {
-		t.Error("logForRequest() returned nil logger")
+		t.Error("log() returned nil logger")
 	}
 }
 

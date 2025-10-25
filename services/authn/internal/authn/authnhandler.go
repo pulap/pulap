@@ -60,7 +60,7 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	req, ok := h.decodeSignUpPayload(w, r, log)
@@ -80,8 +80,8 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	normalizedEmail := authpkg.NormalizeEmail(req.Email)
 
 	// Use encryption keys from config
-	encryptionKey := []byte(h.Cfg().Auth.EncryptionKey)
-	signingKey := []byte(h.Cfg().Auth.SigningKey)
+	encryptionKey := []byte(h.cfg().Auth.EncryptionKey)
+	signingKey := []byte(h.cfg().Auth.SigningKey)
 
 	// Debug: Check key lengths
 	log.Info("encryption key configured", "length", len(encryptionKey))
@@ -139,7 +139,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	req, ok := h.decodeSignInPayload(w, r, log)
@@ -157,7 +157,7 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	// Normalize email and compute lookup hash
 	normalizedEmail := authpkg.NormalizeEmail(req.Email)
-	signingKey := []byte(h.Cfg().Auth.SigningKey)
+	signingKey := []byte(h.cfg().Auth.SigningKey)
 	emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 
 	// Find user by email lookup
@@ -199,7 +199,7 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 
 	// TODO: Invalidate session token
 
@@ -209,25 +209,22 @@ func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 
 // Helper methods
 
-func (h *AuthHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
+func (h *AuthHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *AuthHandler) Log() core.Logger {
-	return h.xparams.Log()
-}
+func (h *AuthHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *AuthHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
-
-func (h *AuthHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
+func (h *AuthHandler) trace() core.Tracer { return h.xparams.Tracer() }
 
 func (h *AuthHandler) decodeSignUpPayload(w http.ResponseWriter, r *http.Request, log core.Logger) (SignUpRequest, bool) {
 	var req SignUpRequest
@@ -260,7 +257,7 @@ func (h *AuthHandler) decodeSignUpPayload(w http.ResponseWriter, r *http.Request
 // generateSessionToken creates a session token for the user
 func (h *AuthHandler) generateSessionToken(userID string) (string, error) {
 	// Parse session TTL
-	ttl, err := time.ParseDuration(h.Cfg().Auth.SessionTTL)
+	ttl, err := time.ParseDuration(h.cfg().Auth.SessionTTL)
 	if err != nil {
 		return "", fmt.Errorf("invalid session TTL: %w", err)
 	}
@@ -281,8 +278,8 @@ func (h *AuthHandler) generateSessionToken(userID string) (string, error) {
 // getTokenPrivateKey gets or generates the Ed25519 private key for tokens
 func (h *AuthHandler) getTokenPrivateKey() (ed25519.PrivateKey, error) {
 	// Try to get from config first
-	if h.Cfg().Auth.TokenPrivateKey != "" {
-		keyBytes, err := base64.StdEncoding.DecodeString(h.Cfg().Auth.TokenPrivateKey)
+	if h.cfg().Auth.TokenPrivateKey != "" {
+		keyBytes, err := base64.StdEncoding.DecodeString(h.cfg().Auth.TokenPrivateKey)
 		if err != nil {
 			return nil, fmt.Errorf("error decode private key: %w", err)
 		}

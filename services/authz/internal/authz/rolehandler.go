@@ -45,7 +45,7 @@ type RoleRequest struct {
 
 // ListRoles handles GET /authz/roles
 func (h *RoleHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	// Parse query parameters
@@ -91,7 +91,7 @@ func (h *RoleHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 
 // CreateRole handles POST /authz/roles
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	var req RoleRequest
@@ -132,12 +132,14 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(core.SuccessResponse{Data: role})
+	if err := json.NewEncoder(w).Encode(core.SuccessResponse{Data: role}); err != nil {
+		log.Error("failed to encode response", "error", err)
+	}
 }
 
 // GetRole handles GET /authz/roles/{id}
 func (h *RoleHandler) GetRole(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	idStr := chi.URLParam(r, "id")
@@ -161,12 +163,14 @@ func (h *RoleHandler) GetRole(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(core.SuccessResponse{Data: role})
+	if err := json.NewEncoder(w).Encode(core.SuccessResponse{Data: role}); err != nil {
+		log.Error("failed to encode response", "error", err)
+	}
 }
 
 // UpdateRole handles PUT /authz/roles/{id}
 func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	idStr := chi.URLParam(r, "id")
@@ -211,12 +215,14 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(core.SuccessResponse{Data: role})
+	if err := json.NewEncoder(w).Encode(core.SuccessResponse{Data: role}); err != nil {
+		log.Error("failed to encode response", "error", err)
+	}
 }
 
 // DeleteRole handles DELETE /authz/roles/{id}
 func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	idStr := chi.URLParam(r, "id")
@@ -236,26 +242,6 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper methods
-
-func (h *RoleHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
-}
-
-func (h *RoleHandler) Log() core.Logger {
-	return h.xparams.Log()
-}
-
-func (h *RoleHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
-
-func (h *RoleHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
 
 func (h *RoleHandler) paginateRoles(roles []*Role, page, limit int) []*Role {
 	if page < 1 {
@@ -277,3 +263,20 @@ func (h *RoleHandler) paginateRoles(roles []*Role, page, limit int) []*Role {
 
 	return roles[start:end]
 }
+
+func (h *RoleHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
+}
+
+func (h *RoleHandler) cfg() *config.Config { return h.xparams.Cfg() }
+
+func (h *RoleHandler) trace() core.Tracer { return h.xparams.Tracer() }
