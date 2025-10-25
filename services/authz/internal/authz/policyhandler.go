@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authz/internal/config"
 )
 
@@ -15,6 +16,7 @@ import (
 type PolicyHandler struct {
 	policyEngine *PolicyEngine
 	xparams      config.XParams
+	tlm          *telemetry.HTTP
 }
 
 // NewPolicyHandler creates a new PolicyHandler
@@ -22,6 +24,10 @@ func NewPolicyHandler(policyEngine *PolicyEngine, xparams config.XParams) *Polic
 	return &PolicyHandler{
 		policyEngine: policyEngine,
 		xparams:      xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
@@ -58,6 +64,9 @@ type UserPermissionsResponse struct {
 // EvaluatePermission handles POST /authz/policy/evaluate
 // This is the core endpoint that other services will call to check permissions
 func (h *PolicyHandler) EvaluatePermission(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "PolicyHandler.EvaluatePermission")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -125,6 +134,9 @@ func (h *PolicyHandler) EvaluatePermission(w http.ResponseWriter, r *http.Reques
 // GetUserPermissions handles GET /authz/policy/users/{user_id}/permissions
 // Returns all permissions for a user in a given scope
 func (h *PolicyHandler) GetUserPermissions(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "PolicyHandler.GetUserPermissions")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 

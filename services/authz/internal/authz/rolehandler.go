@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authz/internal/config"
 )
 
@@ -16,6 +17,7 @@ import (
 type RoleHandler struct {
 	roleRepo RoleRepo
 	xparams  config.XParams
+	tlm      *telemetry.HTTP
 }
 
 // NewRoleHandler creates a new RoleHandler
@@ -23,6 +25,10 @@ func NewRoleHandler(roleRepo RoleRepo, xparams config.XParams) *RoleHandler {
 	return &RoleHandler{
 		roleRepo: roleRepo,
 		xparams:  xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
@@ -45,6 +51,9 @@ type RoleRequest struct {
 
 // ListRoles handles GET /authz/roles
 func (h *RoleHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "RoleHandler.ListRoles")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -91,6 +100,9 @@ func (h *RoleHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 
 // CreateRole handles POST /authz/roles
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "RoleHandler.CreateRole")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -139,6 +151,9 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 // GetRole handles GET /authz/roles/{id}
 func (h *RoleHandler) GetRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "RoleHandler.GetRole")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -170,6 +185,9 @@ func (h *RoleHandler) GetRole(w http.ResponseWriter, r *http.Request) {
 
 // UpdateRole handles PUT /authz/roles/{id}
 func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "RoleHandler.UpdateRole")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -222,6 +240,9 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 // DeleteRole handles DELETE /authz/roles/{id}
 func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "RoleHandler.DeleteRole")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 

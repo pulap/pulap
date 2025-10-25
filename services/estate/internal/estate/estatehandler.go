@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/estate/internal/config"
 )
 
@@ -23,12 +24,17 @@ func NewEstateHandler(repo EstateRepo, xparams config.XParams) *EstateHandler {
 	return &EstateHandler{
 		repo:    repo,
 		xparams: xparams,
+		http: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
 type EstateHandler struct {
 	repo    EstateRepo
 	xparams config.XParams
+	http    *telemetry.HTTP
 }
 
 func (h *EstateHandler) RegisterRoutes(r chi.Router) {
@@ -53,6 +59,8 @@ func (h *EstateHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *EstateHandler) CreateEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.CreateEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -97,6 +105,8 @@ func (h *EstateHandler) CreateEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) GetEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.GetEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -156,6 +166,8 @@ func (h *EstateHandler) GetEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) GetAllEstates(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.GetAllEstates")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -171,6 +183,8 @@ func (h *EstateHandler) GetAllEstates(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) UpdateEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.UpdateEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -219,6 +233,8 @@ func (h *EstateHandler) UpdateEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) DeleteEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.DeleteEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -248,6 +264,8 @@ func (h *EstateHandler) DeleteEstate(w http.ResponseWriter, r *http.Request) {
 
 // Child entity operations (Items)
 func (h *EstateHandler) AddItemToEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.AddItemToEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -292,6 +310,8 @@ func (h *EstateHandler) AddItemToEstate(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *EstateHandler) UpdateItemInEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.UpdateItemInEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -352,6 +372,8 @@ func (h *EstateHandler) UpdateItemInEstate(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *EstateHandler) RemoveItemFromEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.RemoveItemFromEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -447,6 +469,8 @@ func (h *EstateHandler) decodeItemPayload(w http.ResponseWriter, r *http.Request
 
 // Child entity operations (Tags)
 func (h *EstateHandler) AddTagToEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.AddTagToEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -491,6 +515,8 @@ func (h *EstateHandler) AddTagToEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) UpdateTagInEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.UpdateTagInEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -551,6 +577,8 @@ func (h *EstateHandler) UpdateTagInEstate(w http.ResponseWriter, r *http.Request
 }
 
 func (h *EstateHandler) RemoveTagFromEstate(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "EstateHandler.RemoveTagFromEstate")
+	defer finish()
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -695,23 +723,6 @@ func ensureEstateSingleJSONValue(dec *json.Decoder) error {
 	return nil
 }
 
-func (h *EstateHandler) log(req ...*http.Request) core.Logger {
-	logger := h.xparams.Log()
-	if len(req) > 0 && req[0] != nil {
-		r := req[0]
-		return logger.With(
-			"request_id", core.RequestIDFrom(r.Context()),
-			"method", r.Method,
-			"path", r.URL.Path,
-		)
-	}
-	return logger
-}
-
-func (h *EstateHandler) cfg() *config.Config { return h.xparams.Cfg() }
-
-func (h *EstateHandler) trace() core.Tracer { return h.xparams.Tracer() }
-
 // ValidationError represents a validation error.
 type ValidationError struct {
 	Field   string `json:"field"`
@@ -738,3 +749,20 @@ func ValidateDeleteEstate(ctx context.Context, id uuid.UUID) []ValidationError {
 	// TODO: Add validation logic here
 	return []ValidationError{}
 }
+
+func (h *EstateHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
+}
+
+func (h *EstateHandler) cfg() *config.Config { return h.xparams.Cfg() }
+
+func (h *EstateHandler) trace() core.Tracer { return h.xparams.Tracer() }
