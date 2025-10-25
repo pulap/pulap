@@ -53,7 +53,7 @@ func (h *EstateHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *EstateHandler) CreateEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estate, ok := h.decodeEstatePayload(w, r, log)
@@ -97,7 +97,7 @@ func (h *EstateHandler) CreateEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) GetEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r, log)
@@ -156,7 +156,7 @@ func (h *EstateHandler) GetEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) GetAllEstates(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estates, err := h.repo.Estate(ctx)
@@ -171,7 +171,7 @@ func (h *EstateHandler) GetAllEstates(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) UpdateEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r, log)
@@ -219,7 +219,7 @@ func (h *EstateHandler) UpdateEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) DeleteEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	id, ok := h.parseIDParam(w, r, log)
@@ -248,7 +248,7 @@ func (h *EstateHandler) DeleteEstate(w http.ResponseWriter, r *http.Request) {
 
 // Child entity operations (Items)
 func (h *EstateHandler) AddItemToEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -292,7 +292,7 @@ func (h *EstateHandler) AddItemToEstate(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *EstateHandler) UpdateItemInEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -352,7 +352,7 @@ func (h *EstateHandler) UpdateItemInEstate(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *EstateHandler) RemoveItemFromEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -447,7 +447,7 @@ func (h *EstateHandler) decodeItemPayload(w http.ResponseWriter, r *http.Request
 
 // Child entity operations (Tags)
 func (h *EstateHandler) AddTagToEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -491,7 +491,7 @@ func (h *EstateHandler) AddTagToEstate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *EstateHandler) UpdateTagInEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -551,7 +551,7 @@ func (h *EstateHandler) UpdateTagInEstate(w http.ResponseWriter, r *http.Request
 }
 
 func (h *EstateHandler) RemoveTagFromEstate(w http.ResponseWriter, r *http.Request) {
-	log := h.logForRequest(r)
+	log := h.log(r)
 	ctx := r.Context()
 
 	estateID, ok := h.parseIDParam(w, r, log)
@@ -695,25 +695,22 @@ func ensureEstateSingleJSONValue(dec *json.Decoder) error {
 	return nil
 }
 
-func (h *EstateHandler) Log() core.Logger {
-	return h.xparams.Log()
+func (h *EstateHandler) log(req ...*http.Request) core.Logger {
+	logger := h.xparams.Log()
+	if len(req) > 0 && req[0] != nil {
+		r := req[0]
+		return logger.With(
+			"request_id", core.RequestIDFrom(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+		)
+	}
+	return logger
 }
 
-func (h *EstateHandler) Cfg() *config.Config {
-	return h.xparams.Cfg()
-}
+func (h *EstateHandler) cfg() *config.Config { return h.xparams.Cfg() }
 
-func (h *EstateHandler) Trace() core.Tracer {
-	return h.xparams.Tracer()
-}
-
-func (h *EstateHandler) logForRequest(r *http.Request) core.Logger {
-	return h.Log().With(
-		"request_id", core.RequestIDFrom(r.Context()),
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
-}
+func (h *EstateHandler) trace() core.Tracer { return h.xparams.Tracer() }
 
 // ValidationError represents a validation error.
 type ValidationError struct {

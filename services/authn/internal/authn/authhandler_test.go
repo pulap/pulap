@@ -545,14 +545,14 @@ func TestAuthHandler_getTokenPrivateKey(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_logForRequest(t *testing.T) {
+func TestAuthHandler_log(t *testing.T) {
 	handler, _ := setupAuthHandler()
 
 	req := httptest.NewRequest(http.MethodPost, "/authn/signin", nil)
-	log := handler.logForRequest(req)
+	log := handler.log(req)
 
 	if log == nil {
-		t.Error("logForRequest() returned nil logger")
+		t.Error("log() returned nil logger")
 	}
 }
 

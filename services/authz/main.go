@@ -41,21 +41,8 @@ func main() {
 
 	var deps []any
 
-	// WIP: Temporary repository selector.
-	// A single implementation will remain later.
-	var roleRepo authz.RoleRepo
-	var grantRepo authz.GrantRepo
-
-	if cfg.Database.MongoURL != "" {
-		roleRepo = mongo.NewRoleMongoRepo(xparams)
-		grantRepo = mongo.NewGrantMongoRepo(xparams)
-		logger.Infof("Using MongoDB repository: %s", cfg.Database.MongoURL)
-	} else {
-		// TODO: Add SQLite repo when needed
-		roleRepo = mongo.NewRoleMongoRepo(xparams)
-		grantRepo = mongo.NewGrantMongoRepo(xparams)
-		logger.Infof("SQLite not implemented yet, falling back to MongoDB")
-	}
+	roleRepo := mongo.NewRoleMongoRepo(xparams)
+	grantRepo := mongo.NewGrantMongoRepo(xparams)
 
 	deps = append(deps, roleRepo)
 	deps = append(deps, grantRepo)
