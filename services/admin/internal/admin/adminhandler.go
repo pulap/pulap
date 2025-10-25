@@ -8,6 +8,7 @@ import (
 
 	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/admin/internal/config"
 )
 
@@ -18,6 +19,7 @@ type AdminHandler struct {
 	userRepo  UserRepo
 	roleRepo  RoleRepo
 	grantRepo GrantRepo
+	tlm       *telemetry.HTTP
 }
 
 func NewAdminHandler(tmplMgr *core.TemplateManager, userRepo UserRepo, roleRepo RoleRepo, grantRepo GrantRepo, xparams config.XParams) *AdminHandler {
@@ -27,6 +29,10 @@ func NewAdminHandler(tmplMgr *core.TemplateManager, userRepo UserRepo, roleRepo 
 		userRepo:  userRepo,
 		roleRepo:  roleRepo,
 		grantRepo: grantRepo,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
@@ -65,15 +71,23 @@ func (h *AdminHandler) RegisterRoutes(r chi.Router) {
 
 // Health check endpoint
 func (h *AdminHandler) Health(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.Health")
+	defer finish()
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Home renders the admin dashboard
 func (h *AdminHandler) Home(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.Home")
+	defer finish()
+
+	log := h.log(r)
+
 	tmpl, err := h.tmplMgr.Get("home.html")
 	if err != nil {
-		h.log(r).Error("error getting home template", "error", err)
+		log.Error("error getting home template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -84,22 +98,27 @@ func (h *AdminHandler) Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
-		h.log(r).Error("error executing home template", "error", err)
+		log.Error("error executing home template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.ListUsers")
+	defer finish()
+
+	log := h.log(r)
+
 	tmpl, err := h.tmplMgr.Get("users.html")
 	if err != nil {
-		h.log(r).Error("error getting users template", "error", err)
+		log.Error("error getting users template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	users, err := h.userRepo.List(r.Context())
 	if err != nil {
-		h.log(r).Error("error fetching users", "error", err)
+		log.Error("error fetching users", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -112,15 +131,20 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing users template", "error", err)
+		log.Error("error executing users template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) NewUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.NewUser")
+	defer finish()
+
+	log := h.log(r)
+
 	tmpl, err := h.tmplMgr.Get("new-user.html")
 	if err != nil {
-		h.log(r).Error("error getting new-user template", "error", err)
+		log.Error("error getting new-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -132,14 +156,19 @@ func (h *AdminHandler) NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing base template", "error", err)
+		log.Error("error executing base template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.CreateUser")
+	defer finish()
+
+	log := h.log(r)
+
 	if err := r.ParseForm(); err != nil {
-		h.log(r).Error("error parsing form", "error", err)
+		log.Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -157,18 +186,23 @@ func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.Create(r.Context(), req)
 	if err != nil {
-		h.log(r).Error("error creating user", "error", err)
+		log.Error("error creating user", "error", err)
 		http.Error(w, "Cannot create user: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.log(r).Info("User created successfully", "id", user.ID, "email", user.Email)
+	log.Info("User created successfully", "id", user.ID, "email", user.Email)
 
 	w.Header().Set("HX-Redirect", "/list-users")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AdminHandler) ShowUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.ShowUser")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -183,14 +217,14 @@ func (h *AdminHandler) ShowUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.Get(r.Context(), id)
 	if err != nil {
-		h.log(r).Error("error fetching user", "error", err, "id", id)
+		log.Error("error fetching user", "error", err, "id", id)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("show-user.html")
 	if err != nil {
-		h.log(r).Error("error getting show-user template", "error", err)
+		log.Error("error getting show-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -203,12 +237,17 @@ func (h *AdminHandler) ShowUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing template", "error", err)
+		log.Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) EditUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.EditUser")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -223,14 +262,14 @@ func (h *AdminHandler) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.Get(r.Context(), id)
 	if err != nil {
-		h.log(r).Error("error fetching user", "error", err, "id", id)
+		log.Error("error fetching user", "error", err, "id", id)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("edit-user.html")
 	if err != nil {
-		h.log(r).Error("error getting edit-user template", "error", err)
+		log.Error("error getting edit-user template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -243,12 +282,17 @@ func (h *AdminHandler) EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing template", "error", err)
+		log.Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.UpdateUser")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -269,17 +313,22 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.Update(r.Context(), id, req)
 	if err != nil {
-		h.log(r).Error("error updating user", "error", err)
+		log.Error("error updating user", "error", err)
 		http.Error(w, "Cannot update user: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.log(r).Info("User updated successfully", "id", user.ID)
+	log.Info("User updated successfully", "id", user.ID)
 	w.Header().Set("HX-Redirect", "/list-users")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.DeleteUser")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -288,13 +337,13 @@ func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		h.log(r).Error("invalid user ID", "error", err, "id", idStr)
+		log.Error("invalid user ID", "error", err, "id", idStr)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.userRepo.Delete(r.Context(), id); err != nil {
-		h.log(r).Error("error deleting user", "error", err, "id", id)
+		log.Error("error deleting user", "error", err, "id", id)
 		http.Error(w, "Cannot delete user", http.StatusInternalServerError)
 		return
 	}
@@ -303,16 +352,21 @@ func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.ListRoles")
+	defer finish()
+
+	log := h.log(r)
+
 	tmpl, err := h.tmplMgr.Get("roles.html")
 	if err != nil {
-		h.log(r).Error("error getting roles template", "error", err)
+		log.Error("error getting roles template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	roles, err := h.roleRepo.List(r.Context())
 	if err != nil {
-		h.log(r).Error("error fetching roles", "error", err)
+		log.Error("error fetching roles", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -325,15 +379,20 @@ func (h *AdminHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing roles template", "error", err)
+		log.Error("error executing roles template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) NewRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.NewRole")
+	defer finish()
+
+	log := h.log(r)
+
 	tmpl, err := h.tmplMgr.Get("new-role.html")
 	if err != nil {
-		h.log(r).Error("error getting new-role template", "error", err)
+		log.Error("error getting new-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -346,14 +405,19 @@ func (h *AdminHandler) NewRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing base template", "error", err)
+		log.Error("error executing base template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.CreateRole")
+	defer finish()
+
+	log := h.log(r)
+
 	if err := r.ParseForm(); err != nil {
-		h.log(r).Error("error parsing form", "error", err)
+		log.Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -371,18 +435,23 @@ func (h *AdminHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.roleRepo.Create(r.Context(), req)
 	if err != nil {
-		h.log(r).Error("error creating role", "error", err)
+		log.Error("error creating role", "error", err)
 		http.Error(w, "Cannot create role: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.log(r).Info("Role created successfully", "id", role.ID, "name", role.Name)
+	log.Info("Role created successfully", "id", role.ID, "name", role.Name)
 
 	w.Header().Set("HX-Redirect", "/list-roles")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AdminHandler) ShowRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.ShowRole")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -397,14 +466,14 @@ func (h *AdminHandler) ShowRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.roleRepo.Get(r.Context(), id)
 	if err != nil {
-		h.log(r).Error("error fetching role", "error", err, "id", id)
+		log.Error("error fetching role", "error", err, "id", id)
 		http.Error(w, "Role not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("show-role.html")
 	if err != nil {
-		h.log(r).Error("error getting show-role template", "error", err)
+		log.Error("error getting show-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -417,12 +486,17 @@ func (h *AdminHandler) ShowRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing template", "error", err)
+		log.Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) EditRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.EditRole")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -437,14 +511,14 @@ func (h *AdminHandler) EditRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.roleRepo.Get(r.Context(), id)
 	if err != nil {
-		h.log(r).Error("error fetching role", "error", err, "id", id)
+		log.Error("error fetching role", "error", err, "id", id)
 		http.Error(w, "Role not found", http.StatusNotFound)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("edit-role.html")
 	if err != nil {
-		h.log(r).Error("error getting edit-role template", "error", err)
+		log.Error("error getting edit-role template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -458,12 +532,17 @@ func (h *AdminHandler) EditRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing template", "error", err)
+		log.Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.UpdateRole")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -485,17 +564,22 @@ func (h *AdminHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.roleRepo.Update(r.Context(), id, req)
 	if err != nil {
-		h.log(r).Error("error updating role", "error", err)
+		log.Error("error updating role", "error", err)
 		http.Error(w, "Cannot update role: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.log(r).Info("Role updated successfully", "id", role.ID)
+	log.Info("Role updated successfully", "id", role.ID)
 	w.Header().Set("HX-Redirect", "/list-roles")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AdminHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.DeleteRole")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing role ID", http.StatusBadRequest)
@@ -504,13 +588,13 @@ func (h *AdminHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		h.log(r).Error("invalid role ID", "error", err, "id", idStr)
+		log.Error("invalid role ID", "error", err, "id", idStr)
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.roleRepo.Delete(r.Context(), id); err != nil {
-		h.log(r).Error("error deleting role", "error", err, "id", id)
+		log.Error("error deleting role", "error", err, "id", id)
 		http.Error(w, "Cannot delete role", http.StatusInternalServerError)
 		return
 	}
@@ -519,6 +603,11 @@ func (h *AdminHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) UserGrants(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.UserGrants")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "userId")
 	if idStr == "" {
 		http.Error(w, "Missing user ID", http.StatusBadRequest)
@@ -533,28 +622,28 @@ func (h *AdminHandler) UserGrants(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.Get(r.Context(), userID)
 	if err != nil {
-		h.log(r).Error("error fetching user", "error", err)
+		log.Error("error fetching user", "error", err)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
 	grants, err := h.grantRepo.ListByUser(r.Context(), userID)
 	if err != nil {
-		h.log(r).Error("error fetching grants", "error", err)
+		log.Error("error fetching grants", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	roles, err := h.roleRepo.List(r.Context())
 	if err != nil {
-		h.log(r).Error("error fetching roles", "error", err)
+		log.Error("error fetching roles", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	tmpl, err := h.tmplMgr.Get("user-grants.html")
 	if err != nil {
-		h.log(r).Error("error getting user-grants template", "error", err)
+		log.Error("error getting user-grants template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -570,14 +659,19 @@ func (h *AdminHandler) UserGrants(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		h.log(r).Error("error executing template", "error", err)
+		log.Error("error executing template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
 func (h *AdminHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.CreateGrant")
+	defer finish()
+
+	log := h.log(r)
+
 	if err := r.ParseForm(); err != nil {
-		h.log(r).Error("error parsing form", "error", err)
+		log.Error("error parsing form", "error", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -600,18 +694,23 @@ func (h *AdminHandler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 
 	grant, err := h.grantRepo.Create(r.Context(), req)
 	if err != nil {
-		h.log(r).Error("error creating grant", "error", err)
+		log.Error("error creating grant", "error", err)
 		http.Error(w, "Cannot create grant: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.log(r).Info("Grant created successfully", "id", grant.ID, "user_id", grant.UserID)
+	log.Info("Grant created successfully", "id", grant.ID, "user_id", grant.UserID)
 
 	w.Header().Set("HX-Redirect", "/user-grants/"+userID.String())
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AdminHandler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "AdminHandler.DeleteGrant")
+	defer finish()
+
+	log := h.log(r)
+
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		http.Error(w, "Missing grant ID", http.StatusBadRequest)
@@ -620,13 +719,13 @@ func (h *AdminHandler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		h.log(r).Error("invalid grant ID", "error", err, "id", idStr)
+		log.Error("invalid grant ID", "error", err, "id", idStr)
 		http.Error(w, "Invalid grant ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.grantRepo.Delete(r.Context(), id); err != nil {
-		h.log(r).Error("error deleting grant", "error", err, "id", id)
+		log.Error("error deleting grant", "error", err, "id", id)
 		http.Error(w, "Cannot delete grant", http.StatusInternalServerError)
 		return
 	}

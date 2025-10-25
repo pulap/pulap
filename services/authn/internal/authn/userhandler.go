@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/pulap/pulap/pkg/lib/core"
+	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authn/internal/config"
 )
 
@@ -20,12 +21,17 @@ func NewUserHandler(repo UserRepo, xparams config.XParams) *UserHandler {
 	return &UserHandler{
 		repo:    repo,
 		xparams: xparams,
+		tlm: telemetry.NewHTTP(
+			telemetry.WithTracer(xparams.Tracer()),
+			telemetry.WithMetrics(xparams.Metrics()),
+		),
 	}
 }
 
 type UserHandler struct {
 	repo    UserRepo
 	xparams config.XParams
+	tlm     *telemetry.HTTP
 }
 
 func (h *UserHandler) RegisterRoutes(r chi.Router) {
@@ -39,6 +45,9 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "UserHandler.CreateUser")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -71,6 +80,9 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "UserHandler.GetUser")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -98,6 +110,9 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "UserHandler.GetAllUsers")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -113,6 +128,9 @@ func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "UserHandler.UpdateUser")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 
@@ -149,6 +167,9 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.tlm.Start(w, r, "UserHandler.DeleteUser")
+	defer finish()
+
 	log := h.log(r)
 	ctx := r.Context()
 

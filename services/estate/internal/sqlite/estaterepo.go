@@ -620,14 +620,14 @@ func (r *EstateSQLiteRepo) computeTagDiff(current, new []estate.Tag) (toInsert, 
 	return toInsert, toUpdate, toDelete
 }
 
-func (r *EstateSQLiteRepo) Log() core.Logger {
+func (r *EstateSQLiteRepo) log() core.Logger {
 	return r.xparams.Log()
 }
 
-func (r *EstateSQLiteRepo) Cfg() *config.Config {
+func (r *EstateSQLiteRepo) cfg() *config.Config {
 	return r.xparams.Cfg()
 }
 
-func (r *EstateSQLiteRepo) Trace() core.Tracer {
+func (r *EstateSQLiteRepo) trace() core.Tracer {
 	return r.xparams.Tracer()
 }
