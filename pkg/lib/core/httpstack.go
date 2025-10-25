@@ -12,10 +12,11 @@ import (
 // services. All fields are optional; zero values are replaced with safe
 // defaults.
 type StackOptions struct {
-	Timeout time.Duration
-	CORS    *CORSOptions
-	Metrics Metrics
-	Errors  ErrorReporter
+	Timeout     time.Duration
+	CORS        *CORSOptions
+	Metrics     Metrics
+	Errors      ErrorReporter
+	DebugRoutes bool
 }
 
 // ApplyStack wires the shared middleware set onto the provided router. It keeps

@@ -9,12 +9,10 @@ import (
 )
 
 func TestDebugRoutes(t *testing.T) {
-	t.Setenv("HM_DEBUG_ROUTES", "1")
-
 	mux := chi.NewRouter()
 
 	ApplyStack(mux, NewNoopLogger(), StackOptions{})
-	RegisterDebugRoutes(mux)
+	RegisterDebugRoutes(mux, true)
 	mux.Get("/foo", func(w http.ResponseWriter, r *http.Request) {})
 
 	req := httptest.NewRequest(http.MethodGet, debugRoutesPath, nil)

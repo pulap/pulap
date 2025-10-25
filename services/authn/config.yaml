@@ -39,3 +39,9 @@ auth:
   # RSA public key for token verification (PEM format).
   # Env: AUTH_TOKEN_PUBLIC_KEY  
   token_public_key: ""
+
+log:
+  level: "info"
+
+debug:
+  routes: true

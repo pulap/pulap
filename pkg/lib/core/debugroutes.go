@@ -3,21 +3,17 @@ package core
 import (
 	"encoding/json"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
 
-// TODO: Move to config values
-const debugRoutesEnv = "HM_DEBUG_ROUTES"
 const debugRoutesPath = "/debug/routes"
 
-// RegisterDebugRoutes exposes a routes debugger when HM_DEBUG_ROUTES is
-// enabled. The handler enumerates every route currently registered on the
-// router and returns them as JSON.
-func RegisterDebugRoutes(r chi.Router) {
-	if !debugRoutesEnabled() {
+// RegisterDebugRoutes exposes a routes debugger controlled by configuration.
+// The handler enumerates every route currently registered on the router and
+// returns them as JSON.
+func RegisterDebugRoutes(r chi.Router, enabled bool) {
+	if !enabled {
 		return
 	}
 
@@ -56,13 +52,4 @@ func writeDebugRoutes(w http.ResponseWriter, r chi.Router) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(out)
-}
-
-func debugRoutesEnabled() bool {
-	value := strings.TrimSpace(strings.ToLower(os.Getenv(debugRoutesEnv)))
-	switch value {
-	case "1", "true", "yes", "on":
-		return true
-	}
-	return false
 }
