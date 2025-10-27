@@ -8,6 +8,7 @@ services/*/authz
 services/*/admin
 services/*/estate
 services/*/todo
+services/*/.gocache/
 
 # Root level runtime files
 *.pid
