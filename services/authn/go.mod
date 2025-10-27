@@ -19,4 +19,6 @@ require (
 	github.com/spf13/pflag v1.0.10
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.43.0
+	google.golang.org/grpc v1.76.0
+	google.golang.org/protobuf v1.36.10
 )

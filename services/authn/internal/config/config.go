@@ -23,7 +23,8 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string `koanf:"port"`
+	Port     string `koanf:"port"`
+	GRPCPort string `koanf:"grpc_port"`
 }
 
 type DatabaseConfig struct {
@@ -51,7 +52,8 @@ type DebugConfig struct {
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port: ":8082",
+			Port:     ":8082",
+			GRPCPort: ":9082",
 		},
 		Database: DatabaseConfig{
 			Path:          "./auth.db",
@@ -82,6 +84,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	// Setup pflag
 	fs := pflag.NewFlagSet(args[0], pflag.ExitOnError)
 	fs.String("server.port", ":8082", "Server listen address")
+	fs.String("server.grpc_port", ":9082", "gRPC server listen address")
 	fs.String("database.path", "./auth.db", "Path to the SQLite database file")
 	fs.String("log.level", "info", "Log level (debug, info, error)")
 	fs.String("auth.encryption_key", "change-me-32-byte-key-for-aes-gcm", "AES-GCM encryption key")
@@ -118,6 +121,9 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 	if val := os.Getenv("AUTHN_DATABASE_MONGO_DATABASE"); val != "" {
 		cfg.Database.MongoDatabase = val
+	}
+	if val := os.Getenv("AUTHN_SERVER_GRPC_PORT"); val != "" {
+		cfg.Server.GRPCPort = val
 	}
 	if val := os.Getenv("AUTHN_DATABASE_PATH"); val != "" {
 		cfg.Database.Path = val
