@@ -10,6 +10,14 @@ COMPOSE_LOG_FILTER?=pulap-mongodb
 COMPOSE_MONGO_USER?=admin
 COMPOSE_MONGO_PASS?=password
 
+NOMAD_ADDR?=http://127.0.0.1:4646
+NOMAD_JOBS_DIR?=deployments/nomad/jobs
+NOMAD_JOBS?=$(NOMAD_JOBS_DIR)/mongodb.nomad $(NOMAD_JOBS_DIR)/pulap-services.nomad
+NOMAD_AUTHN_IMAGE?=pulap-authn:latest
+NOMAD_AUTHZ_IMAGE?=pulap-authz:latest
+NOMAD_ESTATE_IMAGE?=pulap-estate:latest
+NOMAD_ADMIN_IMAGE?=pulap-admin:latest
+
 MONGO_URL?=mongodb://localhost:27017
 AUTHN_DB?=authn
 AUTHZ_DB?=authz
@@ -26,7 +34,7 @@ GO_VET=go vet
 GO_VULNCHECK=govulncheck
 
 # Phony targets
-.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all db-reset-dev reset-compose-data db-clean-dev fresh-start log-raw log-clean logs logs-clean run-compose run-compose-neat stop-compose
+.PHONY: all build run test test-v test-short coverage coverage-html coverage-func coverage-profile coverage-check coverage-100 clean fmt lint vet check ci run-all stop-all help build-all test-all lint-all db-reset-dev reset-compose-data db-clean-dev fresh-start log-raw log-clean logs logs-clean run-compose run-compose-neat stop-compose nomad-run nomad-stop nomad-status
 
 all: build-all
 
@@ -56,6 +64,9 @@ help:
 	@echo "  db-reset-dev - Drop AuthN users and AuthZ roles/grants collections (dev helper)"
 	@echo "  check        - Run all quality checks"
 	@echo "  ci           - Run CI pipeline with strict checks"
+	@echo "  nomad-run    - Register MongoDB and service jobs in Nomad"
+	@echo "  nomad-stop   - Stop and purge Nomad jobs"
+	@echo "  nomad-status - Show current job status in Nomad"
 	@echo ""
 	@echo "Individual service targets (replace <service> with authn/authz/estate/admin):"
 	@echo "  build-<service>  - Build specific service"
@@ -90,6 +101,36 @@ stop-compose:
 	fi
 	@echo "Stopping docker compose using $(COMPOSE_FILE)..."
 	@docker compose -f $(COMPOSE_FILE) down
+
+nomad-run:
+	@echo "🚀 Registering Nomad jobs using $(NOMAD_JOBS_DIR)..."
+	@for job in $(NOMAD_JOBS); do \
+		echo "   🗂  Running $$job"; \
+		if echo $$job | grep -q "pulap-services"; then \
+			env NOMAD_ADDR=$(NOMAD_ADDR) nomad job run \
+				-var "authn_image=$(NOMAD_AUTHN_IMAGE)" \
+				-var "authz_image=$(NOMAD_AUTHZ_IMAGE)" \
+				-var "estate_image=$(NOMAD_ESTATE_IMAGE)" \
+				-var "admin_image=$(NOMAD_ADMIN_IMAGE)" \
+				$$job || exit 1; \
+		else \
+			env NOMAD_ADDR=$(NOMAD_ADDR) nomad job run $$job || exit 1; \
+		fi; \
+		done
+	@echo "✅ Nomad jobs submitted"
+
+nomad-stop:
+	@echo "🛑 Stopping Nomad jobs..."
+	@for name in pulap-services mongodb; do \
+		echo "   🗑  Purging $$name"; \
+		env NOMAD_ADDR=$(NOMAD_ADDR) nomad job stop -purge $$name >/dev/null 2>&1 || true; \
+	done
+	@echo "✅ Nomad jobs stopped"
+
+nomad-status:
+	@echo "📊 Nomad job status (NOMAD_ADDR=$(NOMAD_ADDR))"
+	@env NOMAD_ADDR=$(NOMAD_ADDR) nomad status pulap-services || true
+	@env NOMAD_ADDR=$(NOMAD_ADDR) nomad status mongodb || true
 
 reset-compose-data:
 	@if [ ! -f "$(COMPOSE_FILE)" ]; then \
