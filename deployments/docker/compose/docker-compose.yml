@@ -30,8 +30,8 @@ services:
 
   authn:
     build:
-      context: .
-      dockerfile: ./services/authn/Dockerfile
+      context: ../../..
+      dockerfile: services/authn/Dockerfile
     container_name: pulap-authn
     ports:
       - "8082"
@@ -57,8 +57,8 @@ services:
 
   authz:
     build:
-      context: .
-      dockerfile: ./services/authz/Dockerfile
+      context: ../../..
+      dockerfile: services/authz/Dockerfile
     container_name: pulap-authz
     ports:
       - "8083"
@@ -85,8 +85,8 @@ services:
 
   estate:
     build:
-      context: .
-      dockerfile: ./services/estate/Dockerfile
+      context: ../../..
+      dockerfile: services/estate/Dockerfile
     container_name: pulap-estate
     ports:
       - "8084"
@@ -110,8 +110,8 @@ services:
 
   admin:
     build:
-      context: .
-      dockerfile: ./services/admin/Dockerfile
+      context: ../../..
+      dockerfile: services/admin/Dockerfile
     container_name: pulap-admin
     ports:
       - "8081:8081"
@@ -149,4 +149,3 @@ volumes:
   authz-data:
   estate-data:
   admin-data:
-
