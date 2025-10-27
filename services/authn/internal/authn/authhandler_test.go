@@ -78,7 +78,7 @@ func TestAuthHandler_RegisterRoutes(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_SignUp(t *testing.T) {
+func TestAuthHandlerSignUp(t *testing.T) {
 	handler, repo := setupAuthHandler()
 
 	tests := []struct {
@@ -144,7 +144,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 			if tt.existingUser != nil {
 				// Create lookup hash for existing user
 				normalizedEmail := authpkg.NormalizeEmail("existing@example.com")
-				signingKey := []byte(handler.xparams.cfg().Auth.SigningKey)
+				signingKey := []byte(handler.cfg().Auth.SigningKey)
 				emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 				tt.existingUser.EmailLookup = emailLookup
 				repo.users[tt.existingUser.ID] = tt.existingUser
@@ -177,13 +177,13 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_SignIn(t *testing.T) {
+func TestAuthHandlerSignIn(t *testing.T) {
 	handler, repo := setupAuthHandler()
 
 	// Create a valid test user
 	validUserID := uuid.New()
 	normalizedEmail := authpkg.NormalizeEmail("test@example.com")
-	signingKey := []byte(handler.xparams.cfg().Auth.SigningKey)
+	signingKey := []byte(handler.cfg().Auth.SigningKey)
 	emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
 	salt := authpkg.GeneratePasswordSalt()
 	passwordHash := authpkg.HashPassword([]byte("ValidPassword123!"), salt)
@@ -284,7 +284,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_SignOut(t *testing.T) {
+func TestAuthHandlerSignOut(t *testing.T) {
 	handler, _ := setupAuthHandler()
 
 	req := httptest.NewRequest(http.MethodPost, "/authn/signout", nil)
@@ -297,9 +297,9 @@ func TestAuthHandler_SignOut(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_decodeSignUpPayload(t *testing.T) {
+func TestAuthHandlerDecodeSignUpPayload(t *testing.T) {
 	handler, _ := setupAuthHandler()
-	log := handler.xparams.log()
+	log := handler.log()
 
 	tests := []struct {
 		name     string
@@ -374,9 +374,9 @@ func TestAuthHandler_decodeSignUpPayload(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_decodeSignInPayload(t *testing.T) {
+func TestAuthHandlerDecodeSignInPayload(t *testing.T) {
 	handler, _ := setupAuthHandler()
-	log := handler.xparams.log()
+	log := handler.log()
 
 	tests := []struct {
 		name     string
@@ -438,7 +438,7 @@ func TestAuthHandler_decodeSignInPayload(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_generateSessionToken(t *testing.T) {
+func TestAuthHandlerGenerateSessionToken(t *testing.T) {
 	handler, _ := setupAuthHandler()
 
 	tests := []struct {
@@ -472,10 +472,15 @@ func TestAuthHandler_generateSessionToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config for this test
-			handler.xparams.cfg().Auth.SessionTTL = tt.sessionTTL
-			handler.xparams.cfg().Auth.TokenPrivateKey = tt.tokenKey
+			handler.cfg().Auth.SessionTTL = tt.sessionTTL
+			handler.cfg().Auth.TokenPrivateKey = tt.tokenKey
 
-			token, err := handler.generateSessionToken(tt.userID)
+			userID, parseErr := uuid.Parse(tt.userID)
+			if parseErr != nil {
+				t.Fatalf("invalid test user id: %v", parseErr)
+			}
+
+			token, err := generateSessionToken(handler.cfg(), userID)
 
 			if tt.expectError {
 				if err == nil {
@@ -493,7 +498,7 @@ func TestAuthHandler_generateSessionToken(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_getTokenPrivateKey(t *testing.T) {
+func TestAuthHandlerGetTokenPrivateKey(t *testing.T) {
 	handler, _ := setupAuthHandler()
 
 	tests := []struct {
@@ -522,9 +527,9 @@ func TestAuthHandler_getTokenPrivateKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler.xparams.cfg().Auth.TokenPrivateKey = tt.configuredKey
+			handler.cfg().Auth.TokenPrivateKey = tt.configuredKey
 
-			privateKey, err := handler.getTokenPrivateKey()
+			privateKey, err := tokenPrivateKey(handler.cfg().Auth.TokenPrivateKey)
 
 			if tt.expectError {
 				if err == nil {
@@ -545,7 +550,7 @@ func TestAuthHandler_getTokenPrivateKey(t *testing.T) {
 	}
 }
 
-func TestAuthHandler_log(t *testing.T) {
+func TestAuthHandlerLog(t *testing.T) {
 	handler, _ := setupAuthHandler()
 
 	req := httptest.NewRequest(http.MethodPost, "/authn/signin", nil)

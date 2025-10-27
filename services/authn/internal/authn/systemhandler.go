@@ -5,12 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
-	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authn/internal/config"
@@ -66,27 +62,22 @@ func (h *SystemHandler) GetBootstrapStatus(w http.ResponseWriter, r *http.Reques
 
 	log := h.log(r)
 
-	signingKey := []byte(h.cfg().Auth.SigningKey)
-	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
-	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
-
-	superadmin, err := h.userRepo.GetByEmailLookup(r.Context(), lookupHash)
-	if err != nil || superadmin == nil {
-		if err != nil {
-			log.Error("failed to check superadmin user", "error", err)
-		}
-		response := BootstrapStatusResponse{
-			NeedsBootstrap: true,
-		}
-		core.RespondSuccess(w, response)
+	superadmin, err := GenerateBootstrapStatus(r.Context(), h.userRepo, h.cfg())
+	if err != nil {
+		log.Error("failed to check superadmin user", "error", err)
+		core.RespondError(w, http.StatusInternalServerError, "Failed to check bootstrap state")
 		return
 	}
 
-	response := BootstrapStatusResponse{
+	if superadmin == nil {
+		core.RespondSuccess(w, BootstrapStatusResponse{NeedsBootstrap: true})
+		return
+	}
+
+	core.RespondSuccess(w, BootstrapStatusResponse{
 		NeedsBootstrap: false,
 		SuperadminID:   superadmin.ID.String(),
-	}
-	core.RespondSuccess(w, response)
+	})
 }
 
 // Bootstrap creates the superadmin user if it doesn't exist
@@ -96,60 +87,20 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 
 	log := h.log(r)
 
-	encKey := []byte(h.cfg().Auth.EncryptionKey)
-	signingKey := []byte(h.cfg().Auth.SigningKey)
-	normalizedEmail := authpkg.NormalizeEmail(SuperadminEmail)
-	lookupHash := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
+	user, password, err := BootstrapSuperadmin(r.Context(), h.userRepo, h.cfg())
+	if err != nil {
+		log.Error("failed to bootstrap superadmin", "error", err)
+		core.RespondError(w, http.StatusInternalServerError, "Failed to bootstrap superadmin")
+		return
+	}
 
-	existing, err := h.userRepo.GetByEmailLookup(r.Context(), lookupHash)
-	if err == nil && existing != nil {
-		response := BootstrapResponse{
-			SuperadminID: existing.ID.String(),
+	if password == "" {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(BootstrapResponse{
+			SuperadminID: user.ID.String(),
 			Email:        SuperadminEmail,
 			Password:     "",
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-	if err != nil {
-		log.Error("failed to check existing superadmin", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Failed to check bootstrap state")
-		return
-	}
-
-	password := generateSecurePassword(32)
-
-	encryptedEmail, err := authpkg.EncryptEmail(normalizedEmail, encKey)
-	if err != nil {
-		log.Error("failed to encrypt email", "error", err)
-		http.Error(w, "Failed to encrypt email", http.StatusInternalServerError)
-		return
-	}
-
-	passwordSalt := authpkg.GeneratePasswordSalt()
-	passwordHash := authpkg.HashPassword([]byte(password), passwordSalt)
-
-	user := &User{
-		ID:           uuid.New(),
-		EmailCT:      encryptedEmail.Ciphertext,
-		EmailIV:      encryptedEmail.IV,
-		EmailTag:     encryptedEmail.Tag,
-		EmailLookup:  lookupHash,
-		PasswordHash: passwordHash,
-		PasswordSalt: passwordSalt,
-		Status:       authpkg.UserStatusActive,
-		CreatedAt:    time.Now(),
-		CreatedBy:    "system",
-		UpdatedAt:    time.Now(),
-		UpdatedBy:    "system",
-	}
-
-	err = h.userRepo.Create(r.Context(), user)
-	if err != nil {
-		log.Error("failed to create superadmin user", "error", err)
-		http.Error(w, "Failed to create superadmin", http.StatusInternalServerError)
+		})
 		return
 	}
 
@@ -175,19 +126,14 @@ func (h *SystemHandler) Bootstrap(w http.ResponseWriter, r *http.Request) {
 		"user_id", user.ID,
 	)
 
-	// TODO: Write to file (optional)
-	// writeBootstrapFile(user.ID.String(), SuperadminEmail, password)
-
 	log.Info("superadmin created successfully", "id", user.ID)
 
-	response := BootstrapResponse{
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(BootstrapResponse{
 		SuperadminID: user.ID.String(),
 		Email:        SuperadminEmail,
 		Password:     password,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func generateSecurePassword(length int) string {

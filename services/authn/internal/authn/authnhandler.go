@@ -1,19 +1,13 @@
 package authn
 
 import (
-	"crypto/ed25519"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-
-	authpkg "github.com/pulap/pulap/pkg/lib/auth"
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/pkg/lib/telemetry"
 	"github.com/pulap/pulap/services/authn/internal/config"
@@ -77,7 +71,6 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate signup request
 	validationErrors := ValidateSignUpRequest(req.Email, req.Password)
 	if len(validationErrors) > 0 {
 		log.Debug("validation failed", "errors", validationErrors)
@@ -85,64 +78,22 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create domain user using pure functions
-	normalizedEmail := authpkg.NormalizeEmail(req.Email)
+	log.Info("encryption key configured", "length", len([]byte(h.cfg().Auth.EncryptionKey)))
+	log.Info("signing key configured", "length", len([]byte(h.cfg().Auth.SigningKey)))
 
-	// Use encryption keys from config
-	encryptionKey := []byte(h.cfg().Auth.EncryptionKey)
-	signingKey := []byte(h.cfg().Auth.SigningKey)
-
-	// Debug: Check key lengths
-	log.Info("encryption key configured", "length", len(encryptionKey))
-	log.Info("signing key configured", "length", len(signingKey))
-
-	// Encrypt email for storage
-	encryptedEmail, err := authpkg.EncryptEmail(normalizedEmail, encryptionKey)
+	user, err := SignUpUser(ctx, h.repo, h.cfg(), req.Email, req.Password)
 	if err != nil {
-		log.Error("error encrypting email", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Could not create account")
+		switch {
+		case errors.Is(err, ErrUserExists):
+			log.Debug("user already exists")
+			core.RespondError(w, http.StatusConflict, "User already exists")
+		default:
+			log.Error("cannot create user", "error", err)
+			core.RespondError(w, http.StatusInternalServerError, "Could not create account")
+		}
 		return
 	}
 
-	emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
-
-	// Check if user already exists
-	existingUser, err := h.repo.GetByEmailLookup(ctx, emailLookup)
-	if err != nil {
-		log.Error("error checking existing user", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Could not create account")
-		return
-	}
-	if existingUser != nil {
-		log.Debug("user already exists")
-		core.RespondError(w, http.StatusConflict, "User already exists")
-		return
-	}
-
-	// Generate salt and hash password
-	salt := authpkg.GeneratePasswordSalt()
-	passwordHash := authpkg.HashPassword([]byte(req.Password), salt)
-
-	// TODO: Encrypt email (needs AES-GCM implementation in authpkg)
-	// For now, store plaintext (will be encrypted once crypto functions are complete)
-
-	// Create service user
-	user := NewUser()
-	user.EmailCT = encryptedEmail.Ciphertext
-	user.EmailIV = encryptedEmail.IV
-	user.EmailTag = encryptedEmail.Tag
-	user.EmailLookup = emailLookup
-	user.PasswordHash = passwordHash
-	user.PasswordSalt = salt
-	user.BeforeCreate()
-
-	if err := h.repo.Create(ctx, user); err != nil {
-		log.Error("cannot create user", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Could not create account")
-		return
-	}
-
-	// Return success (no token in signup, user needs to signin)
 	w.WriteHeader(http.StatusCreated)
 	core.RespondSuccess(w, AuthResponse{User: user})
 }
@@ -159,7 +110,6 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate signin request
 	validationErrors := ValidateSignInRequest(req.Email, req.Password)
 	if len(validationErrors) > 0 {
 		log.Debug("validation failed", "errors", validationErrors)
@@ -167,43 +117,19 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Normalize email and compute lookup hash
-	normalizedEmail := authpkg.NormalizeEmail(req.Email)
-	signingKey := []byte(h.cfg().Auth.SigningKey)
-	emailLookup := authpkg.ComputeLookupHash(normalizedEmail, signingKey)
-
-	// Find user by email lookup
-	user, err := h.repo.GetByEmailLookup(ctx, emailLookup)
+	user, token, err := SignInUser(ctx, h.repo, h.cfg(), req.Email, req.Password)
 	if err != nil {
-		log.Error("error finding user", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Authentication failed")
-		return
-	}
-	if user == nil {
-		log.Debug("user not found")
-		core.RespondError(w, http.StatusUnauthorized, "Invalid credentials")
-		return
-	}
-
-	// Verify password using pure function
-	if !authpkg.VerifyPasswordHash([]byte(req.Password), user.PasswordHash, user.PasswordSalt) {
-		log.Debug("invalid password")
-		core.RespondError(w, http.StatusUnauthorized, "Invalid credentials")
-		return
-	}
-
-	// Check user status
-	if user.Status != authpkg.UserStatusActive {
-		log.Debug("user not active", "status", user.Status)
-		core.RespondError(w, http.StatusForbidden, "Account is not active")
-		return
-	}
-
-	// Generate session token
-	token, err := h.generateSessionToken(user.ID.String())
-	if err != nil {
-		log.Error("error generating session token", "error", err)
-		core.RespondError(w, http.StatusInternalServerError, "Authentication failed")
+		switch {
+		case errors.Is(err, ErrInvalidCredentials):
+			log.Debug("invalid credentials")
+			core.RespondError(w, http.StatusUnauthorized, "Invalid credentials")
+		case errors.Is(err, ErrInactiveAccount):
+			log.Debug("user not active")
+			core.RespondError(w, http.StatusForbidden, "Account is not active")
+		default:
+			log.Error("error signing in", "error", err)
+			core.RespondError(w, http.StatusInternalServerError, "Authentication failed")
+		}
 		return
 	}
 
@@ -249,48 +175,6 @@ func (h *AuthHandler) decodeSignUpPayload(w http.ResponseWriter, r *http.Request
 	}
 
 	return req, true
-}
-
-// generateSessionToken creates a session token for the user
-func (h *AuthHandler) generateSessionToken(userID string) (string, error) {
-	// Parse session TTL
-	ttl, err := time.ParseDuration(h.cfg().Auth.SessionTTL)
-	if err != nil {
-		return "", fmt.Errorf("invalid session TTL: %w", err)
-	}
-
-	// Get or generate Ed25519 private key
-	privateKey, err := h.getTokenPrivateKey()
-	if err != nil {
-		return "", fmt.Errorf("could not get private key: %w", err)
-	}
-
-	// Generate session ID
-	sessionID := uuid.New().String()
-
-	// Generate token
-	return authpkg.GenerateSessionToken(userID, sessionID, privateKey, ttl)
-}
-
-// getTokenPrivateKey gets or generates the Ed25519 private key for tokens
-func (h *AuthHandler) getTokenPrivateKey() (ed25519.PrivateKey, error) {
-	// Try to get from config first
-	if h.cfg().Auth.TokenPrivateKey != "" {
-		keyBytes, err := base64.StdEncoding.DecodeString(h.cfg().Auth.TokenPrivateKey)
-		if err != nil {
-			return nil, fmt.Errorf("error decode private key: %w", err)
-		}
-		return ed25519.PrivateKey(keyBytes), nil
-	}
-
-	// Generate new key pair if not configured
-	// In production, this should be persistent
-	_, privateKey, err := authpkg.GenerateKeyPair()
-	if err != nil {
-		return nil, fmt.Errorf("error generate key pair: %w", err)
-	}
-
-	return privateKey, nil
 }
 
 func (h *AuthHandler) decodeSignInPayload(w http.ResponseWriter, r *http.Request, log core.Logger) (SignInRequest, bool) {

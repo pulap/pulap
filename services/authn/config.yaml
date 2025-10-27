@@ -5,6 +5,10 @@ server:
   # The port the server will listen on.
   # Env: AUTH_SERVER_PORT
   port: ":8082"
+  
+  # The gRPC port the internal server will listen on.
+  # Env: AUTHN_SERVER_GRPC_PORT
+  grpc_port: ":9082"
 
 database:
   # Path to the SQLite database file.
