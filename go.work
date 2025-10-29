@@ -8,5 +8,6 @@ use (
 	./services/admin
 	./services/authn
 	./services/authz
+	./services/dictionary
 	./services/estate
 )
