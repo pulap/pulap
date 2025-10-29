@@ -25,7 +25,7 @@ func NewFakePropertyRepo() *FakePropertyRepo {
 }
 
 func (r *FakePropertyRepo) seedProperties() {
-	// Hardcoded dictionary IDs from estate fake dictionary
+	// Hardcoded fake IDs from estate fake fake
 	residentialCategoryID := uuid.MustParse("00000000-0000-0000-0001-000000000001")
 	commercialCategoryID := uuid.MustParse("00000000-0000-0000-0001-000000000002")
 	houseTypeID := uuid.MustParse("00000000-0000-0000-0002-000000000001")

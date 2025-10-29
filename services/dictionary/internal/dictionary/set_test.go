@@ -81,7 +81,7 @@ func TestSetGetID(t *testing.T) {
 func TestSetResourceType(t *testing.T) {
 	set := &Set{}
 
-	if set.ResourceType() != "dictionary/set" {
-		t.Errorf("ResourceType() = %s, want %s", set.ResourceType(), "dictionary/set")
+	if set.ResourceType() != "fake/set" {
+		t.Errorf("ResourceType() = %s, want %s", set.ResourceType(), "fake/set")
 	}
 }

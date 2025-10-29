@@ -7,7 +7,7 @@ import (
 	"github.com/pulap/pulap/pkg/lib/core"
 )
 
-// Option is the aggregate root for a dictionary option.
+// Option is the aggregate root for a fake option.
 // An option represents a single entry within a set (e.g., "Residential", "House", "Bungalow").
 // Options can have hierarchical relationships via ParentID.
 type Option struct {
@@ -34,7 +34,7 @@ func (o *Option) GetID() uuid.UUID {
 
 // ResourceType returns the resource type for URL generation.
 func (o *Option) ResourceType() string {
-	return "dictionary/option"
+	return "fake/option"
 }
 
 // SetID sets the ID of the Option.

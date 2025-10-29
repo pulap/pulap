@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ListSets shows all dictionary sets
+// ListSets shows all fake sets
 func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.http.Start(w, r, "Handler.ListSets")
 	defer finish()
@@ -33,7 +33,7 @@ func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":     "Dictionary Sets",
 		"Sets":      sets,
-		"ActiveNav": "dictionary",
+		"ActiveNav": "fake",
 		"Template":  "list-sets-content",
 	}
 
@@ -57,7 +57,7 @@ func (h *Handler) NewSet(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]interface{}{
 		"Title":     "New Set",
-		"ActiveNav": "dictionary",
+		"ActiveNav": "fake",
 		"Template":  "new-set",
 	}
 
@@ -130,7 +130,7 @@ func (h *Handler) ShowSet(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":     fmt.Sprintf("Set: %s", set.Label),
 		"Set":       set,
-		"ActiveNav": "dictionary",
+		"ActiveNav": "fake",
 		"Template":  "show-set",
 	}
 
@@ -171,7 +171,7 @@ func (h *Handler) EditSet(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":     fmt.Sprintf("Edit: %s", set.Label),
 		"Set":       set,
-		"ActiveNav": "dictionary",
+		"ActiveNav": "fake",
 		"Template":  "edit-set",
 	}
 
@@ -244,7 +244,7 @@ func (h *Handler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/list-sets", http.StatusSeeOther)
 }
 
-// ListOptions shows all dictionary options
+// ListOptions shows all fake options
 func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.http.Start(w, r, "Handler.ListOptions")
 	defer finish()
@@ -289,7 +289,7 @@ func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 		"Options":       options,
 		"Sets":          sets,
 		"SelectedSetID": setIDStr,
-		"ActiveNav":     "dictionary",
+		"ActiveNav":     "fake",
 		"Template":      "list-options-content",
 	}
 
@@ -324,7 +324,7 @@ func (h *Handler) NewOption(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":     "New Option",
 		"Sets":      sets,
-		"ActiveNav": "dictionary",
+		"ActiveNav": "fake",
 		"Template":  "new-option",
 	}
 
@@ -413,7 +413,7 @@ func (h *Handler) ShowOption(w http.ResponseWriter, r *http.Request) {
 		"Option":      option,
 		"SetName":     option.SetName,
 		"ParentLabel": option.ParentLabel,
-		"ActiveNav":   "dictionary",
+		"ActiveNav":   "fake",
 		"Template":    "show-option",
 	}
 
@@ -467,7 +467,7 @@ func (h *Handler) EditOption(w http.ResponseWriter, r *http.Request) {
 		"Option":        option,
 		"Sets":          sets,
 		"ParentOptions": parentOptions,
-		"ActiveNav":     "dictionary",
+		"ActiveNav":     "fake",
 		"Template":      "edit-option",
 	}
 

@@ -24,7 +24,7 @@ type Property struct {
 	UpdatedBy      string         `json:"updated_by"`
 }
 
-// Classification represents the property taxonomy (references to dictionary service).
+// Classification represents the property taxonomy (references to fake service).
 type Classification struct {
 	CategoryID uuid.UUID `json:"category_id"`
 	TypeID     uuid.UUID `json:"type_id"`
@@ -57,32 +57,32 @@ type Coordinates struct {
 
 // Features represents the physical characteristics and amenities.
 type Features struct {
-	TotalArea      float64  `json:"total_area"`
-	CoveredArea    float64  `json:"covered_area"`
-	LandArea       float64  `json:"land_area"`
-	Bedrooms       int      `json:"bedrooms"`
-	Bathrooms      int      `json:"bathrooms"`
-	HalfBaths      int      `json:"half_baths"`
-	Rooms          int      `json:"rooms"`
-	Parking        int      `json:"parking"`
-	CoveredParking int      `json:"covered_parking"`
-	Floors         int      `json:"floors"`
-	Floor          int      `json:"floor"`
-	YearBuilt      int      `json:"year_built"`
-	Condition      string   `json:"condition"`
-	Pool           bool     `json:"pool"`
-	Garden         bool     `json:"garden"`
-	Balcony        bool     `json:"balcony"`
-	Terrace        bool     `json:"terrace"`
-	Elevator       bool     `json:"elevator"`
-	AirConditioning bool    `json:"air_conditioning"`
-	Heating        bool     `json:"heating"`
-	Furnished      bool     `json:"furnished"`
-	PetFriendly    bool     `json:"pet_friendly"`
-	Storage        bool     `json:"storage"`
-	Laundry        bool     `json:"laundry"`
-	Fireplace      bool     `json:"fireplace"`
-	Amenities      []string `json:"amenities,omitempty"`
+	TotalArea       float64  `json:"total_area"`
+	CoveredArea     float64  `json:"covered_area"`
+	LandArea        float64  `json:"land_area"`
+	Bedrooms        int      `json:"bedrooms"`
+	Bathrooms       int      `json:"bathrooms"`
+	HalfBaths       int      `json:"half_baths"`
+	Rooms           int      `json:"rooms"`
+	Parking         int      `json:"parking"`
+	CoveredParking  int      `json:"covered_parking"`
+	Floors          int      `json:"floors"`
+	Floor           int      `json:"floor"`
+	YearBuilt       int      `json:"year_built"`
+	Condition       string   `json:"condition"`
+	Pool            bool     `json:"pool"`
+	Garden          bool     `json:"garden"`
+	Balcony         bool     `json:"balcony"`
+	Terrace         bool     `json:"terrace"`
+	Elevator        bool     `json:"elevator"`
+	AirConditioning bool     `json:"air_conditioning"`
+	Heating         bool     `json:"heating"`
+	Furnished       bool     `json:"furnished"`
+	PetFriendly     bool     `json:"pet_friendly"`
+	Storage         bool     `json:"storage"`
+	Laundry         bool     `json:"laundry"`
+	Fireplace       bool     `json:"fireplace"`
+	Amenities       []string `json:"amenities,omitempty"`
 }
 
 // Price represents pricing information.

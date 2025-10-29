@@ -12,14 +12,14 @@ import (
 // with its classification, location, physical features, and pricing information.
 type Property struct {
 	ID             uuid.UUID      `json:"id"`
-	Name           string         `json:"name"`                     // Short name/title for the property
-	Description    string         `json:"description"`              // Detailed description
-	Classification Classification `json:"classification"`           // Category, Type, Subtype (dictionary refs)
-	Location       Location       `json:"location"`                 // Address and coordinates
-	Features       Features       `json:"features"`                 // Physical characteristics
-	Price          Price          `json:"price"`                    // Pricing information
-	Status         string         `json:"status"`                   // e.g., "available", "sold", "rented", "reserved"
-	OwnerID        string         `json:"owner_id,omitempty"`       // Reference to owner/user
+	Name           string         `json:"name"`               // Short name/title for the property
+	Description    string         `json:"description"`        // Detailed description
+	Classification Classification `json:"classification"`     // Category, Type, Subtype (fake refs)
+	Location       Location       `json:"location"`           // Address and coordinates
+	Features       Features       `json:"features"`           // Physical characteristics
+	Price          Price          `json:"price"`              // Pricing information
+	Status         string         `json:"status"`             // e.g., "available", "sold", "rented", "reserved"
+	OwnerID        string         `json:"owner_id,omitempty"` // Reference to owner/user
 	CreatedAt      time.Time      `json:"created_at"`
 	CreatedBy      string         `json:"created_by"`
 	UpdatedAt      time.Time      `json:"updated_at"`
@@ -28,10 +28,10 @@ type Property struct {
 
 // Price represents pricing information for a property.
 type Price struct {
-	Amount   float64 `json:"amount"`             // Price amount
-	Currency string  `json:"currency"`           // e.g., "USD", "EUR", "ARS"
-	Type     string  `json:"type"`               // e.g., "sale", "rent_monthly", "rent_daily"
-	Negotiable bool  `json:"negotiable"`         // Whether price is negotiable
+	Amount     float64 `json:"amount"`     // Price amount
+	Currency   string  `json:"currency"`   // e.g., "USD", "EUR", "ARS"
+	Type       string  `json:"type"`       // e.g., "sale", "rent_monthly", "rent_daily"
+	Negotiable bool    `json:"negotiable"` // Whether price is negotiable
 }
 
 // Validate performs basic validation on the price.

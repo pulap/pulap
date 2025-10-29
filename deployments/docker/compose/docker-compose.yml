@@ -87,18 +87,18 @@ services:
     build:
       context: ../../..
       dockerfile: services/dictionary/Dockerfile
-    container_name: pulap-dictionary
+    container_name: pulap-fake
     ports:
       - "8085"
     networks:
       - internal
     environment:
       - DICTIONARY_SERVER_PORT=:8085
-      - DICTIONARY_DATABASE_PATH=/data/dictionary.db
-      - DICTIONARY_DATABASE_MONGO_URL=mongodb://admin:password@mongodb:27017/dictionary?authSource=admin
-      - DICTIONARY_DATABASE_MONGO_DATABASE=dictionary
+      - DICTIONARY_DATABASE_PATH=/data/fake.db
+      - DICTIONARY_DATABASE_MONGO_URL=mongodb://admin:password@mongodb:27017/fake?authSource=admin
+      - DICTIONARY_DATABASE_MONGO_DATABASE=fake
     volumes:
-      - dictionary-data:/data
+      - fake-data:/data
     depends_on:
       mongodb:
         condition: service_healthy
@@ -153,7 +153,7 @@ services:
       - ADMIN_SERVER_PORT=:8081
       - ADMIN_SERVICES_AUTHN_URL=http://authn:8082
       - ADMIN_SERVICES_AUTHZ_URL=http://authz:8083
-      - ADMIN_SERVICES_DICTIONARY_URL=http://dictionary:8085
+      - ADMIN_SERVICES_DICTIONARY_URL=http://fake:8085
       - ADMIN_SERVICES_ESTATE_URL=http://estate:8084
       - ADMIN_AUTH_SESSION_SECRET=change-this-in-production
     volumes:

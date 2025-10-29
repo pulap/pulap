@@ -3,7 +3,7 @@ server:
 
 database:
   mongo_url: "mongodb://localhost:27017"
-  mongo_database: "dictionary"
+  mongo_database: "fake"
 
 log:
   level: "info"
