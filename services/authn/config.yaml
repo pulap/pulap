@@ -17,11 +17,11 @@ database:
   
   # MongoDB connection string.
   # Env: AUTHN_DATABASE_MONGO_URL
-  mongo_url: "${AUTHN_DATABASE_MONGO_URL:-mongodb://localhost:27017}"
-  
+  mongo_url: "mongodb://admin:password@localhost:27017/authn?authSource=admin"
+
   # MongoDB database name.
-  # Env: AUTHN_DATABASE_MONGO_DATABASE  
-  mongo_database: "${AUTHN_DATABASE_MONGO_DATABASE:-authn}"
+  # Env: AUTHN_DATABASE_MONGO_DATABASE
+  mongo_database: "authn"
 
 auth:
   # AES-GCM encryption key for PII data (32 bytes).

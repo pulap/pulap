@@ -11,6 +11,14 @@ database:
   # Env: ESTATE_DATABASE_PATH
   path: "./app.db"
 
+  # MongoDB connection string.
+  # Env: ESTATE_DATABASE_MONGO_URL
+  mongo_url: "mongodb://admin:password@localhost:27017/estate?authSource=admin"
+
+  # MongoDB database name.
+  # Env: ESTATE_DATABASE_MONGO_DATABASE
+  mongo_database: "estate"
+
 log:
   level: "info"
 

@@ -27,7 +27,9 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Path string `koanf:"path"`
+	Path          string `koanf:"path"`
+	MongoURL      string `koanf:"mongo_url"`
+	MongoDatabase string `koanf:"mongo_database"`
 }
 
 type LogConfig struct {
@@ -44,7 +46,9 @@ func New() *Config {
 			Port: ":8084",
 		},
 		Database: DatabaseConfig{
-			Path: "./app.db",
+			Path:          "./app.db",
+			MongoURL:      "mongodb://localhost:27017",
+			MongoDatabase: "estate",
 		},
 		Log: LogConfig{
 			Level: "info",
