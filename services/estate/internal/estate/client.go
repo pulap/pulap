@@ -26,7 +26,7 @@ type Client interface {
 }
 
 // Option represents a dictionary option (category, type, or subtype).
-// This is a DTO for the Dictionary service's Option entity.
+// This is a data type for the Dictionary service's Option entity.
 type Option struct {
 	ID          uuid.UUID  `json:"id"`
 	SetID       uuid.UUID  `json:"set_id"`
@@ -46,8 +46,8 @@ type Option struct {
 // This is a DTO for the Dictionary service's Set entity.
 type Set struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`        // e.g., "estate_category", "estate_type"
-	Label       string    `json:"label"`       // Human-readable label
+	Name        string    `json:"name"`  // e.g., "estate_category", "estate_type"
+	Label       string    `json:"label"` // Human-readable label
 	Description string    `json:"description,omitempty"`
 	Active      bool      `json:"active"`
 	CreatedAt   time.Time `json:"created_at"`

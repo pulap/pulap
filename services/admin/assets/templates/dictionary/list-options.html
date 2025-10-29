@@ -1,0 +1,83 @@
+{{template "base.html" .}}
+
+{{define "list-options-content"}}
+<div class="page-header">
+    <h1 class="page-title">Dictionary Options</h1>
+    <div style="display: flex; gap: 1rem;">
+        <a href="/list-sets" class="btn btn-secondary">View Sets</a>
+        <a href="/new-option" class="btn btn-manage">Add New Option</a>
+    </div>
+</div>
+
+{{if .Sets}}
+<div class="filter-section" style="margin-bottom: 1.5rem;">
+    <label for="set-filter">Filter by Set:</label>
+    <select id="set-filter" onchange="window.location.href='/list-options?set_id=' + this.value">
+        <option value="">All Sets</option>
+        {{range .Sets}}
+        <option value="{{.ID}}" {{if eq $.SelectedSetID .ID}}selected{{end}}>{{.Label}}</option>
+        {{end}}
+    </select>
+</div>
+{{end}}
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Label</th>
+                <th>Set</th>
+                <th>Parent</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{if .Options}}
+                {{range .Options}}
+                <tr>
+                    <td><code>{{.Key}}</code></td>
+                    <td><strong>{{.Label}}</strong></td>
+                    <td>{{.SetName}}</td>
+                    <td>
+                        {{if .ParentLabel}}
+                            {{.ParentLabel}}
+                        {{else}}
+                            <em>Root</em>
+                        {{end}}
+                    </td>
+                    <td>{{.Order}}</td>
+                    <td>
+                        {{if .Active}}
+                            <span class="status-active">Active</span>
+                        {{else}}
+                            <span class="status-inactive">Inactive</span>
+                        {{end}}
+                    </td>
+                    <td class="actions">
+                        <a href="/show-option/{{.ID}}" class="btn btn-sm btn-view">View</a>
+                        <a href="/edit-option/{{.ID}}" class="btn btn-sm btn-edit">Edit</a>
+                        <button
+                            hx-post="/delete-option/{{.ID}}"
+                            hx-confirm="Are you sure you want to delete {{.Label}}?"
+                            hx-target="closest tr"
+                            hx-swap="outerHTML swap:1s"
+                            class="btn btn-sm btn-danger">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {{end}}
+            {{else}}
+            <tr>
+                <td colspan="7" class="text-center">
+                    <p style="padding: 2rem; color: #666;">No options found. <a href="/new-option">Create the first option</a>.</p>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

@@ -2,9 +2,9 @@
 
 # Variables
 PROJECT_NAME=pulap
-SERVICES=authn authz estate admin
-BASE_PORTS=8080 8081 8082 8083 8084
-PKG_LIBS=auth core fake
+SERVICES=authn authz dictionary estate admin
+BASE_PORTS=8080 8081 8082 8083 8084 8085
+PKG_LIBS=auth core fake telemetry
 COMPOSE_FILE?=deployments/docker/compose/docker-compose.yml
 COMPOSE_LOG_FILTER?=pulap-mongodb
 COMPOSE_MONGO_USER?=admin
@@ -15,12 +15,14 @@ NOMAD_JOBS_DIR?=deployments/nomad/jobs
 NOMAD_JOBS?=$(NOMAD_JOBS_DIR)/mongodb.nomad $(NOMAD_JOBS_DIR)/pulap-services.nomad
 NOMAD_AUTHN_IMAGE?=pulap-authn:latest
 NOMAD_AUTHZ_IMAGE?=pulap-authz:latest
+NOMAD_DICTIONARY_IMAGE?=pulap-dictionary:latest
 NOMAD_ESTATE_IMAGE?=pulap-estate:latest
 NOMAD_ADMIN_IMAGE?=pulap-admin:latest
 
 MONGO_URL?=mongodb://admin:password@localhost:27017/admin?authSource=admin
 AUTHN_DB?=authn
 AUTHZ_DB?=authz
+DICTIONARY_DB?=dictionary
 ESTATE_DB?=estate
 TAIL_LINES?=0
 FRESH_LOG_LINES?=200
@@ -69,7 +71,7 @@ help:
 	@echo "  nomad-stop   - Stop and purge Nomad jobs"
 	@echo "  nomad-status - Show current job status in Nomad"
 	@echo ""
-	@echo "Individual service targets (replace <service> with authn/authz/estate/admin):"
+	@echo "Individual service targets (replace <service> with authn/authz/dictionary/estate/admin):"
 	@echo "  build-<service>  - Build specific service"
 	@echo "  test-<service>   - Test specific service"
 	@echo "  lint-<service>   - Lint specific service"
@@ -142,8 +144,8 @@ reset-compose-data:
 		echo "❌ compose MongoDB service is not running. Start it first (make run-compose)."; \
 		exit 1; \
 	fi
-	@echo "🧹 Clearing MongoDB databases inside compose (AuthN=$(AUTHN_DB), AuthZ=$(AUTHZ_DB))..."
-	@docker compose -f $(COMPOSE_FILE) exec mongodb mongosh --quiet --username $(COMPOSE_MONGO_USER) --password $(COMPOSE_MONGO_PASS) --authenticationDatabase admin --eval 'const dbs = ["$(AUTHN_DB)", "$(AUTHZ_DB)"]; dbs.forEach(name => { const res = db.getSiblingDB(name).dropDatabase(); printjson({db: name, dropped: res.ok === 1}); });'
+	@echo "🧹 Clearing MongoDB databases inside compose (AuthN=$(AUTHN_DB), AuthZ=$(AUTHZ_DB), Dictionary=$(DICTIONARY_DB), Estate=$(ESTATE_DB))..."
+	@docker compose -f $(COMPOSE_FILE) exec mongodb mongosh --quiet --username $(COMPOSE_MONGO_USER) --password $(COMPOSE_MONGO_PASS) --authenticationDatabase admin --eval 'const dbs = ["$(AUTHN_DB)", "$(AUTHZ_DB)", "$(DICTIONARY_DB)", "$(ESTATE_DB)"]; dbs.forEach(name => { const res = db.getSiblingDB(name).dropDatabase(); printjson({db: name, dropped: res.ok === 1}); });'
 	@echo "✅ Compose MongoDB databases cleared."
 
 # Build all services
@@ -164,6 +166,10 @@ build-authn:
 build-authz:
 	@echo "📦 Building authz service..."
 	@cd services/authz && go build -o authz .
+
+build-dictionary:
+	@echo "📦 Building dictionary service..."
+	@cd services/dictionary && go build -o dictionary .
 
 build-estate:
 	@echo "📦 Building estate service..."
@@ -240,6 +246,9 @@ test-authn:
 
 test-authz:
 	@cd services/authz && go test ./...
+
+test-dictionary:
+	@cd services/dictionary && go test ./...
 
 test-estate:
 	@cd services/estate && go test ./...
@@ -324,6 +333,9 @@ lint-authn:
 lint-authz:
 	@cd services/authz && golangci-lint run
 
+lint-dictionary:
+	@cd services/dictionary && golangci-lint run
+
 lint-estate:
 	@cd services/estate && golangci-lint run
 
@@ -349,16 +361,19 @@ run-all:
 	@cd services/authn && nohup ./authn > authn.log 2>&1 & echo $$! > authn.pid; sleep 2
 	@echo "   📦 Starting AuthZ on :8083..."
 	@cd services/authz && nohup ./authz > authz.log 2>&1 & echo $$! > authz.pid; sleep 2
+	@echo "   📦 Starting Dictionary on :8085..."
+	@cd services/dictionary && nohup ./dictionary > dictionary.log 2>&1 & echo $$! > dictionary.pid; sleep 2
 	@echo "   📦 Starting Estate on :8084..."
 	@cd services/estate && nohup ./estate > estate.log 2>&1 & echo $$! > estate.pid; sleep 2
 	@echo ""
 	@echo "🎉 All Pulap services started!"
 	@echo "📡 Services running:"
 	@echo "   • Portal (external): http://localhost:8080"
-	@echo "   • Admin:  http://localhost:8081 (business admin)"
-	@echo "   • AuthN:  http://localhost:8082 (authentication)"
-	@echo "   • AuthZ:  http://localhost:8083 (authorization)"
-	@echo "   • Estate: http://localhost:8084 (real estate)"
+	@echo "   • Admin:      http://localhost:8081 (business admin)"
+	@echo "   • AuthN:      http://localhost:8082 (authentication)"
+	@echo "   • AuthZ:      http://localhost:8083 (authorization)"
+	@echo "   • Dictionary: http://localhost:8085 (dictionary)"
+	@echo "   • Estate:     http://localhost:8084 (real estate)"
 	@echo ""
 	@echo "🛑 To stop all services: make stop-all"
 
@@ -369,6 +384,9 @@ run-authn: build-authn
 run-authz: build-authz
 	@cd services/authz && ./authz
 
+run-dictionary: build-dictionary
+	@cd services/dictionary && ./dictionary
+
 run-estate: build-estate
 	@cd services/estate && ./estate
 
@@ -377,7 +395,7 @@ run-admin: build-admin
 
 stop-all:
 	@echo "🛑 Stopping all Pulap services..."
-	@for port in 8080 8081 8082 8083 8084; do \
+	@for port in $(BASE_PORTS); do \
 		if lsof -ti:$$port >/dev/null 2>&1; then \
 			echo "🛑 Stopping process on port $$port"; \
 			lsof -ti:$$port | xargs -r kill -9 || true; \
@@ -435,6 +453,10 @@ db-reset-dev:
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);'
 	@echo "🧹 Clearing AuthZ grants collection ($(AUTHZ_DB).grants)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);'
+	@echo "🧹 Clearing Dictionary sets collection ($(DICTIONARY_DB).sets)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.sets.deleteMany({}); printjson(result);'
+	@echo "🧹 Clearing Dictionary options collection ($(DICTIONARY_DB).options)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.options.deleteMany({}); printjson(result);'
 	@echo "🧹 Clearing Estate properties collection ($(ESTATE_DB).properties)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);'
 	@echo "✅ Host MongoDB collections cleared."
@@ -445,6 +467,8 @@ db-reset-compose:
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);' || echo "⚠️  AuthN collection clear failed"
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ roles clear failed"
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ grants clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.sets.deleteMany({}); printjson(result);' || echo "⚠️  Dictionary sets clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.options.deleteMany({}); printjson(result);' || echo "⚠️  Dictionary options clear failed"
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);' || echo "⚠️  Estate properties clear failed"
 	@echo "✅ Docker Compose MongoDB collections cleared."
 

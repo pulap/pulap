@@ -87,6 +87,23 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/create-grant", h.CreateGrant)
 		r.Post("/delete-grant/{id}", h.DeleteGrant)
 
+		h.log().Info("Registering dictionary management routes...")
+		r.Get("/list-sets", h.ListSets)
+		r.Get("/new-set", h.NewSet)
+		r.Post("/create-set", h.CreateSet)
+		r.Get("/show-set/{id}", h.ShowSet)
+		r.Get("/edit-set/{id}", h.EditSet)
+		r.Post("/update-set/{id}", h.UpdateSet)
+		r.Post("/delete-set/{id}", h.DeleteSet)
+
+		r.Get("/list-options", h.ListOptions)
+		r.Get("/new-option", h.NewOption)
+		r.Post("/create-option", h.CreateOption)
+		r.Get("/show-option/{id}", h.ShowOption)
+		r.Get("/edit-option/{id}", h.EditOption)
+		r.Post("/update-option/{id}", h.UpdateOption)
+		r.Post("/delete-option/{id}", h.DeleteOption)
+
 		h.log().Info("Registering property management routes...")
 		r.Get("/list-properties", h.ListProperties)
 		r.Get("/new-property", h.NewProperty)
