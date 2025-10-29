@@ -53,10 +53,14 @@ func main() {
 	roleRepo := admin.NewFakeRoleRepo()
 	grantRepo := admin.NewFakeGrantRepo(userRepo, roleRepo)
 
+	estateClient := core.NewServiceClient(cfg.Services.EstateURL)
+	propertyRepo := admin.NewAPIPropertyRepo(estateClient)
+
 	repos := admin.Repos{
-		UserRepo:  userRepo,
-		RoleRepo:  roleRepo,
-		GrantRepo: grantRepo,
+		UserRepo:     userRepo,
+		RoleRepo:     roleRepo,
+		GrantRepo:    grantRepo,
+		PropertyRepo: propertyRepo,
 	}
 
 	adminService := admin.NewDefaultService(repos, xparams)
@@ -65,7 +69,9 @@ func main() {
 	authZClient := core.NewAuthZHTTPClient(cfg.Services.AuthzURL)
 	deps = append(deps, authZClient)
 
-	adminHandler := admin.NewHandler(tmplMgr, adminService, authZClient, authnClient, xparams)
+	dictClient := admin.NewFakeDictionaryClient()
+
+	adminHandler := admin.NewHandler(tmplMgr, adminService, authZClient, authnClient, dictClient, xparams)
 	deps = append(deps, adminHandler)
 
 	starts, stops, _ := core.Setup(ctx, router, deps...)

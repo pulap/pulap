@@ -18,9 +18,10 @@ NOMAD_AUTHZ_IMAGE?=pulap-authz:latest
 NOMAD_ESTATE_IMAGE?=pulap-estate:latest
 NOMAD_ADMIN_IMAGE?=pulap-admin:latest
 
-MONGO_URL?=mongodb://localhost:27017
+MONGO_URL?=mongodb://admin:password@localhost:27017/admin?authSource=admin
 AUTHN_DB?=authn
 AUTHZ_DB?=authz
+ESTATE_DB?=estate
 TAIL_LINES?=0
 FRESH_LOG_LINES?=200
 LOG_STREAM?=log-clean
@@ -172,19 +173,19 @@ build-admin:
 	@echo "📦 Building admin service..."
 	@cd services/admin && go build -o admin .
 
-log-raw:
+log-stream:
 	@echo "📜 Streaming raw logs from all services..."
-	@tail -n $(TAIL_LINES) -F services/*/*.log | \
-	awk '{
-		if ($$0 ~ /^==> .* <==$$/) next;
-		printf "%s %s\n", strftime("[%H:%M:%S]"), $$0;
-	}'
+	@tail -n $(TAIL_LINES) -F services/*/*.log 2>/dev/null | \
+	awk '{ \
+		if ($$0 ~ /^==> .* <==$$/) next; \
+		printf "%s %s\n", strftime("[%H:%M:%S]"), $$0; \
+	}' || true
 
-logs-clean:
+log-clean:
 	@echo "📜 Streaming condensed logs (time | level | message)..."
-	@tail -n $(TAIL_LINES) -F services/*/*.log | scripts/log_clean.awk
+	@tail -n $(TAIL_LINES) -F services/*/*.log 2>/dev/null | scripts/log_clean.awk || true
 
-logs: log-raw
+logs: log-stream
 
 log-clear:
 	@echo "🧹 Clearing all service logs..."
@@ -192,9 +193,9 @@ log-clear:
 	@echo "✅ All logs removed."
 
 db-clean-dev:
-	@echo "🗑  Removing local development databases..."
-	@rm -f services/authn/authn.db services/authz/authz.db services/estate/app.db
-	@echo "✅ Local development databases removed."
+	@echo "🗑  Removing local SQLite reference databases..."
+	@rm -f services/authn/authn.db services/authz/authz.db
+	@echo "✅ Local SQLite reference databases removed."
 
 fresh-start:
 	@echo "♻️  Resetting development environment..."
@@ -420,8 +421,10 @@ dev-deps:
 	@go install golang.org/x/vuln/cmd/govulncheck@latest
 	@echo "✅ Development dependencies installed"
 
+# Reset MongoDB collections for local/Nomad development (host network)
 db-reset-dev:
-	@command -v mongosh >/dev/null 2>&1 || { echo "❌ mongosh not found. Install MongoDB Shell or set MONGO_URL."; exit 1; }
+	@command -v mongosh >/dev/null 2>&1 || { echo "❌ mongosh not found. Install MongoDB Shell."; exit 1; }
+	@echo "🧹 Clearing host MongoDB collections..."
 	@echo "🧹 Clearing AuthN users collection ($(AUTHN_DB).users)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);'
 	@if [ "$(AUTHN_DB)" != "auth" ]; then \
@@ -432,7 +435,18 @@ db-reset-dev:
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);'
 	@echo "🧹 Clearing AuthZ grants collection ($(AUTHZ_DB).grants)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);'
-	@echo "✅ Development Mongo collections cleared."
+	@echo "🧹 Clearing Estate properties collection ($(ESTATE_DB).properties)..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);'
+	@echo "✅ Host MongoDB collections cleared."
+
+# Reset MongoDB collections for Docker Compose (container network)
+db-reset-compose:
+	@echo "🧹 Clearing Docker Compose MongoDB collections..."
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);' || echo "⚠️  AuthN collection clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ roles clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ grants clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);' || echo "⚠️  Estate properties clear failed"
+	@echo "✅ Docker Compose MongoDB collections cleared."
 
 # Tidy all modules
 tidy:

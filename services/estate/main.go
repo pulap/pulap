@@ -10,8 +10,9 @@ import (
 
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/estate/internal/config"
+	"github.com/pulap/pulap/services/estate/internal/dictionary"
 	"github.com/pulap/pulap/services/estate/internal/estate"
-	"github.com/pulap/pulap/services/estate/internal/sqlite"
+	"github.com/pulap/pulap/services/estate/internal/mongo"
 )
 
 const (
@@ -41,11 +42,17 @@ func main() {
 	}, xparams)
 
 	var deps []any
-	EstateRepo := sqlite.NewEstateSQLiteRepo(xparams)
-	deps = append(deps, EstateRepo)
 
-	EstateHandler := estate.NewEstateHandler(EstateRepo, xparams)
-	deps = append(deps, EstateHandler)
+	// Initialize MongoDB repository
+	propertyRepo := mongo.NewPropertyRepo(xparams)
+	deps = append(deps, propertyRepo)
+
+	// Initialize fake dictionary client (will be replaced with HTTP client when dictionary service exists)
+	dictClient := dictionary.NewFake()
+
+	// Initialize property handler
+	propertyHandler := estate.NewHandler(propertyRepo, dictClient, xparams)
+	deps = append(deps, propertyHandler)
 
 	starts, stops, _ := core.Setup(ctx, router, deps...)
 

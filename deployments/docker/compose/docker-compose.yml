@@ -95,6 +95,8 @@ services:
     environment:
       - ESTATE_SERVER_PORT=:8084
       - ESTATE_DATABASE_PATH=/data/estate.db
+      - ESTATE_DATABASE_MONGO_URL=mongodb://admin:password@mongodb:27017/estate?authSource=admin
+      - ESTATE_DATABASE_MONGO_DATABASE=estate
     volumes:
       - estate-data:/data
     depends_on:

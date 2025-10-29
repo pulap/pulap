@@ -13,11 +13,11 @@ database:
   
   # MongoDB connection string.
   # Env: AUTHZ_DATABASE_MONGO_URL
-  mongo_url: "${AUTHZ_DATABASE_MONGO_URL:-mongodb://localhost:27017}"
-  
+  mongo_url: "mongodb://admin:password@localhost:27017/authz?authSource=admin"
+
   # MongoDB database name.
-  # Env: AUTHZ_DATABASE_MONGO_DATABASE  
-  mongo_database: "${AUTHZ_DATABASE_MONGO_DATABASE:-authz}"
+  # Env: AUTHZ_DATABASE_MONGO_DATABASE
+  mongo_database: "authz"
 
 auth:
   authn_url: "http://localhost:8082"
