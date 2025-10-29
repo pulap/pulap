@@ -19,6 +19,7 @@ type Handler struct {
 	service     Service
 	authZClt    *core.AuthzHTTPClient
 	authnClient *core.ServiceClient
+	dictClient  DictionaryClient
 	xparams     config.XParams
 	http        *telemetry.HTTP
 
@@ -30,6 +31,7 @@ func NewHandler(
 	service Service,
 	autZClt *core.AuthzHTTPClient,
 	authnClient *core.ServiceClient,
+	dictClient DictionaryClient,
 	xparams config.XParams,
 ) *Handler {
 	return &Handler{
@@ -37,6 +39,7 @@ func NewHandler(
 		service:     service,
 		authZClt:    autZClt,
 		authnClient: authnClient,
+		dictClient:  dictClient,
 		xparams:     xparams,
 		http: telemetry.NewHTTP(
 			telemetry.WithTracer(xparams.Tracer()),
@@ -83,6 +86,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/user-grants/{userId}", h.UserGrants)
 		r.Post("/create-grant", h.CreateGrant)
 		r.Post("/delete-grant/{id}", h.DeleteGrant)
+
+		h.log().Info("Registering property management routes...")
+		r.Get("/list-properties", h.ListProperties)
+		r.Get("/new-property", h.NewProperty)
+		r.Post("/create-property", h.CreateProperty)
+		r.Get("/show-property/{id}", h.ShowProperty)
+		r.Get("/edit-property/{id}", h.EditProperty)
+		r.Post("/update-property/{id}", h.UpdateProperty)
+		r.Post("/delete-property/{id}", h.DeleteProperty)
 	})
 
 	h.log().Info("Admin routes registered successfully")

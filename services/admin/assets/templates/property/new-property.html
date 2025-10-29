@@ -1,0 +1,174 @@
+{{template "base.html" .}}
+
+{{define "new-property"}}
+<div class="page-header">
+    <h1 class="page-title">Create New Property</h1>
+    <a href="/list-properties" class="btn btn-secondary">← Back to Properties</a>
+</div>
+
+<div class="card">
+    <form method="POST" action="/create-property">
+        <h2>Basic Information</h2>
+
+        <div class="form-group">
+            <label for="name">Property Name *</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status *</label>
+            <select id="status" name="status" required>
+                <option value="available">Available</option>
+                <option value="sold">Sold</option>
+                <option value="rented">Rented</option>
+                <option value="reserved">Reserved</option>
+                <option value="draft">Draft</option>
+            </select>
+        </div>
+
+        <h2 style="margin-top: 2rem;">Classification</h2>
+
+        <div class="form-group">
+            <label for="category_id">Category *</label>
+            <select id="category_id" name="category_id" required>
+                <option value="">-- Select Category --</option>
+                {{range .Categories}}
+                <option value="{{.id}}">{{.name}}</option>
+                {{end}}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="type_id">Type *</label>
+            <select id="type_id" name="type_id" required>
+                <option value="">-- Select Type --</option>
+                {{range .Types}}
+                <option value="{{.id}}">{{.name}}</option>
+                {{end}}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="subtype_id">Subtype</label>
+            <select id="subtype_id" name="subtype_id">
+                <option value="">-- Select Subtype (Optional) --</option>
+                {{range .Subtypes}}
+                <option value="{{.id}}">{{.name}}</option>
+                {{end}}
+            </select>
+        </div>
+
+        <h2 style="margin-top: 2rem;">Location</h2>
+
+        <div class="form-group">
+            <label for="street">Street *</label>
+            <input type="text" id="street" name="street" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="number">Number</label>
+                <input type="text" id="number" name="number">
+            </div>
+
+            <div class="form-group">
+                <label for="unit">Unit</label>
+                <input type="text" id="unit" name="unit" placeholder="Apt 5B">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="city">City *</label>
+                <input type="text" id="city" name="city" required>
+            </div>
+
+            <div class="form-group">
+                <label for="state">State</label>
+                <input type="text" id="state" name="state">
+            </div>
+
+            <div class="form-group">
+                <label for="postal_code">Postal Code</label>
+                <input type="text" id="postal_code" name="postal_code">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="country">Country *</label>
+            <input type="text" id="country" name="country" required>
+        </div>
+
+        <div class="form-group">
+            <label for="region">Region</label>
+            <input type="text" id="region" name="region" placeholder="LATAM">
+        </div>
+
+        <h2 style="margin-top: 2rem;">Features</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div class="form-group">
+                <label for="total_area">Total Area (m²) *</label>
+                <input type="number" id="total_area" name="total_area" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="bedrooms">Bedrooms *</label>
+                <input type="number" id="bedrooms" name="bedrooms" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="bathrooms">Bathrooms *</label>
+                <input type="number" id="bathrooms" name="bathrooms" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="parking">Parking Spaces</label>
+                <input type="number" id="parking" name="parking" min="0" value="0">
+            </div>
+        </div>
+
+        <h2 style="margin-top: 2rem;">Price</h2>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="price_amount">Amount *</label>
+                <input type="number" id="price_amount" name="price_amount" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="currency">Currency *</label>
+                <select id="currency" name="currency" required>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="PLN">PLN</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="price_type">Type *</label>
+                <select id="price_type" name="price_type" required>
+                    <option value="sale">Sale</option>
+                    <option value="rent_monthly">Rent (Monthly)</option>
+                    <option value="rent_daily">Rent (Daily)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="owner_id">Owner ID</label>
+            <input type="text" id="owner_id" name="owner_id" placeholder="agent-001">
+        </div>
+
+        <div class="form-group" style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">Create Property</button>
+            <a href="/list-properties" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
+        </div>
+    </form>
+</div>
+{{end}}

@@ -28,6 +28,14 @@ type Service interface {
 	GetGrant(ctx context.Context, id uuid.UUID) (*Grant, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	DeleteGrant(ctx context.Context, id uuid.UUID) error
+
+	CreateProperty(ctx context.Context, req *CreatePropertyRequest) (*Property, error)
+	GetProperty(ctx context.Context, id uuid.UUID) (*Property, error)
+	ListProperties(ctx context.Context) ([]*Property, error)
+	UpdateProperty(ctx context.Context, id uuid.UUID, req *UpdatePropertyRequest) (*Property, error)
+	DeleteProperty(ctx context.Context, id uuid.UUID) error
+	ListPropertiesByOwner(ctx context.Context, ownerID string) ([]*Property, error)
+	ListPropertiesByStatus(ctx context.Context, status string) ([]*Property, error)
 }
 
 type defaultService struct {
@@ -36,9 +44,10 @@ type defaultService struct {
 }
 
 type Repos struct {
-	UserRepo  UserRepo
-	RoleRepo  RoleRepo
-	GrantRepo GrantRepo
+	UserRepo     UserRepo
+	RoleRepo     RoleRepo
+	GrantRepo    GrantRepo
+	PropertyRepo PropertyRepo
 }
 
 //authzHelper := auth.NewAuthzHelper(authzHTTPClient, 5*time.Minute)
@@ -127,6 +136,38 @@ func (s *defaultService) ListGrants(ctx context.Context) ([]*Grant, error) {
 func (s *defaultService) DeleteGrant(ctx context.Context, id uuid.UUID) error {
 	return s.repos.GrantRepo.Delete(ctx, id)
 }
+
+// Property methods
+
+func (s *defaultService) CreateProperty(ctx context.Context, req *CreatePropertyRequest) (*Property, error) {
+	return s.repos.PropertyRepo.Create(ctx, req)
+}
+
+func (s *defaultService) GetProperty(ctx context.Context, id uuid.UUID) (*Property, error) {
+	return s.repos.PropertyRepo.Get(ctx, id)
+}
+
+func (s *defaultService) ListProperties(ctx context.Context) ([]*Property, error) {
+	return s.repos.PropertyRepo.List(ctx)
+}
+
+func (s *defaultService) UpdateProperty(ctx context.Context, id uuid.UUID, req *UpdatePropertyRequest) (*Property, error) {
+	return s.repos.PropertyRepo.Update(ctx, id, req)
+}
+
+func (s *defaultService) DeleteProperty(ctx context.Context, id uuid.UUID) error {
+	return s.repos.PropertyRepo.Delete(ctx, id)
+}
+
+func (s *defaultService) ListPropertiesByOwner(ctx context.Context, ownerID string) ([]*Property, error) {
+	return s.repos.PropertyRepo.ListByOwner(ctx, ownerID)
+}
+
+func (s *defaultService) ListPropertiesByStatus(ctx context.Context, status string) ([]*Property, error) {
+	return s.repos.PropertyRepo.ListByStatus(ctx, status)
+}
+
+// Helper methods
 
 func (s *defaultService) log() core.Logger {
 	return s.xparams.Log()
