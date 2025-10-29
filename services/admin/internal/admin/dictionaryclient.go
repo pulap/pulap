@@ -9,9 +9,24 @@ import (
 
 // DictionaryClient provides access to dictionary service for taxonomy data.
 type DictionaryClient interface {
+	// Property classification helpers
 	ListCategories(ctx context.Context) ([]DictionaryOption, error)
 	ListTypesByCategory(ctx context.Context, categoryID uuid.UUID) ([]DictionaryOption, error)
 	ListSubtypesByType(ctx context.Context, typeID uuid.UUID) ([]DictionaryOption, error)
+
+	// Set CRUD operations
+	ListSets(ctx context.Context) ([]DictionarySet, error)
+	GetSet(ctx context.Context, id uuid.UUID) (*DictionarySet, error)
+	CreateSet(ctx context.Context, req *CreateSetRequest) (*DictionarySet, error)
+	UpdateSet(ctx context.Context, id uuid.UUID, req *UpdateSetRequest) (*DictionarySet, error)
+	DeleteSet(ctx context.Context, id uuid.UUID) error
+
+	// Option CRUD operations
+	ListOptions(ctx context.Context, setID *uuid.UUID) ([]DictionaryOptionDetail, error)
+	GetOption(ctx context.Context, id uuid.UUID) (*DictionaryOptionDetail, error)
+	CreateOption(ctx context.Context, req *CreateOptionRequest) (*DictionaryOptionDetail, error)
+	UpdateOption(ctx context.Context, id uuid.UUID, req *UpdateOptionRequest) (*DictionaryOptionDetail, error)
+	DeleteOption(ctx context.Context, id uuid.UUID) error
 }
 
 // DictionaryOption represents a dictionary option.
@@ -63,6 +78,48 @@ func (c *FakeDictionaryClient) ListSubtypesByType(ctx context.Context, typeID uu
 	}, nil
 }
 
+// Set CRUD stub implementations for FakeDictionaryClient
+func (c *FakeDictionaryClient) ListSets(ctx context.Context) ([]DictionarySet, error) {
+	return []DictionarySet{}, nil
+}
+
+func (c *FakeDictionaryClient) GetSet(ctx context.Context, id uuid.UUID) (*DictionarySet, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) CreateSet(ctx context.Context, req *CreateSetRequest) (*DictionarySet, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) UpdateSet(ctx context.Context, id uuid.UUID, req *UpdateSetRequest) (*DictionarySet, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) DeleteSet(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
+// Option CRUD stub implementations for FakeDictionaryClient
+func (c *FakeDictionaryClient) ListOptions(ctx context.Context, setID *uuid.UUID) ([]DictionaryOptionDetail, error) {
+	return []DictionaryOptionDetail{}, nil
+}
+
+func (c *FakeDictionaryClient) GetOption(ctx context.Context, id uuid.UUID) (*DictionaryOptionDetail, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) CreateOption(ctx context.Context, req *CreateOptionRequest) (*DictionaryOptionDetail, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) UpdateOption(ctx context.Context, id uuid.UUID, req *UpdateOptionRequest) (*DictionaryOptionDetail, error) {
+	return nil, nil
+}
+
+func (c *FakeDictionaryClient) DeleteOption(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
 // APIDictionaryClient calls the real dictionary service.
 type APIDictionaryClient struct {
 	client *core.ServiceClient
@@ -95,6 +152,68 @@ func (c *APIDictionaryClient) ListSubtypesByType(ctx context.Context, typeID uui
 	// TODO: Implement when dictionary service is ready
 	fake := NewFakeDictionaryClient()
 	return fake.ListSubtypesByType(ctx, typeID)
+}
+
+// Set CRUD implementations for APIDictionaryClient
+func (c *APIDictionaryClient) ListSets(ctx context.Context) ([]DictionarySet, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.ListSets(ctx)
+}
+
+func (c *APIDictionaryClient) GetSet(ctx context.Context, id uuid.UUID) (*DictionarySet, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.GetSet(ctx, id)
+}
+
+func (c *APIDictionaryClient) CreateSet(ctx context.Context, req *CreateSetRequest) (*DictionarySet, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.CreateSet(ctx, req)
+}
+
+func (c *APIDictionaryClient) UpdateSet(ctx context.Context, id uuid.UUID, req *UpdateSetRequest) (*DictionarySet, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.UpdateSet(ctx, id, req)
+}
+
+func (c *APIDictionaryClient) DeleteSet(ctx context.Context, id uuid.UUID) error {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.DeleteSet(ctx, id)
+}
+
+// Option CRUD implementations for APIDictionaryClient
+func (c *APIDictionaryClient) ListOptions(ctx context.Context, setID *uuid.UUID) ([]DictionaryOptionDetail, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.ListOptions(ctx, setID)
+}
+
+func (c *APIDictionaryClient) GetOption(ctx context.Context, id uuid.UUID) (*DictionaryOptionDetail, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.GetOption(ctx, id)
+}
+
+func (c *APIDictionaryClient) CreateOption(ctx context.Context, req *CreateOptionRequest) (*DictionaryOptionDetail, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.CreateOption(ctx, req)
+}
+
+func (c *APIDictionaryClient) UpdateOption(ctx context.Context, id uuid.UUID, req *UpdateOptionRequest) (*DictionaryOptionDetail, error) {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.UpdateOption(ctx, id, req)
+}
+
+func (c *APIDictionaryClient) DeleteOption(ctx context.Context, id uuid.UUID) error {
+	// TODO: Call dictionary service API
+	fake := NewFakeDictionaryClient()
+	return fake.DeleteOption(ctx, id)
 }
 
 // Helper to convert options to map for templates
