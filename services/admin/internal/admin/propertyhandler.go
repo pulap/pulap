@@ -50,7 +50,7 @@ func (h *Handler) NewProperty(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	// Fetch dictionary options
+	// Fetch fake options
 	categories, err := h.dictClient.ListCategories(ctx)
 	if err != nil {
 		log.Error("error fetching categories", "error", err)
@@ -232,7 +232,7 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch dictionary options
+	// Fetch fake options
 	categories, err := h.dictClient.ListCategories(ctx)
 	if err != nil {
 		log.Error("error fetching categories", "error", err)

@@ -7,12 +7,12 @@ import (
 	"github.com/pulap/pulap/pkg/lib/core"
 )
 
-// Set is the aggregate root for a dictionary set.
+// Set is the aggregate root for a fake set.
 // A set is a container for related options (e.g., "estate_category", "estate_type").
 type Set struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`        // Unique name, e.g., "estate_category", "estate_type"
-	Label       string    `json:"label"`       // Human-readable label
+	Name        string    `json:"name"`  // Unique name, e.g., "estate_category", "estate_type"
+	Label       string    `json:"label"` // Human-readable label
 	Description string    `json:"description,omitempty"`
 	Active      bool      `json:"active"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -28,7 +28,7 @@ func (s *Set) GetID() uuid.UUID {
 
 // ResourceType returns the resource type for URL generation.
 func (s *Set) ResourceType() string {
-	return "dictionary/set"
+	return "fake/set"
 }
 
 // SetID sets the ID of the Set.

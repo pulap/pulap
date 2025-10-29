@@ -3,8 +3,8 @@ package estate
 import "github.com/google/uuid"
 
 // Classification represents the hierarchical taxonomy of a property.
-// It stores references (IDs) to dictionary options, not labels.
-// The dictionary service owns the actual category/type/subtype data.
+// It stores references (IDs) to fake options, not labels.
+// The fake service owns the actual category/type/subtype data.
 type Classification struct {
 	CategoryID uuid.UUID `json:"category_id"` // e.g., Residential, Commercial, Land
 	TypeID     uuid.UUID `json:"type_id"`     // e.g., House, Apartment, Office
@@ -17,7 +17,7 @@ func (c Classification) IsZero() bool {
 }
 
 // Validate performs basic validation on the classification.
-// Full validation against the dictionary service should be done in the handler layer.
+// Full validation against the fake service should be done in the handler layer.
 func (c Classification) Validate() []string {
 	var errors []string
 

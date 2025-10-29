@@ -87,7 +87,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/create-grant", h.CreateGrant)
 		r.Post("/delete-grant/{id}", h.DeleteGrant)
 
-		h.log().Info("Registering dictionary management routes...")
+		h.log().Info("Registering fake management routes...")
 		r.Get("/list-sets", h.ListSets)
 		r.Get("/new-set", h.NewSet)
 		r.Post("/create-set", h.CreateSet)

@@ -7,7 +7,7 @@ import (
 	"github.com/pulap/pulap/pkg/lib/core"
 )
 
-// DictionaryClient provides access to dictionary service for taxonomy data.
+// DictionaryClient provides access to fake service for taxonomy data.
 type DictionaryClient interface {
 	// Property classification helpers
 	ListCategories(ctx context.Context) ([]DictionaryOption, error)
@@ -29,16 +29,16 @@ type DictionaryClient interface {
 	DeleteOption(ctx context.Context, id uuid.UUID) error
 }
 
-// DictionaryOption represents a dictionary option.
+// DictionaryOption represents a fake option.
 type DictionaryOption struct {
 	ID   uuid.UUID
 	Name string
 }
 
-// FakeDictionaryClient provides hardcoded dictionary data for development.
+// FakeDictionaryClient provides hardcoded fake data for development.
 type FakeDictionaryClient struct{}
 
-// NewFakeDictionaryClient creates a new fake dictionary client.
+// NewFakeDictionaryClient creates a new fake fake client.
 func NewFakeDictionaryClient() *FakeDictionaryClient {
 	return &FakeDictionaryClient{}
 }
@@ -120,98 +120,98 @@ func (c *FakeDictionaryClient) DeleteOption(ctx context.Context, id uuid.UUID) e
 	return nil
 }
 
-// APIDictionaryClient calls the real dictionary service.
+// APIDictionaryClient calls the real fake service.
 type APIDictionaryClient struct {
 	client *core.ServiceClient
 }
 
-// NewAPIDictionaryClient creates a new API-based dictionary client.
+// NewAPIDictionaryClient creates a new API-based fake client.
 func NewAPIDictionaryClient(client *core.ServiceClient) *APIDictionaryClient {
 	return &APIDictionaryClient{
 		client: client,
 	}
 }
 
-// ListCategories returns all categories from dictionary service.
+// ListCategories returns all categories from fake service.
 func (c *APIDictionaryClient) ListCategories(ctx context.Context) ([]DictionaryOption, error) {
-	// TODO: Implement when dictionary service is ready
+	// TODO: Implement when fake service is ready
 	// For now, delegate to fake
 	fake := NewFakeDictionaryClient()
 	return fake.ListCategories(ctx)
 }
 
-// ListTypesByCategory returns types for a category from dictionary service.
+// ListTypesByCategory returns types for a category from fake service.
 func (c *APIDictionaryClient) ListTypesByCategory(ctx context.Context, categoryID uuid.UUID) ([]DictionaryOption, error) {
-	// TODO: Implement when dictionary service is ready
+	// TODO: Implement when fake service is ready
 	fake := NewFakeDictionaryClient()
 	return fake.ListTypesByCategory(ctx, categoryID)
 }
 
-// ListSubtypesByType returns subtypes for a type from dictionary service.
+// ListSubtypesByType returns subtypes for a type from fake service.
 func (c *APIDictionaryClient) ListSubtypesByType(ctx context.Context, typeID uuid.UUID) ([]DictionaryOption, error) {
-	// TODO: Implement when dictionary service is ready
+	// TODO: Implement when fake service is ready
 	fake := NewFakeDictionaryClient()
 	return fake.ListSubtypesByType(ctx, typeID)
 }
 
 // Set CRUD implementations for APIDictionaryClient
 func (c *APIDictionaryClient) ListSets(ctx context.Context) ([]DictionarySet, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.ListSets(ctx)
 }
 
 func (c *APIDictionaryClient) GetSet(ctx context.Context, id uuid.UUID) (*DictionarySet, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.GetSet(ctx, id)
 }
 
 func (c *APIDictionaryClient) CreateSet(ctx context.Context, req *CreateSetRequest) (*DictionarySet, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.CreateSet(ctx, req)
 }
 
 func (c *APIDictionaryClient) UpdateSet(ctx context.Context, id uuid.UUID, req *UpdateSetRequest) (*DictionarySet, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.UpdateSet(ctx, id, req)
 }
 
 func (c *APIDictionaryClient) DeleteSet(ctx context.Context, id uuid.UUID) error {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.DeleteSet(ctx, id)
 }
 
 // Option CRUD implementations for APIDictionaryClient
 func (c *APIDictionaryClient) ListOptions(ctx context.Context, setID *uuid.UUID) ([]DictionaryOptionDetail, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.ListOptions(ctx, setID)
 }
 
 func (c *APIDictionaryClient) GetOption(ctx context.Context, id uuid.UUID) (*DictionaryOptionDetail, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.GetOption(ctx, id)
 }
 
 func (c *APIDictionaryClient) CreateOption(ctx context.Context, req *CreateOptionRequest) (*DictionaryOptionDetail, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.CreateOption(ctx, req)
 }
 
 func (c *APIDictionaryClient) UpdateOption(ctx context.Context, id uuid.UUID, req *UpdateOptionRequest) (*DictionaryOptionDetail, error) {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.UpdateOption(ctx, id, req)
 }
 
 func (c *APIDictionaryClient) DeleteOption(ctx context.Context, id uuid.UUID) error {
-	// TODO: Call dictionary service API
+	// TODO: Call fake service API
 	fake := NewFakeDictionaryClient()
 	return fake.DeleteOption(ctx, id)
 }
