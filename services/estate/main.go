@@ -10,8 +10,8 @@ import (
 
 	"github.com/pulap/pulap/pkg/lib/core"
 	"github.com/pulap/pulap/services/estate/internal/config"
-	"github.com/pulap/pulap/services/estate/internal/dictionary"
 	"github.com/pulap/pulap/services/estate/internal/estate"
+	"github.com/pulap/pulap/services/estate/internal/fake"
 	"github.com/pulap/pulap/services/estate/internal/mongo"
 )
 
@@ -47,8 +47,8 @@ func main() {
 	propertyRepo := mongo.NewPropertyRepo(xparams)
 	deps = append(deps, propertyRepo)
 
-	// Initialize fake dictionary client (will be replaced with HTTP client when dictionary service exists)
-	dictClient := dictionary.NewFake()
+	// Initialize fake fake client (will be replaced with HTTP client when fake service exists)
+	dictClient := fake.NewDictionary()
 
 	// Initialize property handler
 	propertyHandler := estate.NewHandler(propertyRepo, dictClient, xparams)

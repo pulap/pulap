@@ -70,9 +70,9 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate classification against dictionary service
+	// Validate classification against fake service
 	if valid, errs, err := h.dictClient.ValidateClassification(ctx, property.Classification); err != nil {
-		log.Error("dictionary service error", "error", err)
+		log.Error("fake service error", "error", err)
 		core.RespondError(w, http.StatusBadGateway, "Could not validate classification")
 		return
 	} else if !valid {
@@ -179,9 +179,9 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate classification against dictionary service
+	// Validate classification against fake service
 	if valid, errs, err := h.dictClient.ValidateClassification(ctx, property.Classification); err != nil {
-		log.Error("dictionary service error", "error", err)
+		log.Error("fake service error", "error", err)
 		core.RespondError(w, http.StatusBadGateway, "Could not validate classification")
 		return
 	} else if !valid {

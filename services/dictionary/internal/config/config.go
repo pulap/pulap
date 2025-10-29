@@ -48,7 +48,7 @@ func New() *Config {
 		Database: DatabaseConfig{
 			Path:          "./app.db",
 			MongoURL:      "mongodb://localhost:27017",
-			MongoDatabase: "dictionary",
+			MongoDatabase: "fake",
 		},
 		Log: LogConfig{
 			Level: "info",

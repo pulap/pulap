@@ -8,7 +8,7 @@ import (
 )
 
 // Client is the interface for interacting with the Dictionary service.
-// It provides methods to retrieve and validate dictionary options.
+// It provides methods to retrieve and validate fake options.
 type Client interface {
 	// GetOption retrieves a single option by ID.
 	GetOption(ctx context.Context, id uuid.UUID) (*Option, error)
@@ -25,7 +25,7 @@ type Client interface {
 	ValidateClassification(ctx context.Context, c Classification) (bool, []string, error)
 }
 
-// Option represents a dictionary option (category, type, or subtype).
+// Option represents a fake option (category, type, or subtype).
 // This is a data type for the Dictionary service's Option entity.
 type Option struct {
 	ID          uuid.UUID  `json:"id"`
@@ -42,7 +42,7 @@ type Option struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-// Set represents a dictionary set (container for options).
+// Set represents a fake set (container for options).
 // This is a DTO for the Dictionary service's Set entity.
 type Set struct {
 	ID          uuid.UUID `json:"id"`

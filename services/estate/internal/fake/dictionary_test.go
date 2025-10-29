@@ -1,4 +1,4 @@
-package dictionary
+package fake
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestFakeGetOption(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Test getting existing option
@@ -37,7 +37,7 @@ func TestFakeGetOption(t *testing.T) {
 }
 
 func TestFakeListOptionsByParent(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Test listing root-level categories (no parent)
@@ -86,7 +86,7 @@ func TestFakeListOptionsByParent(t *testing.T) {
 }
 
 func TestFakeValidateClassificationValid(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Valid classification: Residential -> House -> Bungalow
@@ -109,7 +109,7 @@ func TestFakeValidateClassificationValid(t *testing.T) {
 }
 
 func TestFakeValidateClassificationValidWithoutSubtype(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Valid classification without subtype: Commercial -> Office
@@ -132,7 +132,7 @@ func TestFakeValidateClassificationValidWithoutSubtype(t *testing.T) {
 }
 
 func TestFakeValidateClassificationInvalidHierarchy(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Invalid: Type doesn't belong to Category (house under commercial)
@@ -167,7 +167,7 @@ func TestFakeValidateClassificationInvalidHierarchy(t *testing.T) {
 }
 
 func TestFakeValidateClassificationInvalidSubtypeHierarchy(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Invalid: Subtype doesn't belong to Type (loft under house, should be under apartment)
@@ -199,7 +199,7 @@ func TestFakeValidateClassificationInvalidSubtypeHierarchy(t *testing.T) {
 }
 
 func TestFakeValidateClassificationNonExistentIDs(t *testing.T) {
-	fake := NewFake()
+	fake := NewDictionary()
 	ctx := context.Background()
 
 	// Non-existent category

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	name    = "dictionary"
+	name    = "fake"
 	version = "0.1.0"
 )
 

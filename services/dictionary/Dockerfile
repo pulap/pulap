@@ -11,7 +11,7 @@ COPY services/ services/
 WORKDIR /build/services/dictionary
 
 RUN go mod download
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o dictionary .
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o fake .
 
 FROM alpine:latest
 

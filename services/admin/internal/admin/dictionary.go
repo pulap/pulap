@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// DictionarySet represents a dictionary set.
+// DictionarySet represents a fake set.
 type DictionarySet struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
@@ -17,13 +17,13 @@ type DictionarySet struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// DictionaryOptionDetail represents a detailed dictionary option with lookups.
+// DictionaryOptionDetail represents a detailed fake option with lookups.
 type DictionaryOptionDetail struct {
 	ID          uuid.UUID  `json:"id"`
 	Set         uuid.UUID  `json:"set_id"`
-	SetName     string     `json:"set_name"`      // Populated from lookup
+	SetName     string     `json:"set_name"` // Populated from lookup
 	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
-	ParentLabel string     `json:"parent_label"`  // Populated from lookup
+	ParentLabel string     `json:"parent_label"` // Populated from lookup
 	ShortCode   string     `json:"short_code"`
 	Key         string     `json:"key"`
 	Label       string     `json:"label"`

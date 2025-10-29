@@ -43,7 +43,7 @@ func (r *OptionRepo) Start(ctx context.Context) error {
 
 	dbName := appCfg.Database.MongoDatabase
 	if dbName == "" {
-		dbName = "dictionary"
+		dbName = "fake"
 	}
 
 	// Connect to MongoDB
