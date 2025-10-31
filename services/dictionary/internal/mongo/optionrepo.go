@@ -65,11 +65,12 @@ func (r *OptionRepo) Start(ctx context.Context) error {
 	r.db = client.Database(dbName)
 	r.collection = r.db.Collection("options")
 
-	// Create compound index on set_id and key for uniqueness within a set
+	// Create compound index on (set_id, key, locale) for uniqueness within a set per locale
 	indexModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "set_id", Value: 1},
 			{Key: "key", Value: 1},
+			{Key: "locale", Value: 1},
 		},
 		Options: options.Index().SetUnique(true),
 	}

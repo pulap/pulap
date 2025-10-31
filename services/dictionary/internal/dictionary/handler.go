@@ -37,9 +37,9 @@ func NewHandler(setRepo SetRepo, optionRepo OptionRepo, xparams config.XParams) 
 	}
 }
 
-// RegisterRoutes registers all routes for the fake service.
+// RegisterRoutes registers all routes for the dictionary service.
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Route("/fake", func(r chi.Router) {
+	r.Route("/dictionary", func(r chi.Router) {
 		// Set routes
 		r.Route("/sets", func(r chi.Router) {
 			r.Post("/", h.CreateSet)
@@ -65,7 +65,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 // Set Handlers
 
-// CreateSet handles POST /fake/sets
+// CreateSet handles POST /dictionary/sets
 func (h *Handler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.CreateSet")
 	defer finish()
@@ -99,7 +99,7 @@ func (h *Handler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, set, links...)
 }
 
-// GetSet handles GET /fake/sets/{id}
+// GetSet handles GET /dictionary/sets/{id}
 func (h *Handler) GetSet(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.GetSet")
 	defer finish()
@@ -127,7 +127,7 @@ func (h *Handler) GetSet(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, set, links...)
 }
 
-// GetSetByName handles GET /fake/sets/name/{name}
+// GetSetByName handles GET /dictionary/sets/name/{name}
 func (h *Handler) GetSetByName(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.GetSetByName")
 	defer finish()
@@ -157,7 +157,7 @@ func (h *Handler) GetSetByName(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, set, links...)
 }
 
-// ListSets handles GET /fake/sets
+// ListSets handles GET /dictionary/sets
 func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.ListSets")
 	defer finish()
@@ -182,10 +182,10 @@ func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	core.RespondCollection(w, sets, "fake/set")
+	core.RespondCollection(w, sets, "dictionary/set")
 }
 
-// UpdateSet handles PUT /fake/sets/{id}
+// UpdateSet handles PUT /dictionary/sets/{id}
 func (h *Handler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.UpdateSet")
 	defer finish()
@@ -223,7 +223,7 @@ func (h *Handler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, set, links...)
 }
 
-// DeleteSet handles DELETE /fake/sets/{id}
+// DeleteSet handles DELETE /dictionary/sets/{id}
 func (h *Handler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.DeleteSet")
 	defer finish()
@@ -252,7 +252,7 @@ func (h *Handler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 
 // Option Handlers
 
-// CreateOption handles POST /fake/options
+// CreateOption handles POST /dictionary/options
 func (h *Handler) CreateOption(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.CreateOption")
 	defer finish()
@@ -286,7 +286,7 @@ func (h *Handler) CreateOption(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, option, links...)
 }
 
-// GetOption handles GET /fake/options/{id}
+// GetOption handles GET /dictionary/options/{id}
 func (h *Handler) GetOption(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.GetOption")
 	defer finish()
@@ -314,7 +314,7 @@ func (h *Handler) GetOption(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, option, links...)
 }
 
-// ListOptions handles GET /fake/options
+// ListOptions handles GET /dictionary/options
 func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.ListOptions")
 	defer finish()
@@ -339,10 +339,10 @@ func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	core.RespondCollection(w, options, "fake/option")
+	core.RespondCollection(w, options, "dictionary/option")
 }
 
-// ListOptionsBySetName handles GET /fake/options/set/{setName}
+// ListOptionsBySetName handles GET /dictionary/options/set/{setName}
 func (h *Handler) ListOptionsBySetName(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.ListOptionsBySetName")
 	defer finish()
@@ -363,10 +363,10 @@ func (h *Handler) ListOptionsBySetName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	core.RespondCollection(w, options, "fake/option")
+	core.RespondCollection(w, options, "dictionary/option")
 }
 
-// ListOptionsBySetAndParent handles GET /fake/options/set/{setName}/parent/{parentID}
+// ListOptionsBySetAndParent handles GET /dictionary/options/set/{setName}/parent/{parentID}
 func (h *Handler) ListOptionsBySetAndParent(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.ListOptionsBySetAndParent")
 	defer finish()
@@ -399,10 +399,10 @@ func (h *Handler) ListOptionsBySetAndParent(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	core.RespondCollection(w, options, "fake/option")
+	core.RespondCollection(w, options, "dictionary/option")
 }
 
-// UpdateOption handles PUT /fake/options/{id}
+// UpdateOption handles PUT /dictionary/options/{id}
 func (h *Handler) UpdateOption(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.UpdateOption")
 	defer finish()
@@ -440,7 +440,7 @@ func (h *Handler) UpdateOption(w http.ResponseWriter, r *http.Request) {
 	core.RespondSuccess(w, option, links...)
 }
 
-// DeleteOption handles DELETE /fake/options/{id}
+// DeleteOption handles DELETE /dictionary/options/{id}
 func (h *Handler) DeleteOption(w http.ResponseWriter, r *http.Request) {
 	w, r, finish := h.tlm.Start(w, r, "Handler.DeleteOption")
 	defer finish()
