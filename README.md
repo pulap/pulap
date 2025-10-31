@@ -60,5 +60,5 @@ To stop everything: `make nomad-stop`.
 In CI/CD pipelines set `NOMAD_ADDR` and the relevant `NOMAD_*_IMAGE` variables before invoking `make nomad-run` so the job uses the artifacts published during the build stage.
 
 <p align="center">
-  <img src="docs/img/signin.png" width="1200">
+  <img src="docs/img/gallery/create-property.png" width="1200">
 </p>

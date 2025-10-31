@@ -16,11 +16,33 @@ func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 	log := h.log(r)
 
 	ctx := r.Context()
-	sets, err := h.dictClient.ListSets(ctx)
+
+	// Get filter parameter
+	selectedLocale := r.URL.Query().Get("locale")
+
+	sets, err := h.dictRepo.ListSets(ctx)
 	if err != nil {
 		log.Error("error listing sets", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	// Extract unique locales and filter sets if needed
+	localesMap := make(map[string]bool)
+	var filteredSets []DictionarySet
+
+	for _, set := range sets {
+		localesMap[set.Locale] = true
+
+		if selectedLocale == "" || set.Locale == selectedLocale {
+			filteredSets = append(filteredSets, set)
+		}
+	}
+
+	// Convert map to sorted slice
+	locales := make([]string, 0, len(localesMap))
+	for locale := range localesMap {
+		locales = append(locales, locale)
 	}
 
 	tmpl, err := h.tmplMgr.Get("list-sets.html")
@@ -31,10 +53,12 @@ func (h *Handler) ListSets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":     "Dictionary Sets",
-		"Sets":      sets,
-		"ActiveNav": "fake",
-		"Template":  "list-sets-content",
+		"Title":          "Dictionary Sets",
+		"Sets":           filteredSets,
+		"Locales":        locales,
+		"SelectedLocale": selectedLocale,
+		"ActiveNav":      "fake",
+		"Template":       "list-sets-content",
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "list-sets.html", data); err != nil {
@@ -87,7 +111,7 @@ func (h *Handler) CreateSet(w http.ResponseWriter, r *http.Request) {
 		Active:      r.FormValue("active") == "true",
 	}
 
-	set, err := h.dictClient.CreateSet(ctx, req)
+	set, err := h.dictRepo.CreateSet(ctx, req)
 	if err != nil {
 		log.Error("error creating set", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -113,11 +137,19 @@ func (h *Handler) ShowSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	set, err := h.dictClient.GetSet(ctx, id)
+	set, err := h.dictRepo.GetSet(ctx, id)
 	if err != nil {
 		log.Error("error getting set", "error", err, "id", id)
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
+	}
+
+	// Get options associated with this set
+	options, err := h.dictRepo.ListOptions(ctx, &id)
+	if err != nil {
+		log.Error("error getting options for set", "error", err, "id", id)
+		// Don't fail the whole request if options fail to load
+		options = []DictionaryOptionDetail{}
 	}
 
 	tmpl, err := h.tmplMgr.Get("show-set.html")
@@ -130,7 +162,8 @@ func (h *Handler) ShowSet(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":     fmt.Sprintf("Set: %s", set.Label),
 		"Set":       set,
-		"ActiveNav": "fake",
+		"Options":   options,
+		"ActiveNav": "dictionary",
 		"Template":  "show-set",
 	}
 
@@ -154,7 +187,7 @@ func (h *Handler) EditSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	set, err := h.dictClient.GetSet(ctx, id)
+	set, err := h.dictRepo.GetSet(ctx, id)
 	if err != nil {
 		log.Error("error getting set", "error", err, "id", id)
 		http.Error(w, "Not Found", http.StatusNotFound)
@@ -208,7 +241,7 @@ func (h *Handler) UpdateSet(w http.ResponseWriter, r *http.Request) {
 		Active:      r.FormValue("active") == "true",
 	}
 
-	_, err = h.dictClient.UpdateSet(ctx, id, req)
+	_, err = h.dictRepo.UpdateSet(ctx, id, req)
 	if err != nil {
 		log.Error("error updating set", "error", err, "id", id)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -234,7 +267,7 @@ func (h *Handler) DeleteSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.dictClient.DeleteSet(ctx, id); err != nil {
+	if err := h.dictRepo.DeleteSet(ctx, id); err != nil {
 		log.Error("error deleting set", "error", err, "id", id)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -262,7 +295,7 @@ func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	options, err := h.dictClient.ListOptions(ctx, setID)
+	options, err := h.dictRepo.ListOptions(ctx, setID)
 	if err != nil {
 		log.Error("error listing options", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -270,11 +303,22 @@ func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get all sets for filter dropdown
-	sets, err := h.dictClient.ListSets(ctx)
+	sets, err := h.dictRepo.ListSets(ctx)
 	if err != nil {
 		log.Error("error listing sets", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	// Find the selected set for the title
+	var selectedSet *DictionarySet
+	if setID != nil {
+		for i := range sets {
+			if sets[i].ID == *setID {
+				selectedSet = &sets[i]
+				break
+			}
+		}
 	}
 
 	tmpl, err := h.tmplMgr.Get("list-options.html")
@@ -284,12 +328,18 @@ func (h *Handler) ListOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	title := "Dictionary Options"
+	if selectedSet != nil {
+		title = fmt.Sprintf("Options for %s (%s)", selectedSet.Label, selectedSet.Locale)
+	}
+
 	data := map[string]interface{}{
-		"Title":         "Dictionary Options",
+		"Title":         title,
 		"Options":       options,
 		"Sets":          sets,
+		"SelectedSet":   selectedSet,
 		"SelectedSetID": setIDStr,
-		"ActiveNav":     "fake",
+		"ActiveNav":     "dictionary",
 		"Template":      "list-options-content",
 	}
 
@@ -307,7 +357,7 @@ func (h *Handler) NewOption(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Get all sets for dropdown
-	sets, err := h.dictClient.ListSets(ctx)
+	sets, err := h.dictRepo.ListSets(ctx)
 	if err != nil {
 		log.Error("error listing sets", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -368,7 +418,7 @@ func (h *Handler) CreateOption(w http.ResponseWriter, r *http.Request) {
 		Active:      r.FormValue("active") == "true",
 	}
 
-	option, err := h.dictClient.CreateOption(ctx, req)
+	option, err := h.dictRepo.CreateOption(ctx, req)
 	if err != nil {
 		log.Error("error creating option", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -394,7 +444,7 @@ func (h *Handler) ShowOption(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	option, err := h.dictClient.GetOption(ctx, id)
+	option, err := h.dictRepo.GetOption(ctx, id)
 	if err != nil {
 		log.Error("error getting option", "error", err, "id", id)
 		http.Error(w, "Not Found", http.StatusNotFound)
@@ -437,7 +487,7 @@ func (h *Handler) EditOption(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	option, err := h.dictClient.GetOption(ctx, id)
+	option, err := h.dictRepo.GetOption(ctx, id)
 	if err != nil {
 		log.Error("error getting option", "error", err, "id", id)
 		http.Error(w, "Not Found", http.StatusNotFound)
@@ -445,7 +495,7 @@ func (h *Handler) EditOption(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get all sets for dropdown
-	sets, err := h.dictClient.ListSets(ctx)
+	sets, err := h.dictRepo.ListSets(ctx)
 	if err != nil {
 		log.Error("error listing sets", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -453,7 +503,7 @@ func (h *Handler) EditOption(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get potential parent options from the same set
-	parentOptions, _ := h.dictClient.ListOptions(ctx, &option.Set)
+	parentOptions, _ := h.dictRepo.ListOptions(ctx, &option.Set)
 
 	tmpl, err := h.tmplMgr.Get("edit-option.html")
 	if err != nil {
@@ -518,7 +568,7 @@ func (h *Handler) UpdateOption(w http.ResponseWriter, r *http.Request) {
 		Active:      r.FormValue("active") == "true",
 	}
 
-	_, err = h.dictClient.UpdateOption(ctx, id, req)
+	_, err = h.dictRepo.UpdateOption(ctx, id, req)
 	if err != nil {
 		log.Error("error updating option", "error", err, "id", id)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -544,7 +594,7 @@ func (h *Handler) DeleteOption(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.dictClient.DeleteOption(ctx, id); err != nil {
+	if err := h.dictRepo.DeleteOption(ctx, id); err != nil {
 		log.Error("error deleting option", "error", err, "id", id)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

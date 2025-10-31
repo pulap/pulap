@@ -60,6 +60,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Apply database seeds
+	logger.Info("Applying database seeds...")
+	db := setRepo.GetDatabase()
+	tracker := dictionary.NewMongoSeedTracker(db)
+	seeds := dictionary.GetDictionarySeeds()
+
+	if err := dictionary.ApplySeeds(ctx, db, tracker, seeds, name); err != nil {
+		logger.Errorf("Failed to apply seeds: %v", err)
+		os.Exit(1)
+	}
+	logger.Info("Database seeds applied successfully")
+
 	logger.Infof("%s(%s) started successfully", name, version)
 
 	go func() {

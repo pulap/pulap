@@ -35,7 +35,12 @@
 
         <div class="form-group">
             <label for="category_id">Category *</label>
-            <select id="category_id" name="category_id" required>
+            <select id="category_id" name="category_id" required
+                    hx-get="/htmx/types-by-category"
+                    hx-target="#type_id"
+                    hx-trigger="change"
+                    hx-include="[name='category_id']"
+                    hx-swap="innerHTML">
                 <option value="">-- Select Category --</option>
                 {{range .Categories}}
                 <option value="{{.id}}" {{if eq .id (printf "%s" $.Property.Classification.CategoryID)}}selected{{end}}>{{.name}}</option>
@@ -45,7 +50,12 @@
 
         <div class="form-group">
             <label for="type_id">Type *</label>
-            <select id="type_id" name="type_id" required>
+            <select id="type_id" name="type_id" required
+                    hx-get="/htmx/subtypes-by-type"
+                    hx-target="#subtype_id"
+                    hx-trigger="change"
+                    hx-include="[name='type_id']"
+                    hx-swap="innerHTML">
                 <option value="">-- Select Type --</option>
                 {{range .Types}}
                 <option value="{{.id}}" {{if eq .id (printf "%s" $.Property.Classification.TypeID)}}selected{{end}}>{{.name}}</option>

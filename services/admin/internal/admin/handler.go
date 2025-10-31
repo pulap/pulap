@@ -19,7 +19,7 @@ type Handler struct {
 	service     Service
 	authZClt    *core.AuthzHTTPClient
 	authnClient *core.ServiceClient
-	dictClient  DictionaryClient
+	dictRepo    DictionaryRepo
 	xparams     config.XParams
 	http        *telemetry.HTTP
 
@@ -31,7 +31,7 @@ func NewHandler(
 	service Service,
 	autZClt *core.AuthzHTTPClient,
 	authnClient *core.ServiceClient,
-	dictClient DictionaryClient,
+	dictRepo DictionaryRepo,
 	xparams config.XParams,
 ) *Handler {
 	return &Handler{
@@ -39,7 +39,7 @@ func NewHandler(
 		service:     service,
 		authZClt:    autZClt,
 		authnClient: authnClient,
-		dictClient:  dictClient,
+		dictRepo:    dictRepo,
 		xparams:     xparams,
 		http: telemetry.NewHTTP(
 			telemetry.WithTracer(xparams.Tracer()),
@@ -112,6 +112,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/edit-property/{id}", h.EditProperty)
 		r.Post("/update-property/{id}", h.UpdateProperty)
 		r.Post("/delete-property/{id}", h.DeleteProperty)
+
+		// HTMX endpoints for cascading selects
+		r.Get("/htmx/types-by-category", h.HTMXTypesByCategory)
+		r.Get("/htmx/subtypes-by-type", h.HTMXSubtypesByType)
 	})
 
 	h.log().Info("Admin routes registered successfully")

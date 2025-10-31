@@ -10,6 +10,7 @@ import (
 type DictionarySet struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
+	Locale      string    `json:"locale"`
 	Label       string    `json:"label"`
 	Description string    `json:"description,omitempty"`
 	Active      bool      `json:"active"`
@@ -24,6 +25,7 @@ type DictionaryOptionDetail struct {
 	SetName     string     `json:"set_name"` // Populated from lookup
 	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
 	ParentLabel string     `json:"parent_label"` // Populated from lookup
+	Locale      string     `json:"locale"`
 	ShortCode   string     `json:"short_code"`
 	Key         string     `json:"key"`
 	Label       string     `json:"label"`

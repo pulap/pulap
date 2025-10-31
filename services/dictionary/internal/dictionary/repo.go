@@ -14,8 +14,11 @@ type SetRepo interface {
 	// Get retrieves a complete Set aggregate by ID.
 	Get(ctx context.Context, id uuid.UUID) (*Set, error)
 
-	// GetByName retrieves a Set by its unique name.
+	// GetByName retrieves a Set by its unique name (returns first match, use GetByNameAndLocale for specific locale).
 	GetByName(ctx context.Context, name string) (*Set, error)
+
+	// GetByNameAndLocale retrieves a Set by its unique name and locale.
+	GetByNameAndLocale(ctx context.Context, name, locale string) (*Set, error)
 
 	// Save performs a unit-of-work save operation on the aggregate.
 	Save(ctx context.Context, set *Set) error

@@ -57,7 +57,7 @@ func (r *FakePropertyRepo) seedProperties() {
 					Latitude:  -34.588,
 					Longitude: -58.415,
 				},
-				Region: "LATAM",
+				Region: "EUROPE",
 			},
 			Features: Features{
 				TotalArea:       450.0,
@@ -122,7 +122,7 @@ func (r *FakePropertyRepo) seedProperties() {
 					Latitude:  -34.604,
 					Longitude: -58.382,
 				},
-				Region: "LATAM",
+				Region: "EUROPE",
 			},
 			Features: Features{
 				TotalArea:       120.0,
@@ -188,7 +188,7 @@ func (r *FakePropertyRepo) seedProperties() {
 					Latitude:  -34.608,
 					Longitude: -58.384,
 				},
-				Region: "LATAM",
+				Region: "EUROPE",
 			},
 			Features: Features{
 				TotalArea:       200.0,

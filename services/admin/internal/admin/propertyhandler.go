@@ -51,23 +51,44 @@ func (h *Handler) NewProperty(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Fetch fake options
-	categories, err := h.dictClient.ListCategories(ctx)
+	categories, err := h.dictRepo.ListCategories(ctx)
 	if err != nil {
 		log.Error("error fetching categories", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	types, err := h.dictClient.ListTypesByCategory(ctx, uuid.Nil)
+	types, err := h.dictRepo.ListTypesByCategory(ctx, uuid.Nil)
 	if err != nil {
 		log.Error("error fetching types", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	subtypes, err := h.dictClient.ListSubtypesByType(ctx, uuid.Nil)
+	subtypes, err := h.dictRepo.ListSubtypesByType(ctx, uuid.Nil)
 	if err != nil {
 		log.Error("error fetching subtypes", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	statuses, err := h.dictRepo.ListStatuses(ctx)
+	if err != nil {
+		log.Error("error fetching statuses", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	priceTypes, err := h.dictRepo.ListPriceTypes(ctx)
+	if err != nil {
+		log.Error("error fetching price types", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	conditions, err := h.dictRepo.ListConditions(ctx)
+	if err != nil {
+		log.Error("error fetching conditions", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -86,6 +107,9 @@ func (h *Handler) NewProperty(w http.ResponseWriter, r *http.Request) {
 		"Categories": DictionaryOptionsToMap(categories),
 		"Types":      DictionaryOptionsToMap(types),
 		"Subtypes":   DictionaryOptionsToMap(subtypes),
+		"Statuses":   DictionaryOptionsToMap(statuses),
+		"PriceTypes": DictionaryOptionsToMap(priceTypes),
+		"Conditions": DictionaryOptionsToMap(conditions),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "new-property.html", data); err != nil {
@@ -233,23 +257,44 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch fake options
-	categories, err := h.dictClient.ListCategories(ctx)
+	categories, err := h.dictRepo.ListCategories(ctx)
 	if err != nil {
 		log.Error("error fetching categories", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	types, err := h.dictClient.ListTypesByCategory(ctx, uuid.Nil)
+	types, err := h.dictRepo.ListTypesByCategory(ctx, uuid.Nil)
 	if err != nil {
 		log.Error("error fetching types", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	subtypes, err := h.dictClient.ListSubtypesByType(ctx, uuid.Nil)
+	subtypes, err := h.dictRepo.ListSubtypesByType(ctx, uuid.Nil)
 	if err != nil {
 		log.Error("error fetching subtypes", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	statuses, err := h.dictRepo.ListStatuses(ctx)
+	if err != nil {
+		log.Error("error fetching statuses", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	priceTypes, err := h.dictRepo.ListPriceTypes(ctx)
+	if err != nil {
+		log.Error("error fetching price types", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	conditions, err := h.dictRepo.ListConditions(ctx)
+	if err != nil {
+		log.Error("error fetching conditions", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -269,6 +314,9 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 		"Categories": DictionaryOptionsToMap(categories),
 		"Types":      DictionaryOptionsToMap(types),
 		"Subtypes":   DictionaryOptionsToMap(subtypes),
+		"Statuses":   DictionaryOptionsToMap(statuses),
+		"PriceTypes": DictionaryOptionsToMap(priceTypes),
+		"Conditions": DictionaryOptionsToMap(conditions),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "edit-property.html", data); err != nil {
@@ -381,4 +429,78 @@ func (h *Handler) DeleteProperty(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("property deleted successfully", "id", id)
 	http.Redirect(w, r, "/list-properties", http.StatusSeeOther)
+}
+
+// HTMXTypesByCategory returns HTML options for types filtered by category
+func (h *Handler) HTMXTypesByCategory(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HTMXTypesByCategory")
+	defer finish()
+	log := h.log(r)
+
+	ctx := r.Context()
+	categoryIDStr := r.URL.Query().Get("category_id")
+
+	var categoryID uuid.UUID
+	if categoryIDStr != "" {
+		var err error
+		categoryID, err = uuid.Parse(categoryIDStr)
+		if err != nil {
+			log.Error("invalid category id", "category_id", categoryIDStr)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`<option value="">-- Invalid Category --</option>`))
+			return
+		}
+	}
+
+	types, err := h.dictRepo.ListTypesByCategory(ctx, categoryID)
+	if err != nil {
+		log.Error("error fetching types", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<option value="">-- Error loading types --</option>`))
+		return
+	}
+
+	// Write HTML options
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<option value="">-- Select Type --</option>`))
+	for _, t := range types {
+		w.Write([]byte(fmt.Sprintf(`<option value="%s">%s</option>`, t.ID.String(), t.Name)))
+	}
+}
+
+// HTMXSubtypesByType returns HTML options for subtypes filtered by type
+func (h *Handler) HTMXSubtypesByType(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HTMXSubtypesByType")
+	defer finish()
+	log := h.log(r)
+
+	ctx := r.Context()
+	typeIDStr := r.URL.Query().Get("type_id")
+
+	var typeID uuid.UUID
+	if typeIDStr != "" {
+		var err error
+		typeID, err = uuid.Parse(typeIDStr)
+		if err != nil {
+			log.Error("invalid type id", "type_id", typeIDStr)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`<option value="">-- Invalid Type --</option>`))
+			return
+		}
+	}
+
+	subtypes, err := h.dictRepo.ListSubtypesByType(ctx, typeID)
+	if err != nil {
+		log.Error("error fetching subtypes", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<option value="">-- Error loading subtypes --</option>`))
+		return
+	}
+
+	// Write HTML options
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<option value="">-- Select Subtype (Optional) --</option>`))
+	for _, s := range subtypes {
+		w.Write([]byte(fmt.Sprintf(`<option value="%s">%s</option>`, s.ID.String(), s.Name)))
+	}
 }

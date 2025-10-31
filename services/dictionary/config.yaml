@@ -2,8 +2,8 @@ server:
   port: ":8085"
 
 database:
-  mongo_url: "mongodb://localhost:27017"
-  mongo_database: "fake"
+  mongo_url: "mongodb://admin:password@localhost:27017/dictionary?authSource=admin"
+  mongo_database: "dictionary"
 
 log:
   level: "info"
