@@ -4,16 +4,16 @@ package estate
 type Location struct {
 	Address     Address     `json:"address"`
 	Coordinates Coordinates `json:"coordinates"`
-	Region      string      `json:"region,omitempty"` // e.g., "LATAM", "North America"
+	Region      string      `json:"region,omitempty"` // e.g., "EUROPE", "North America"
 }
 
 // Address represents a structured physical address.
 type Address struct {
 	Street     string `json:"street"`
 	Number     string `json:"number,omitempty"`
-	Unit       string `json:"unit,omitempty"`       // Apartment, suite, etc.
+	Unit       string `json:"unit,omitempty"` // Apartment, suite, etc.
 	City       string `json:"city"`
-	State      string `json:"state,omitempty"`      // Province, state, department
+	State      string `json:"state,omitempty"` // Province, state, department
 	PostalCode string `json:"postal_code,omitempty"`
 	Country    string `json:"country"`
 }

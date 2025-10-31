@@ -28,9 +28,10 @@ type ServerConfig struct {
 }
 
 type ServicesConfig struct {
-	AuthnURL  string `koanf:"authn_url"`
-	AuthzURL  string `koanf:"authz_url"`
-	EstateURL string `koanf:"estate_url"`
+	AuthnURL      string `koanf:"authn_url"`
+	AuthzURL      string `koanf:"authz_url"`
+	EstateURL     string `koanf:"estate_url"`
+	DictionaryURL string `koanf:"dictionary_url"`
 }
 
 type AuthConfig struct {
@@ -52,9 +53,10 @@ func New() *Config {
 			Port: ":8081",
 		},
 		Services: ServicesConfig{
-			AuthnURL:  "http://localhost:8082",
-			AuthzURL:  "http://localhost:8083",
-			EstateURL: "http://localhost:8084",
+			AuthnURL:      "http://localhost:8082",
+			AuthzURL:      "http://localhost:8083",
+			EstateURL:     "http://localhost:8084",
+			DictionaryURL: "http://localhost:8085",
 		},
 		Auth: AuthConfig{
 			CacheTTL:      "5m",
@@ -83,6 +85,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("services.authn_url", "http://localhost:8082", "Authn service URL")
 	fs.String("services.authz_url", "http://localhost:8083", "Authz service URL")
 	fs.String("services.estate_url", "http://localhost:8084", "Estate service URL")
+	fs.String("services.dictionary_url", "http://localhost:8085", "Dictionary service URL")
 	fs.String("auth.cache_ttl", "5m", "Auth cache TTL")
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
 	fs.String("log.level", "info", "log level (debug, info, error)")
@@ -127,6 +130,9 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 	if val := os.Getenv("ADMIN_SERVICES_ESTATE_URL"); val != "" {
 		cfg.Services.EstateURL = val
+	}
+	if val := os.Getenv("ADMIN_SERVICES_DICTIONARY_URL"); val != "" {
+		cfg.Services.DictionaryURL = val
 	}
 	if val := os.Getenv("ADMIN_AUTH_SESSION_SECRET"); val != "" {
 		cfg.Auth.SessionSecret = val

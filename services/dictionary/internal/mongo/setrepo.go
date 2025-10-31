@@ -63,9 +63,12 @@ func (r *SetRepo) Start(ctx context.Context) error {
 	r.db = client.Database(dbName)
 	r.collection = r.db.Collection("sets")
 
-	// Create unique index on name field
+	// Create unique compound index on (name, locale) to ensure name uniqueness per locale
 	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{Key: "name", Value: 1}},
+		Keys: bson.D{
+			{Key: "name", Value: 1},
+			{Key: "locale", Value: 1},
+		},
 		Options: options.Index().SetUnique(true),
 	}
 	if _, err := r.collection.Indexes().CreateOne(ctx, indexModel); err != nil {
@@ -85,6 +88,11 @@ func (r *SetRepo) Stop(ctx context.Context) error {
 		r.xparams.Log().Info("Disconnected from MongoDB")
 	}
 	return nil
+}
+
+// GetDatabase returns the MongoDB database instance for seeding and other operations.
+func (r *SetRepo) GetDatabase() *mongo.Database {
+	return r.db
 }
 
 // Create creates a new Set aggregate in MongoDB.
@@ -120,7 +128,7 @@ func (r *SetRepo) Get(ctx context.Context, id uuid.UUID) (*dictionary.Set, error
 	return &set, nil
 }
 
-// GetByName retrieves a Set by its unique name.
+// GetByName retrieves a Set by its unique name (returns first match, use GetByNameAndLocale for specific locale).
 func (r *SetRepo) GetByName(ctx context.Context, name string) (*dictionary.Set, error) {
 	var set dictionary.Set
 
@@ -131,6 +139,22 @@ func (r *SetRepo) GetByName(ctx context.Context, name string) (*dictionary.Set, 
 			return nil, fmt.Errorf("Set with name %s not found", name)
 		}
 		return nil, fmt.Errorf("could not get Set by name: %w", err)
+	}
+
+	return &set, nil
+}
+
+// GetByNameAndLocale retrieves a Set by its unique name and locale.
+func (r *SetRepo) GetByNameAndLocale(ctx context.Context, name, locale string) (*dictionary.Set, error) {
+	var set dictionary.Set
+
+	filter := bson.M{"name": name, "locale": locale}
+	err := r.collection.FindOne(ctx, filter).Decode(&set)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("Set with name %s and locale %s not found", name, locale)
+		}
+		return nil, fmt.Errorf("could not get Set by name and locale: %w", err)
 	}
 
 	return &set, nil

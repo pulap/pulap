@@ -69,9 +69,10 @@ func main() {
 	authZClient := core.NewAuthZHTTPClient(cfg.Services.AuthzURL)
 	deps = append(deps, authZClient)
 
-	dictClient := admin.NewFakeDictionaryClient()
+	dictServiceClient := core.NewServiceClient(cfg.Services.DictionaryURL)
+	dictRepo := admin.NewAPIDictionaryRepo(dictServiceClient)
 
-	adminHandler := admin.NewHandler(tmplMgr, adminService, authZClient, authnClient, dictClient, xparams)
+	adminHandler := admin.NewHandler(tmplMgr, adminService, authZClient, authnClient, dictRepo, xparams)
 	deps = append(deps, adminHandler)
 
 	starts, stops, _ := core.Setup(ctx, router, deps...)
