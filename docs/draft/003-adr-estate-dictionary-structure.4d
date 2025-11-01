@@ -1,0 +1,379 @@
+# Dictionary Service and Hierarchical Taxonomy for Real Estate
+
+**Status:** Accepted | **Updated:** 2025-11-01 | **Version:** 0.3
+
+## Overview
+
+This document describes the **Dictionary Service** and its integration with the **Estate Service** in Pulap’s Go-based microservice architecture.
+It introduces a hierarchical taxonomy for real estate classification that supports three levels: **category**, **type**, and **subtype**, replacing the previous flat dictionary approach.
+
+The new service provides centralized management of taxonomies through **Sets** and **Options**, exposing both **HTTP APIs** and **event-based** cache invalidation mechanisms.
+
+## 1. Context
+
+The previous implementation used a single `real_estate_type` dictionary, which proved insufficient for complex classification. Real-world use cases require broader categories (e.g., Residential) that branch into types (e.g., House, Apartment) and subtypes (e.g., Bungalow, Loft).
+
+As Pulap transitions to a Go microservice architecture, the `estate` service must consume a dedicated **Dictionary Service** rather than embedding dictionaries locally.
+
+**Goals:**
+
+* Implement a **three-level taxonomy**: `estate_category` → `estate_type` → `estate_subtype`
+* Keep **Sets** flat while modeling **hierarchy in Options** using `parent_id`
+* Provide **read/write APIs** and **Pub/Sub events** for cache invalidation
+* Enforce validation in `estate` through **references to dictionary IDs**
+
+## 2. Decision
+
+1. Create a new **Dictionary Service** (Go) with two entities:
+
+   * **Set**: a named container (e.g., `estate_category`, `estate_type`, `estate_subtype`)
+   * **Option**: an entry within a Set, optionally linked to a parent Option (`parent_id`)
+2. The `estate` service stores foreign references to dictionary options:
+
+   * `category_id`, `type_id`, `subtype_id`
+3. The UI flow cascades from Category → Type → Subtype using `parent_id` filtering
+4. Caching in `estate` follows a **read-through** strategy with **event-driven invalidation**
+5. Pub/Sub abstraction uses SQLite as default backend, with NATS planned for scale
+
+## 3. Architecture Overview
+
+### 3.1 Bounded Contexts
+
+| Context              | Responsibility                                                 |
+| -------------------- | -------------------------------------------------------------- |
+| **dictionary**       | Owns Sets and Options, APIs, events, and seeding               |
+| **estate**           | Manages Estates and validates references to dictionary entries |
+| **future consumers** | Listings, Contracts, Valuation, Analytics                      |
+
+### 3.2 Flow Diagram
+
+```mermaid
+flowchart LR
+  UI -->|HTTP| estate
+  estate -->|HTTP| dictionary
+  dictionary -->|Events: option.updated,set.updated| estate
+  listings -->|HTTP| dictionary
+  contracts -->|HTTP| dictionary
+  analytics -->|HTTP| dictionary
+```
+
+## 4. Data Model
+
+### 4.1 SQL Schema (SQLite/PostgreSQL Compatible)
+
+```sql
+CREATE TABLE sets (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  description TEXT,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE options (
+  id TEXT PRIMARY KEY,
+  set_id TEXT NOT NULL REFERENCES sets(id) ON DELETE CASCADE,
+  parent_id TEXT NULL REFERENCES options(id) ON DELETE SET NULL,
+  short_code TEXT NOT NULL,
+  key TEXT NOT NULL,
+  label TEXT NOT NULL,
+  description TEXT,
+  value TEXT NOT NULL,
+  "order" INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (short_code, set_id),
+  UNIQUE (key, set_id)
+);
+
+CREATE INDEX idx_options_set_id ON options(set_id);
+CREATE INDEX idx_options_parent_id ON options(parent_id);
+```
+
+### 4.2 Go Domain Types
+
+```go
+type Set struct {
+    ID          uuid.UUID `json:"id"`
+    Name        string    `json:"name"`
+    Label       string    `json:"label"`
+    Description string    `json:"description,omitempty"`
+    Active      bool      `json:"active"`
+    CreatedAt   time.Time `json:"created_at"`
+    UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type Option struct {
+    ID          uuid.UUID  `json:"id"`
+    SetID       uuid.UUID  `json:"set_id"`
+    ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+    ShortCode   string     `json:"short_code"`
+    Key         string     `json:"key"`
+    Label       string     `json:"label"`
+    Description string     `json:"description,omitempty"`
+    Value       string     `json:"value"`
+    Order       int        `json:"order"`
+    Active      bool       `json:"active"`
+    CreatedAt   time.Time  `json:"created_at"`
+    UpdatedAt   time.Time  `json:"updated_at"`
+}
+```
+
+## 5. Seed Data
+
+### 5.1 YAML (Authoritative Source)
+
+```yaml
+sets:
+  - name: estate_category
+    label: Estate Category
+  - name: estate_type
+    label: Estate Type
+  - name: estate_subtype
+    label: Estate Subtype
+
+options:
+  estate_category:
+    - key: residential
+      short_code: res
+      label: Residential
+      value: Residential
+    - key: commercial
+      short_code: com
+      label: Commercial
+      value: Commercial
+    - key: land
+      short_code: land
+      label: Land
+      value: Land
+    - key: agricultural
+      short_code: agr
+      label: Agricultural
+      value: Agricultural
+    - key: mixed_use
+      short_code: mix
+      label: Mixed-use
+      value: Mixed-use
+    - key: special_purpose
+      short_code: spc
+      label: Special Purpose
+      value: Special Purpose
+
+  estate_type:
+    - key: house
+      short_code: house
+      label: House
+      value: House
+      parent: residential
+    - key: apartment
+      short_code: apt
+      label: Apartment
+      value: Apartment
+      parent: residential
+    - key: office
+      short_code: off
+      label: Office
+      value: Office
+      parent: commercial
+    - key: retail
+      short_code: rtl
+      label: Retail
+      value: Retail
+      parent: commercial
+
+  estate_subtype:
+    - key: bungalow
+      short_code: bglw
+      label: Bungalow
+      value: Bungalow
+      parent: house
+    - key: loft
+      short_code: loft
+      label: Loft
+      value: Loft
+      parent: apartment
+    - key: showroom
+      short_code: shw
+      label: Showroom
+      value: Showroom
+      parent: retail
+```
+
+### 5.2 JSON (Hierarchical Representation)
+
+```json
+{
+  "Residential": {
+    "House": ["Bungalow", "Cottage", "Chalet"],
+    "Apartment": ["Studio", "Loft", "Penthouse"]
+  },
+  "Commercial": {
+    "Office": ["Office Building", "Co-working Space"],
+    "Retail": ["Store", "Mall", "Showroom"]
+  }
+}
+```
+
+## 6. Dictionary Service API
+
+### 6.1 Endpoints
+
+```
+GET    /api/sets
+POST   /api/sets
+GET    /api/sets/{name}
+GET    /api/sets/{name}/options
+POST   /api/sets/{name}/options
+GET    /api/options/{id}
+GET    /api/options/{id}/children
+PATCH  /api/options/{id}
+DELETE /api/options/{id}
+```
+
+### 6.2 OpenAPI Excerpt
+
+```yaml
+paths:
+  /api/sets/{name}/options:
+    get:
+      summary: List options in a Set
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema: { type: string }
+        - in: query
+          name: parent_id
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Option"
+```
+
+## 7. Events and Caching
+
+### 7.1 Event Publication
+
+**Topic:** `dictionary.option.updated`
+
+**Payload:**
+
+```json
+{
+  "id": "6b1e9a2d-3b8b-4a8d-9a7e-0f2a7b5d9e10",
+  "set": "estate_type",
+  "key": "house",
+  "parent_id": "cb6b3f44-2f1a-4f29-9f0a-7bdb51b6e0e4",
+  "active": true,
+  "updated_at": "2025-10-28T12:34:56Z"
+}
+```
+
+**Transport:**
+
+* Default: SQLite-based message log
+* Alternative: NATS backend for distributed deployment
+
+## 8. Estate Service Integration
+
+### 8.1 Domain Model
+
+```go
+type Classification struct {
+    CategoryID uuid.UUID `json:"category_id"`
+    TypeID     uuid.UUID `json:"type_id"`
+    SubtypeID  uuid.UUID `json:"subtype_id"`
+}
+
+type Estate struct {
+    // ... existing fields ...
+    Classification Classification `json:"classification"`
+}
+```
+
+### 8.2 Validation
+
+During Create/Update operations, `estate` validates classification hierarchy against the Dictionary Service:
+
+```go
+ok, err := dictClient.ValidateClassification(ctx, estate.Classification)
+if err != nil { /* handle transport error */ }
+if !ok { /* reject invalid classification */ }
+```
+
+### 8.3 Client Interface
+
+```go
+type DictionaryClient interface {
+    GetOption(ctx context.Context, id uuid.UUID) (*OptionDTO, error)
+    ListOptionsByParent(ctx context.Context, setName string, parentID *uuid.UUID) ([]OptionDTO, error)
+    ValidateClassification(ctx context.Context, c Classification) (bool, []string, error)
+}
+```
+
+### 8.4 Caching Strategy
+
+* In-memory LRU by `option_id` and `set+parent_id`
+* Invalidate on `dictionary.option.updated` events
+
+### 8.5 Persistence Example (SQLite)
+
+```sql
+ALTER TABLE estates ADD COLUMN category_id TEXT;
+ALTER TABLE estates ADD COLUMN type_id TEXT;
+ALTER TABLE estates ADD COLUMN subtype_id TEXT;
+CREATE INDEX idx_estates_category ON estates(category_id);
+CREATE INDEX idx_estates_type ON estates(type_id);
+CREATE INDEX idx_estates_subtype ON estates(subtype_id);
+```
+
+### 8.6 UI Flow
+
+1. `GET /api/sets/estate_category/options`
+2. `GET /api/sets/estate_type/options?parent_id={category_id}`
+3. `GET /api/sets/estate_subtype/options?parent_id={type_id}`
+
+## 9. Validation Rules
+
+1. A Type must have `parent_id` pointing to a Category
+2. A Subtype must have `parent_id` pointing to a Type
+3. All selected options must be active
+4. Cross-set parentage is enforced in the Dictionary Service
+
+## 10. Migration Plan
+
+1. Deploy Dictionary Service (read-only mode)
+2. Extend `estate` with new classification fields and client integration
+3. Backfill existing records to match dictionary IDs
+4. Enable validation enforcement in `estate`
+5. Activate event-driven cache invalidation
+6. Remove legacy in-service dictionaries
+
+## 11. Risks and Mitigations
+
+| Risk                   | Mitigation                                                  |
+| ---------------------- | ----------------------------------------------------------- |
+| Dictionary unavailable | Allow cached reads; block writes until validation resumes   |
+| I18n and aliases       | Add `option_aliases` table with `(option_id, term, locale)` |
+| Reporting rollups      | Use recursive CTEs or denormalized analytics tables         |
+
+## 12. Future Extensions
+
+* Add `option_aliases` for internationalization and search mapping
+* Include support for hierarchical queries and tree traversal APIs
+* Extend caching with TTL-based invalidation for stale data
+* Provide CLI and admin UI for seed management
+
+## Conclusion
+
+This ADR establishes a scalable, hierarchical **Dictionary Service** that enables consistent taxonomy management across Pulap’s microservices.
+It decouples domain data from static dictionaries, ensures referential integrity through validation and events, and lays the foundation for richer classification and reporting features.
