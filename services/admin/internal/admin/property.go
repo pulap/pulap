@@ -18,11 +18,14 @@ type Property struct {
 	Price          Price          `json:"price"`
 	Status         string         `json:"status"`
 	OwnerID        string         `json:"owner_id,omitempty"`
+	SchemaVersion  int            `json:"schema_version"`
 	CreatedAt      time.Time      `json:"created_at"`
 	CreatedBy      string         `json:"created_by"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	UpdatedBy      string         `json:"updated_by"`
 }
+
+const CurrentPropertySchemaVersion = 2
 
 // Classification represents the property taxonomy (references to fake service).
 type Classification struct {
@@ -33,9 +36,14 @@ type Classification struct {
 
 // Location represents the physical location of a property.
 type Location struct {
-	Address     Address     `json:"address"`
-	Coordinates Coordinates `json:"coordinates"`
-	Region      string      `json:"region,omitempty"`
+	Address     Address        `json:"address"`
+	Coordinates Coordinates    `json:"coordinates"`
+	Region      string         `json:"region,omitempty"`
+	Provider    string         `json:"provider,omitempty"`
+	ProviderURL string         `json:"provider_url,omitempty"`
+	ProviderRef string         `json:"provider_ref,omitempty"`
+	Raw         map[string]any `json:"raw,omitempty"`
+	DisplayName string         `json:"display_name,omitempty"`
 }
 
 // Address represents a structured physical address.
@@ -103,6 +111,7 @@ type CreatePropertyRequest struct {
 	Price          Price          `json:"price"`
 	Status         string         `json:"status,omitempty"`
 	OwnerID        string         `json:"owner_id,omitempty"`
+	SchemaVersion  int            `json:"schema_version,omitempty"`
 }
 
 // UpdatePropertyRequest represents a request to update an existing property.
@@ -115,4 +124,5 @@ type UpdatePropertyRequest struct {
 	Price          Price          `json:"price"`
 	Status         string         `json:"status"`
 	OwnerID        string         `json:"owner_id,omitempty"`
+	SchemaVersion  int            `json:"schema_version,omitempty"`
 }

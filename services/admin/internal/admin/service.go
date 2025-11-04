@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -36,11 +37,15 @@ type Service interface {
 	DeleteProperty(ctx context.Context, id uuid.UUID) error
 	ListPropertiesByOwner(ctx context.Context, ownerID string) ([]*Property, error)
 	ListPropertiesByStatus(ctx context.Context, status string) ([]*Property, error)
+	SuggestLocations(ctx context.Context, query string) ([]LocationSuggestion, error)
+	ResolveLocation(ctx context.Context, reference string) (*ResolvedAddress, error)
+	NormalizeLocation(ctx context.Context, req NormalizeLocationRequest) (*NormalizedLocation, error)
 }
 
 type defaultService struct {
-	repos   Repos
-	xparams config.XParams
+	repos            Repos
+	locationProvider LocationProvider
+	xparams          config.XParams
 }
 
 type Repos struct {
@@ -52,12 +57,15 @@ type Repos struct {
 
 //authzHelper := auth.NewAuthzHelper(authzHTTPClient, 5*time.Minute)
 
-func NewDefaultService(repos Repos, xparams config.XParams) *defaultService {
+func NewDefaultService(repos Repos, locationProvider LocationProvider, xparams config.XParams) *defaultService {
 	return &defaultService{
-		repos:   repos,
-		xparams: xparams,
+		repos:            repos,
+		locationProvider: locationProvider,
+		xparams:          xparams,
 	}
 }
+
+var ErrLocationProviderUnavailable = errors.New("location provider not configured")
 
 func (s *defaultService) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
 
@@ -165,6 +173,36 @@ func (s *defaultService) ListPropertiesByOwner(ctx context.Context, ownerID stri
 
 func (s *defaultService) ListPropertiesByStatus(ctx context.Context, status string) ([]*Property, error) {
 	return s.repos.PropertyRepo.ListByStatus(ctx, status)
+}
+
+func (s *defaultService) SuggestLocations(ctx context.Context, query string) ([]LocationSuggestion, error) {
+	if s.locationProvider == nil {
+		return nil, ErrLocationProviderUnavailable
+	}
+	return s.locationProvider.Autocomplete(ctx, query)
+}
+
+func (s *defaultService) ResolveLocation(ctx context.Context, reference string) (*ResolvedAddress, error) {
+	if s.locationProvider == nil {
+		return nil, ErrLocationProviderUnavailable
+	}
+	return s.locationProvider.Resolve(ctx, reference)
+}
+
+func (s *defaultService) NormalizeLocation(ctx context.Context, req NormalizeLocationRequest) (*NormalizedLocation, error) {
+	if s.locationProvider == nil {
+		return nil, ErrLocationProviderUnavailable
+	}
+	ref := strings.TrimSpace(req.ProviderRef)
+	if ref == "" {
+		return nil, fmt.Errorf("reference cannot be empty")
+	}
+	resolved, err := s.locationProvider.Resolve(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	result := buildNormalizedLocation(resolved, req.SelectedText)
+	return &result, nil
 }
 
 // Helper methods

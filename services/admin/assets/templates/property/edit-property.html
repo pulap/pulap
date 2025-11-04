@@ -74,50 +74,7 @@
         </div>
 
         <h2 style="margin-top: 2rem;">Location</h2>
-
-        <div class="form-group">
-            <label for="street">Street *</label>
-            <input type="text" id="street" name="street" value="{{.Property.Location.Address.Street}}" required>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-                <label for="number">Number</label>
-                <input type="text" id="number" name="number" value="{{.Property.Location.Address.Number}}">
-            </div>
-
-            <div class="form-group">
-                <label for="unit">Unit</label>
-                <input type="text" id="unit" name="unit" value="{{.Property.Location.Address.Unit}}">
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-                <label for="city">City *</label>
-                <input type="text" id="city" name="city" value="{{.Property.Location.Address.City}}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="state">State</label>
-                <input type="text" id="state" name="state" value="{{.Property.Location.Address.State}}">
-            </div>
-
-            <div class="form-group">
-                <label for="postal_code">Postal Code</label>
-                <input type="text" id="postal_code" name="postal_code" value="{{.Property.Location.Address.PostalCode}}">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="country">Country *</label>
-            <input type="text" id="country" name="country" value="{{.Property.Location.Address.Country}}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="region">Region</label>
-            <input type="text" id="region" name="region" value="{{.Property.Location.Region}}">
-        </div>
+        {{template "location-fields.html" .}}
 
         <h2 style="margin-top: 2rem;">Features</h2>
 
