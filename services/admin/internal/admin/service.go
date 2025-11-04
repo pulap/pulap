@@ -40,6 +40,16 @@ type Service interface {
 	SuggestLocations(ctx context.Context, query string) ([]LocationSuggestion, error)
 	ResolveLocation(ctx context.Context, reference string) (*ResolvedAddress, error)
 	NormalizeLocation(ctx context.Context, req NormalizeLocationRequest) (*NormalizedLocation, error)
+
+	ListMediaByResource(ctx context.Context, targetType string, targetID uuid.UUID) ([]*Media, error)
+	ListPropertyMedia(ctx context.Context, propertyID uuid.UUID) ([]*Media, error)
+	CreatePropertyMedia(ctx context.Context, propertyID uuid.UUID, req CreateMediaRequest) (*Media, error)
+	ListMedia(ctx context.Context, params MediaListParams) ([]*Media, error)
+	GetMedia(ctx context.Context, id uuid.UUID) (*Media, error)
+	UpdateMedia(ctx context.Context, id uuid.UUID, req UpdateMediaRequest) (*Media, error)
+	DeleteMedia(ctx context.Context, id uuid.UUID) error
+	EnableMedia(ctx context.Context, id uuid.UUID) (*Media, error)
+	DisableMedia(ctx context.Context, id uuid.UUID) (*Media, error)
 }
 
 type defaultService struct {
@@ -53,6 +63,7 @@ type Repos struct {
 	RoleRepo     RoleRepo
 	GrantRepo    GrantRepo
 	PropertyRepo PropertyRepo
+	MediaRepo    MediaRepo
 }
 
 //authzHelper := auth.NewAuthzHelper(authzHTTPClient, 5*time.Minute)
@@ -203,6 +214,70 @@ func (s *defaultService) NormalizeLocation(ctx context.Context, req NormalizeLoc
 	}
 	result := buildNormalizedLocation(resolved, req.SelectedText)
 	return &result, nil
+}
+
+func (s *defaultService) ListMediaByResource(ctx context.Context, targetType string, targetID uuid.UUID) ([]*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return []*Media{}, nil
+	}
+	return s.repos.MediaRepo.ListByTarget(ctx, targetType, targetID)
+}
+
+func (s *defaultService) ListPropertyMedia(ctx context.Context, propertyID uuid.UUID) ([]*Media, error) {
+	return s.ListMediaByResource(ctx, "property", propertyID)
+}
+
+func (s *defaultService) CreatePropertyMedia(ctx context.Context, propertyID uuid.UUID, req CreateMediaRequest) (*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return nil, fmt.Errorf("media repository not configured")
+	}
+	if req.ResourceType == "" {
+		req.ResourceType = "property"
+	}
+	req.ResourceID = propertyID
+	return s.repos.MediaRepo.Create(ctx, req)
+}
+
+func (s *defaultService) ListMedia(ctx context.Context, params MediaListParams) ([]*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return []*Media{}, nil
+	}
+	return s.repos.MediaRepo.List(ctx, params)
+}
+
+func (s *defaultService) GetMedia(ctx context.Context, id uuid.UUID) (*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return nil, fmt.Errorf("media repository not configured")
+	}
+	return s.repos.MediaRepo.Get(ctx, id)
+}
+
+func (s *defaultService) UpdateMedia(ctx context.Context, id uuid.UUID, req UpdateMediaRequest) (*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return nil, fmt.Errorf("media repository not configured")
+	}
+	return s.repos.MediaRepo.Update(ctx, id, req)
+}
+
+func (s *defaultService) DeleteMedia(ctx context.Context, id uuid.UUID) error {
+	if s.repos.MediaRepo == nil {
+		return fmt.Errorf("media repository not configured")
+	}
+	return s.repos.MediaRepo.Delete(ctx, id)
+}
+
+func (s *defaultService) EnableMedia(ctx context.Context, id uuid.UUID) (*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return nil, fmt.Errorf("media repository not configured")
+	}
+	return s.repos.MediaRepo.Enable(ctx, id)
+}
+
+func (s *defaultService) DisableMedia(ctx context.Context, id uuid.UUID) (*Media, error) {
+	if s.repos.MediaRepo == nil {
+		return nil, fmt.Errorf("media repository not configured")
+	}
+	return s.repos.MediaRepo.Disable(ctx, id)
 }
 
 // Helper methods

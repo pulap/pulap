@@ -28,7 +28,7 @@ func newJSONResponse(statusCode int, body string) *http.Response {
 	return resp
 }
 
-func TestGoogleMapsProvider_Autocomplete(t *testing.T) {
+func TestGoogleMapsProvideAutocomplete(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -144,7 +144,7 @@ func TestGoogleMapsProvider_Autocomplete(t *testing.T) {
 	})
 }
 
-func TestGoogleMapsProvider_Resolve(t *testing.T) {
+func TestGoogleMapsProvideResolve(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

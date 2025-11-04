@@ -33,6 +33,7 @@ type ServicesConfig struct {
 	AuthzURL      string `koanf:"authz_url"`
 	EstateURL     string `koanf:"estate_url"`
 	DictionaryURL string `koanf:"dictionary_url"`
+	MediaURL      string `koanf:"media_url"`
 }
 
 type AuthConfig struct {
@@ -80,6 +81,7 @@ func New() *Config {
 			AuthzURL:      "http://localhost:8083",
 			EstateURL:     "http://localhost:8084",
 			DictionaryURL: "http://localhost:8085",
+			MediaURL:      "http://localhost:8086",
 		},
 		Auth: AuthConfig{
 			CacheTTL:      "5m",
@@ -121,6 +123,7 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("services.authz_url", "http://localhost:8083", "Authz service URL")
 	fs.String("services.estate_url", "http://localhost:8084", "Estate service URL")
 	fs.String("services.dictionary_url", "http://localhost:8085", "Dictionary service URL")
+	fs.String("services.media_url", "http://localhost:8086", "Media service URL")
 	fs.String("auth.cache_ttl", "5m", "Auth cache TTL")
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
 	fs.String("log.level", "info", "log level (debug, info, error)")
@@ -175,6 +178,9 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 	if val := os.Getenv("ADMIN_SERVICES_DICTIONARY_URL"); val != "" {
 		cfg.Services.DictionaryURL = val
+	}
+	if val := os.Getenv("ADMIN_SERVICES_MEDIA_URL"); val != "" {
+		cfg.Services.MediaURL = val
 	}
 	if val := os.Getenv("ADMIN_AUTH_SESSION_SECRET"); val != "" {
 		cfg.Auth.SessionSecret = val

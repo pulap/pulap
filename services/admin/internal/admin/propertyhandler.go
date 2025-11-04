@@ -1,9 +1,17 @@
 package admin
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"sort"
 	"strconv"
@@ -14,6 +22,8 @@ import (
 
 	"github.com/pulap/pulap/pkg/lib/core"
 )
+
+const maxMediaUploadSize = 32 << 20 // 32MB
 
 // ListProperties shows all properties
 func (h *Handler) ListProperties(w http.ResponseWriter, r *http.Request) {
@@ -398,10 +408,18 @@ func (h *Handler) ShowProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	mediaAssets, err := h.service.ListPropertyMedia(ctx, id)
+	if err != nil {
+		log.Error("error fetching media for property", "error", err, "id", id)
+		mediaAssets = []*Media{}
+	}
+
 	priceTypes, err := h.dictRepo.ListPriceTypes(ctx)
 	if err != nil {
 		log.Error("error fetching price types", "error", err)
 	}
+
+	mediaCategories, mediaKinds, mediaTags := h.mediaLabelMaps(ctx)
 
 	tmpl, err := h.tmplMgr.Get("show-property.html")
 	if err != nil {
@@ -411,11 +429,15 @@ func (h *Handler) ShowProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":           fmt.Sprintf("Property: %s", property.Name),
-		"Property":        property,
-		"ActiveNav":       "properties",
-		"Template":        "show-property",
-		"PriceTypeLabels": map[string]string{},
+		"Title":               fmt.Sprintf("Property: %s", property.Name),
+		"Property":            property,
+		"ActiveNav":           "properties",
+		"Template":            "show-property",
+		"PriceTypeLabels":     map[string]string{},
+		"PropertyMedia":       mediaAssets,
+		"MediaCategoryLabels": mediaCategories,
+		"MediaKindLabels":     mediaKinds,
+		"MediaTagLabels":      mediaTags,
 	}
 
 	if priceTypes != nil {
@@ -493,6 +515,15 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	mediaAssets, err := h.service.ListPropertyMedia(ctx, id)
+	if err != nil {
+		log.Error("error fetching media for property", "error", err, "id", id)
+		mediaAssets = []*Media{}
+	}
+
+	mediaCategories, mediaKinds, mediaTags := h.mediaLabelMaps(ctx)
+	mediaOptions := h.mediaFormOptions(ctx)
+
 	tmpl, err := h.tmplMgr.Get("edit-property.html")
 	if err != nil {
 		log.Error("error getting template", "error", err)
@@ -501,19 +532,26 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":           fmt.Sprintf("Edit: %s", property.Name),
-		"Property":        property,
-		"ActiveNav":       "properties",
-		"Template":        "edit-property",
-		"Categories":      DictionaryOptionsToMap(categories),
-		"Types":           DictionaryOptionsToMap(types),
-		"Subtypes":        DictionaryOptionsToMap(subtypes),
-		"Statuses":        DictionaryOptionsToMap(statuses),
-		"PriceTypes":      DictionaryOptionsToMap(priceTypes),
-		"Conditions":      DictionaryOptionsToMap(conditions),
-		"Location":        locationFormModelFromProperty(property),
-		"PriceValues":     priceValuesByType(property.Prices),
-		"PriceTypeLabels": priceLabelsByKey(priceTypes),
+		"Title":               fmt.Sprintf("Edit: %s", property.Name),
+		"Property":            property,
+		"ActiveNav":           "properties",
+		"Template":            "edit-property",
+		"Categories":          DictionaryOptionsToMap(categories),
+		"Types":               DictionaryOptionsToMap(types),
+		"Subtypes":            DictionaryOptionsToMap(subtypes),
+		"Statuses":            DictionaryOptionsToMap(statuses),
+		"PriceTypes":          DictionaryOptionsToMap(priceTypes),
+		"Conditions":          DictionaryOptionsToMap(conditions),
+		"Location":            locationFormModelFromProperty(property),
+		"PriceValues":         priceValuesByType(property.Prices),
+		"PriceTypeLabels":     priceLabelsByKey(priceTypes),
+		"PropertyMedia":       mediaAssets,
+		"MediaCategoryLabels": mediaCategories,
+		"MediaKindLabels":     mediaKinds,
+		"MediaTagLabels":      mediaTags,
+		"MediaCategories":     mediaOptions.Categories,
+		"MediaKinds":          mediaOptions.Kinds,
+		"MediaTagGroups":      mediaOptions.TagGroups,
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "edit-property.html", data); err != nil {
@@ -614,6 +652,118 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("property updated successfully", "id", id)
 	http.Redirect(w, r, fmt.Sprintf("/show-property/%s", id), http.StatusSeeOther)
+}
+
+// CreatePropertyMedia handles uploading a new media asset for a property.
+func (h *Handler) CreatePropertyMedia(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.CreatePropertyMedia")
+	defer finish()
+	log := h.log(r)
+
+	ctx := r.Context()
+	idStr := chi.URLParam(r, "id")
+	propertyID, err := uuid.Parse(idStr)
+	if err != nil {
+		log.Error("invalid property id", "id", idStr)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	if err := r.ParseMultipartForm(maxMediaUploadSize); err != nil {
+		log.Error("error parsing media form", "error", err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		log.Error("media file missing", "error", err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	buffer := &bytes.Buffer{}
+	size, err := io.Copy(buffer, file)
+	if err != nil {
+		log.Error("error reading media file", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if size == 0 {
+		http.Error(w, "Uploaded file is empty", http.StatusBadRequest)
+		return
+	}
+
+	mimeType := header.Header.Get("Content-Type")
+	if mimeType == "" {
+		mimeType = http.DetectContentType(buffer.Bytes())
+	}
+
+	width := parseIntDefault(r.FormValue("resolution_width"), 0)
+	height := parseIntDefault(r.FormValue("resolution_height"), 0)
+	if width == 0 || height == 0 {
+		cfg, format, err := image.DecodeConfig(bytes.NewReader(buffer.Bytes()))
+		if err == nil {
+			width = cfg.Width
+			height = cfg.Height
+			if mimeType == "" {
+				mimeType = "image/" + format
+			}
+		} else {
+			log.Error("cannot determine image dimensions", "error", err)
+			http.Error(w, "Unable to determine image dimensions", http.StatusBadRequest)
+			return
+		}
+	}
+
+	categoryID, err := uuid.Parse(strings.TrimSpace(r.FormValue("media_category_id")))
+	if err != nil {
+		http.Error(w, "Invalid media category", http.StatusBadRequest)
+		return
+	}
+
+	kind := strings.TrimSpace(r.FormValue("media_kind"))
+	if kind == "" {
+		kind = "real"
+	}
+
+	enabled := true
+	if r.FormValue("media_enabled") == "" {
+		enabled = false
+	}
+
+	tagIDs := gatherMediaTagIDs(r.MultipartForm, DefaultMediaTagSetNames()...)
+
+	metadata := map[string]string{
+		"original_name": header.Filename,
+	}
+
+	request := CreateMediaRequest{
+		ResourceType: "property",
+		ResourceID:   propertyID,
+		FileName:     header.Filename,
+		MimeType:     mimeType,
+		Data:         buffer.Bytes(),
+		Filesize:     size,
+		CategoryID:   categoryID,
+		Kind:         kind,
+		Tags:         tagIDs,
+		Enabled:      enabled,
+		Resolution:   MediaResolution{Width: width, Height: height},
+		Metadata:     metadata,
+	}
+
+	if _, err := h.service.CreatePropertyMedia(ctx, propertyID, request); err != nil {
+		log.Error("error creating property media", "error", err, "property_id", propertyID)
+		http.Error(w, "Could not upload media", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/edit-property/%s", propertyID.String()), http.StatusSeeOther)
 }
 
 // DeleteProperty handles deleting a property
@@ -795,6 +945,71 @@ func extractPricesFromForm(r *http.Request) []Price {
 	return prices
 }
 
+func parseIntDefault(value string, def int) int {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return def
+	}
+	if num, err := strconv.Atoi(value); err == nil {
+		return num
+	}
+	return def
+}
+
+func gatherMediaTagIDs(form *multipart.Form, fields ...string) []uuid.UUID {
+	if form == nil {
+		return nil
+	}
+	seen := make(map[uuid.UUID]struct{})
+	var ids []uuid.UUID
+	for _, field := range fields {
+		values := form.Value[field]
+		for _, raw := range values {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
+				continue
+			}
+			tagID, err := uuid.Parse(raw)
+			if err != nil {
+				continue
+			}
+			if _, ok := seen[tagID]; ok {
+				continue
+			}
+			seen[tagID] = struct{}{}
+			ids = append(ids, tagID)
+		}
+	}
+	return ids
+}
+
+func gatherMediaTagIDsFromValues(values map[string][]string, fields ...string) []uuid.UUID {
+	if len(values) == 0 {
+		return nil
+	}
+	seen := make(map[uuid.UUID]struct{})
+	var ids []uuid.UUID
+	for _, field := range fields {
+		entries := values[field]
+		for _, raw := range entries {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
+				continue
+			}
+			tagID, err := uuid.Parse(raw)
+			if err != nil {
+				continue
+			}
+			if _, exists := seen[tagID]; exists {
+				continue
+			}
+			seen[tagID] = struct{}{}
+			ids = append(ids, tagID)
+		}
+	}
+	return ids
+}
+
 func priceValuesByType(prices []Price) map[string]*Price {
 	if len(prices) == 0 {
 		return map[string]*Price{}
@@ -821,4 +1036,100 @@ func priceLabelsByKey(options []DictionaryOption) map[string]string {
 		labels[key] = opt.Name
 	}
 	return labels
+}
+
+func (h *Handler) mediaLabelMaps(ctx context.Context) (map[string]string, map[string]string, map[string]string) {
+	categories := make(map[string]string)
+	kinds := make(map[string]string)
+	tags := make(map[string]string)
+
+	if h.dictRepo == nil {
+		return categories, kinds, tags
+	}
+
+	const locale = "en"
+
+	if opts, err := h.dictRepo.GetOptionsBySetName(ctx, "media_location", locale, nil); err == nil {
+		for _, opt := range opts {
+			categories[opt.ID.String()] = opt.Name
+		}
+	} else {
+		h.log().Error("error fetching media locations", "error", err)
+	}
+
+	if opts, err := h.dictRepo.GetOptionsBySetName(ctx, "media_kind", locale, nil); err == nil {
+		for _, opt := range opts {
+			key := strings.TrimSpace(opt.Key)
+			if key == "" {
+				key = opt.ID.String()
+			}
+			kinds[key] = opt.Name
+		}
+	} else {
+		h.log().Error("error fetching media kinds", "error", err)
+	}
+
+	for _, setInfo := range DefaultMediaTagSets() {
+		opts, err := h.dictRepo.GetOptionsBySetName(ctx, setInfo.Name, locale, nil)
+		if err != nil {
+			h.log().Error("error fetching media options", "set", setInfo.Name, "error", err)
+			continue
+		}
+		for _, opt := range opts {
+			tags[opt.ID.String()] = opt.Name
+		}
+	}
+
+	return categories, kinds, tags
+}
+
+type mediaFormOptions struct {
+	Categories []DictionaryOption
+	Kinds      []DictionaryOption
+	TagGroups  []mediaTagGroup
+}
+
+type mediaTagGroup struct {
+	ID      string
+	Label   string
+	Options []DictionaryOption
+}
+
+func (h *Handler) mediaFormOptions(ctx context.Context) mediaFormOptions {
+	options := mediaFormOptions{}
+	if h.dictRepo == nil {
+		return options
+	}
+
+	const locale = "en"
+
+	if cats, err := h.dictRepo.GetOptionsBySetName(ctx, "media_location", locale, nil); err == nil {
+		options.Categories = cats
+	} else {
+		h.log().Error("error fetching media locations", "error", err)
+	}
+
+	if kinds, err := h.dictRepo.GetOptionsBySetName(ctx, "media_kind", locale, nil); err == nil {
+		options.Kinds = kinds
+	} else {
+		h.log().Error("error fetching media kinds", "error", err)
+	}
+
+	for _, tagSet := range DefaultMediaTagSets() {
+		opts, err := h.dictRepo.GetOptionsBySetName(ctx, tagSet.Name, locale, nil)
+		if err != nil {
+			h.log().Error("error fetching media tag options", "set", tagSet.Name, "error", err)
+			continue
+		}
+		if len(opts) == 0 {
+			continue
+		}
+		options.TagGroups = append(options.TagGroups, mediaTagGroup{
+			ID:      tagSet.Name,
+			Label:   tagSet.Label,
+			Options: opts,
+		})
+	}
+
+	return options
 }

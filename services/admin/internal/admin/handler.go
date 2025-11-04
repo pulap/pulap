@@ -112,8 +112,17 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/edit-property/{id}", h.EditProperty)
 		r.Post("/update-property/{id}", h.UpdateProperty)
 		r.Post("/delete-property/{id}", h.DeleteProperty)
+		r.Post("/properties/{id}/media", h.CreatePropertyMedia)
 		r.Get("/properties/locations/suggest", h.SuggestLocations)
 		r.Post("/properties/locations/normalize", h.HTMXNormalizeLocation)
+
+		h.log().Info("Registering media management routes...")
+		r.Get("/list-media", h.ListMedia)
+		r.Get("/show-media/{id}", h.ShowMedia)
+		r.Post("/media/{id}/update", h.UpdateMedia)
+		r.Post("/media/{id}/enable", h.EnableMedia)
+		r.Post("/media/{id}/disable", h.DisableMedia)
+		r.Post("/media/{id}/delete", h.DeleteMedia)
 
 		// HTMX endpoints for cascading selects
 		r.Get("/htmx/types-by-category", h.HTMXTypesByCategory)

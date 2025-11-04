@@ -57,11 +57,24 @@ func main() {
 	estateClient := core.NewServiceClient(cfg.Services.EstateURL)
 	propertyRepo := admin.NewAPIPropertyRepo(estateClient)
 
+	var mediaRepo admin.MediaRepo
+	if cfg.Services.MediaURL != "" {
+		mediaClient := core.NewServiceClient(cfg.Services.MediaURL)
+		mediaRepo = admin.NewAPIMediaRepo(mediaClient, cfg.Services.MediaURL)
+	}
+
 	repos := admin.Repos{
 		UserRepo:     userRepo,
 		RoleRepo:     roleRepo,
 		GrantRepo:    grantRepo,
 		PropertyRepo: propertyRepo,
+		MediaRepo:    mediaRepo,
+	}
+
+	if mediaRepo != nil {
+		logger.Infof("media service configured: %s", cfg.Services.MediaURL)
+	} else {
+		logger.Infof("media service URL not configured; media features disabled")
 	}
 
 	locationProvider := configureLocationProvider(cfg)

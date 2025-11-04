@@ -10,4 +10,5 @@ use (
 	./services/authz
 	./services/dictionary
 	./services/estate
+	./services/media
 )

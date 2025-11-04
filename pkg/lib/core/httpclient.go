@@ -53,6 +53,10 @@ func (c *HTTPClient) Post(ctx context.Context, path string, body interface{}, re
 	return c.doWithRetry(ctx, "POST", path, body, result)
 }
 
+func (c *HTTPClient) Put(ctx context.Context, path string, body interface{}, result interface{}) error {
+	return c.doWithRetry(ctx, "PUT", path, body, result)
+}
+
 func (c *HTTPClient) Patch(ctx context.Context, path string, body interface{}, result interface{}) error {
 	return c.doWithRetry(ctx, "PATCH", path, body, result)
 }

@@ -2,8 +2,8 @@
 
 # Variables
 PROJECT_NAME=pulap
-SERVICES=authn authz dictionary estate admin
-BASE_PORTS=8080 8081 8082 8083 8084 8085
+SERVICES=authn authz dictionary estate admin media
+BASE_PORTS=8080 8081 8082 8083 8084 8085 8086
 PKG_LIBS=auth core fake telemetry
 COMPOSE_FILE?=deployments/docker/compose/docker-compose.yml
 COMPOSE_LOG_FILTER?=pulap-mongodb
@@ -178,6 +178,10 @@ build-estate:
 build-admin:
 	@echo "📦 Building admin service..."
 	@cd services/admin && go build -o admin .
+
+build-media:
+	@echo "📦 Building media service..."
+	@cd services/media && go build -o media .
 
 log-stream:
 	@echo "📜 Streaming raw logs from all services..."
@@ -365,6 +369,8 @@ run-all:
 	@cd services/dictionary && nohup ./dictionary > dictionary.log 2>&1 & echo $$! > dictionary.pid; sleep 2
 	@echo "   📦 Starting Estate on :8084..."
 	@cd services/estate && nohup ./estate > estate.log 2>&1 & echo $$! > estate.pid; sleep 2
+	@echo "   📦 Starting Media on :8086..."
+	@cd services/media && nohup ./media > media.log 2>&1 & echo $$! > media.pid; sleep 2
 	@echo ""
 	@echo "🎉 All Pulap services started!"
 	@echo "📡 Services running:"
@@ -374,6 +380,7 @@ run-all:
 	@echo "   • AuthZ:      http://localhost:8083 (authorization)"
 	@echo "   • Dictionary: http://localhost:8085 (dictionary)"
 	@echo "   • Estate:     http://localhost:8084 (real estate)"
+	@echo "   • Media:      http://localhost:8086 (media assets)"
 	@echo ""
 	@echo "🛑 To stop all services: make stop-all"
 
@@ -392,6 +399,9 @@ run-estate: build-estate
 
 run-admin: build-admin
 	@cd services/admin && ./admin
+
+run-media: build-media
+	@cd services/media && ./media
 
 stop-all:
 	@echo "🛑 Stopping all Pulap services..."
@@ -453,12 +463,10 @@ db-reset-dev:
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);'
 	@echo "🧹 Clearing AuthZ grants collection ($(AUTHZ_DB).grants)..."
 	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);'
-	@echo "🧹 Clearing Dictionary sets collection ($(DICTIONARY_DB).sets)..."
-	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.sets.deleteMany({}); printjson(result);'
-	@echo "🧹 Clearing Dictionary options collection ($(DICTIONARY_DB).options)..."
-	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.options.deleteMany({}); printjson(result);'
-	@echo "🧹 Clearing Estate properties collection ($(ESTATE_DB).properties)..."
-	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);'
+	@echo "🧹 Dropping Dictionary database ($(DICTIONARY_DB))..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.dropDatabase(); printjson({ acknowledged: result.ok === 1, droppedDatabase: result.dropped });'
+	@echo "🧹 Dropping Estate database ($(ESTATE_DB))..."
+	@mongosh "$(MONGO_URL)" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.dropDatabase(); printjson({ acknowledged: result.ok === 1, droppedDatabase: result.dropped });'
 	@echo "✅ Host MongoDB collections cleared."
 
 # Reset MongoDB collections for Docker Compose (container network)
@@ -467,9 +475,8 @@ db-reset-compose:
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHN_DB)"); result = db.users.deleteMany({}); printjson(result);' || echo "⚠️  AuthN collection clear failed"
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.roles.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ roles clear failed"
 	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(AUTHZ_DB)"); result = db.grants.deleteMany({}); printjson(result);' || echo "⚠️  AuthZ grants clear failed"
-	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.sets.deleteMany({}); printjson(result);' || echo "⚠️  Dictionary sets clear failed"
-	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.options.deleteMany({}); printjson(result);' || echo "⚠️  Dictionary options clear failed"
-	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.properties.deleteMany({}); printjson(result);' || echo "⚠️  Estate properties clear failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(DICTIONARY_DB)"); result = db.dropDatabase(); printjson({ acknowledged: result.ok === 1, droppedDatabase: result.dropped });' || echo "⚠️  Dictionary database drop failed"
+	@docker exec pulap-mongodb mongosh "mongodb://$(COMPOSE_MONGO_USER):$(COMPOSE_MONGO_PASS)@localhost:27017/admin?authSource=admin" --quiet --eval 'db = db.getSiblingDB("$(ESTATE_DB)"); result = db.dropDatabase(); printjson({ acknowledged: result.ok === 1, droppedDatabase: result.dropped });' || echo "⚠️  Estate database drop failed"
 	@echo "✅ Docker Compose MongoDB collections cleared."
 
 # Tidy all modules

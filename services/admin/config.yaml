@@ -6,6 +6,7 @@ services:
   authz_url: "http://localhost:8083"
   estate_url: "http://localhost:8084"
   dictionary_url: "http://localhost:8085"
+  media_url: "http://localhost:8086"
 
 auth:
   cache_ttl: "5m"
