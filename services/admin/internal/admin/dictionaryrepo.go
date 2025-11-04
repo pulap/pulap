@@ -38,6 +38,7 @@ type DictionaryRepo interface {
 type DictionaryOption struct {
 	ID   uuid.UUID
 	Name string
+	Key  string
 }
 
 // FakeDictionaryRepo provides hardcoded fake data for development.
@@ -95,9 +96,11 @@ func (c *FakeDictionaryRepo) ListStatuses(ctx context.Context) ([]DictionaryOpti
 // ListPriceTypes returns all price type options.
 func (c *FakeDictionaryRepo) ListPriceTypes(ctx context.Context) ([]DictionaryOption, error) {
 	return []DictionaryOption{
-		{ID: uuid.MustParse("d1111111-1111-1111-1111-111111111111"), Name: "Sale"},
-		{ID: uuid.MustParse("d2222222-2222-2222-2222-222222222222"), Name: "Rent"},
-		{ID: uuid.MustParse("d3333333-3333-3333-3333-333333333333"), Name: "Lease"},
+		{ID: uuid.MustParse("d1111111-1111-1111-1111-111111111111"), Name: "Sale", Key: "sale"},
+		{ID: uuid.MustParse("d2222222-2222-2222-2222-222222222222"), Name: "Rent (Monthly)", Key: "rent_monthly"},
+		{ID: uuid.MustParse("d3333333-3333-3333-3333-333333333333"), Name: "Rent (Weekly)", Key: "rent_weekly"},
+		{ID: uuid.MustParse("d4444444-4444-4444-4444-444444444444"), Name: "Rent (Daily)", Key: "rent_daily"},
+		{ID: uuid.MustParse("d5555555-5555-5555-5555-555555555555"), Name: "Rent (Yearly)", Key: "rent_yearly"},
 	}, nil
 }
 
@@ -211,6 +214,7 @@ func (c *APIDictionaryRepo) GetOptionsBySetName(ctx context.Context, setName, lo
 		filteredOptions = append(filteredOptions, DictionaryOption{
 			ID:   opt.ID,
 			Name: opt.Label,
+			Key:  opt.Key,
 		})
 	}
 
@@ -479,6 +483,9 @@ func DictionaryOptionsToMap(options []DictionaryOption) []map[string]string {
 		result[i] = map[string]string{
 			"id":   opt.ID.String(),
 			"name": opt.Name,
+		}
+		if opt.Key != "" {
+			result[i]["key"] = opt.Key
 		}
 	}
 	return result

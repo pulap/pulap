@@ -86,11 +86,18 @@ func (r *FakePropertyRepo) seedProperties() {
 				Fireplace:       true,
 				Amenities:       []string{"security", "grill"},
 			},
-			Price: Price{
-				Amount:     650000.0,
-				Currency:   "USD",
-				Type:       "sale",
-				Negotiable: true,
+			Prices: []Price{
+				{
+					Amount:     650000.0,
+					Currency:   "USD",
+					Type:       "sale",
+					Negotiable: true,
+				},
+				{
+					Amount:   4200.0,
+					Currency: "USD",
+					Type:     "rent_monthly",
+				},
 			},
 			Status:    "available",
 			OwnerID:   "agent-001",
@@ -152,11 +159,17 @@ func (r *FakePropertyRepo) seedProperties() {
 				Fireplace:       false,
 				Amenities:       []string{"gym", "concierge"},
 			},
-			Price: Price{
-				Amount:     1500.0,
-				Currency:   "USD",
-				Type:       "rent_monthly",
-				Negotiable: false,
+			Prices: []Price{
+				{
+					Amount:   1500.0,
+					Currency: "USD",
+					Type:     "rent_monthly",
+				},
+				{
+					Amount:   120.0,
+					Currency: "USD",
+					Type:     "rent_daily",
+				},
 			},
 			Status:    "available",
 			OwnerID:   "agent-002",
@@ -218,11 +231,18 @@ func (r *FakePropertyRepo) seedProperties() {
 				Fireplace:       false,
 				Amenities:       []string{"security", "reception", "meeting_rooms"},
 			},
-			Price: Price{
-				Amount:     3500.0,
-				Currency:   "USD",
-				Type:       "rent_monthly",
-				Negotiable: true,
+			Prices: []Price{
+				{
+					Amount:   650000.0,
+					Currency: "USD",
+					Type:     "sale",
+				},
+				{
+					Amount:     3500.0,
+					Currency:   "USD",
+					Type:       "rent_monthly",
+					Negotiable: true,
+				},
 			},
 			Status:    "available",
 			OwnerID:   "agent-001",
@@ -249,7 +269,7 @@ func (r *FakePropertyRepo) Create(ctx context.Context, req *CreatePropertyReques
 		Classification: req.Classification,
 		Location:       req.Location,
 		Features:       req.Features,
-		Price:          req.Price,
+		Prices:         req.Prices,
 		Status:         req.Status,
 		OwnerID:        req.OwnerID,
 		CreatedAt:      time.Now(),
@@ -304,7 +324,7 @@ func (r *FakePropertyRepo) Update(ctx context.Context, id uuid.UUID, req *Update
 	property.Classification = req.Classification
 	property.Location = req.Location
 	property.Features = req.Features
-	property.Price = req.Price
+	property.Prices = req.Prices
 	property.Status = req.Status
 	property.OwnerID = req.OwnerID
 	property.UpdatedAt = time.Now()
