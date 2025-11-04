@@ -17,7 +17,7 @@ type Property struct {
 	Classification Classification `json:"classification"`     // Category, Type, Subtype (fake refs)
 	Location       Location       `json:"location"`           // Address and coordinates
 	Features       Features       `json:"features"`           // Physical characteristics
-	Price          Price          `json:"price"`              // Pricing information
+	Prices         []Price        `json:"prices"`             // Pricing information by type
 	Status         string         `json:"status"`             // e.g., "available", "sold", "rented", "reserved"
 	OwnerID        string         `json:"owner_id,omitempty"` // Reference to owner/user
 	SchemaVersion  int            `json:"schema_version"`
@@ -82,16 +82,18 @@ func (p *Property) SetID(id uuid.UUID) {
 }
 
 // New creates a new Property with a generated ID.
-const currentSchemaVersion = 2
+const currentSchemaVersion = 3
 
 func New() *Property {
 	return &Property{
 		ID:            core.GenerateNewID(),
 		Status:        "available",
 		SchemaVersion: currentSchemaVersion,
-		Price: Price{
-			Currency: "USD",
-			Type:     "sale",
+		Prices: []Price{
+			{
+				Currency: "USD",
+				Type:     "sale",
+			},
 		},
 	}
 }

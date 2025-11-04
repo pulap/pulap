@@ -247,6 +247,78 @@ main {
     margin-bottom: 1.5rem;
 }
 
+.form-hint {
+    margin-bottom: 1rem;
+    color: rgba(30, 52, 85, 0.7);
+    font-size: 0.85rem;
+}
+
+.price-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.price-grid.readonly {
+    margin-top: 0.5rem;
+}
+
+.price-card {
+    flex: 1 1 180px;
+    max-width: 260px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(30, 52, 85, 0.08);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.price-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.price-card .price-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.price-card .price-note {
+    font-size: 0.8rem;
+    color: var(--accent-strong);
+}
+
+.price-card.readonly {
+    background: var(--white);
+}
+
+.price-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.price-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+    border-radius: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    color: var(--primary);
+}
+
+.price-list li span {
+    font-weight: 600;
+}
+
 label {
     display: block;
     margin-bottom: 0.5rem;

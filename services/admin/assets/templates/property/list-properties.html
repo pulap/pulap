@@ -26,10 +26,15 @@
                     <td>{{.Location.Address.City}}, {{.Location.Address.Country}}</td>
                     <td>{{.Features.Bedrooms}} bed / {{.Features.Bathrooms}} bath</td>
                     <td>
-                        {{if eq .Price.Type "sale"}}
-                            ${{printf "%.0f" .Price.Amount}} {{.Price.Currency}}
+                        {{if .Prices}}
+                            <ul class="price-list">
+                                {{range .Prices}}
+                                {{$label := index $.PriceTypeLabels .Type}}
+                                <li><span>{{if $label}}{{$label}}{{else}}{{.Type}}{{end}}</span> {{printf "%.0f" .Amount}} {{.Currency}}</li>
+                                {{end}}
+                            </ul>
                         {{else}}
-                            ${{printf "%.0f" .Price.Amount}}/mo
+                            —
                         {{end}}
                     </td>
                     <td><span class="status-{{.Status}}">{{.Status}}</span></td>
