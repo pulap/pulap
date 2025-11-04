@@ -106,6 +106,13 @@ func ValidateCreateProperty(ctx context.Context, property *Property) []Validatio
 		})
 	}
 
+	if property.SchemaVersion <= 0 {
+		errors = append(errors, ValidationError{
+			Field:   "schema_version",
+			Message: "SchemaVersion must be greater than zero",
+		})
+	}
+
 	return errors
 }
 
@@ -174,6 +181,13 @@ func ValidateUpdateProperty(ctx context.Context, id uuid.UUID, property *Propert
 		errors = append(errors, ValidationError{
 			Field:   "updated_at",
 			Message: "Updated timestamp is required",
+		})
+	}
+
+	if property.SchemaVersion <= 0 {
+		errors = append(errors, ValidationError{
+			Field:   "schema_version",
+			Message: "SchemaVersion must be greater than zero",
 		})
 	}
 

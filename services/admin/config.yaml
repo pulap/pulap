@@ -16,3 +16,15 @@ log:
 
 debug:
   routes: true
+
+geocode:
+  provider: "locationiq"
+  # google:
+  #   api_key: ""
+  #   endpoint: "https://maps.googleapis.com/maps/api"
+  # osm:
+  #   endpoint: "https://nominatim.openstreetmap.org"
+  #   email: ""
+  locationiq:
+    key: ""
+    endpoint: "https://api.locationiq.com/v1"

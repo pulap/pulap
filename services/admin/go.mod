@@ -12,6 +12,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.0
 	github.com/pulap/pulap/pkg/lib/core v0.0.0
 	github.com/spf13/pflag v1.0.10
+	golang.org/x/text v0.30.0
 )
 
 require (

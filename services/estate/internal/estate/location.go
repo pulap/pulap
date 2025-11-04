@@ -2,9 +2,14 @@ package estate
 
 // Location represents the physical location of a property.
 type Location struct {
-	Address     Address     `json:"address"`
-	Coordinates Coordinates `json:"coordinates"`
-	Region      string      `json:"region,omitempty"` // e.g., "EUROPE", "North America"
+	Address     Address        `json:"address"`
+	Coordinates Coordinates    `json:"coordinates"`
+	Region      string         `json:"region,omitempty"` // e.g., "EUROPE", "North America"
+	Provider    string         `json:"provider,omitempty"`
+	ProviderURL string         `json:"provider_url,omitempty"`
+	ProviderRef string         `json:"provider_ref,omitempty"`
+	Raw         map[string]any `json:"raw,omitempty"`
+	DisplayName string         `json:"display_name,omitempty"`
 }
 
 // Address represents a structured physical address.
@@ -53,6 +58,10 @@ func (l Location) Validate() []string {
 		if l.Coordinates.Longitude < -180 || l.Coordinates.Longitude > 180 {
 			errors = append(errors, "coordinates.longitude must be between -180 and 180")
 		}
+	}
+
+	if l.Provider != "" && l.ProviderRef == "" {
+		errors = append(errors, "location.provider_ref is required when provider is set")
 	}
 
 	return errors

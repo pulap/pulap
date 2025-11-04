@@ -161,11 +161,12 @@ func parsePropertyFromMap(data map[string]interface{}) (*Property, error) {
 	}
 
 	property := &Property{
-		ID:          id,
-		Name:        stringField(data, "name"),
-		Description: stringField(data, "description"),
-		Status:      stringField(data, "status"),
-		OwnerID:     stringField(data, "owner_id"),
+		ID:            id,
+		Name:          stringField(data, "name"),
+		Description:   stringField(data, "description"),
+		Status:        stringField(data, "status"),
+		OwnerID:       stringField(data, "owner_id"),
+		SchemaVersion: intField(data, "schema_version"),
 	}
 
 	// Parse classification
@@ -207,6 +208,13 @@ func parsePropertyFromMap(data map[string]interface{}) (*Property, error) {
 		}
 
 		property.Location.Region = stringField(locData, "region")
+		property.Location.Provider = stringField(locData, "provider")
+		property.Location.ProviderURL = stringField(locData, "provider_url")
+		property.Location.ProviderRef = stringField(locData, "provider_ref")
+		property.Location.DisplayName = stringField(locData, "display_name")
+		if raw, ok := locData["raw"].(map[string]interface{}); ok {
+			property.Location.Raw = raw
+		}
 	}
 
 	// Parse features
