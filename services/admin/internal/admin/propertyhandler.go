@@ -1,12 +1,17 @@
 package admin
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
+	"github.com/pulap/pulap/pkg/lib/core"
 )
 
 // ListProperties shows all properties
@@ -110,6 +115,7 @@ func (h *Handler) NewProperty(w http.ResponseWriter, r *http.Request) {
 		"Statuses":   DictionaryOptionsToMap(statuses),
 		"PriceTypes": DictionaryOptionsToMap(priceTypes),
 		"Conditions": DictionaryOptionsToMap(conditions),
+		"Location":   newLocationFormModel(),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "new-property.html", data); err != nil {
@@ -148,25 +154,40 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 	parking, _ := strconv.Atoi(r.FormValue("parking"))
 	amount, _ := strconv.ParseFloat(r.FormValue("price_amount"), 64)
 
+	location := Location{
+		Address: Address{
+			Street:     strings.TrimSpace(r.FormValue("street")),
+			Number:     strings.TrimSpace(r.FormValue("number")),
+			Unit:       strings.TrimSpace(r.FormValue("unit")),
+			City:       strings.TrimSpace(r.FormValue("city")),
+			State:      strings.TrimSpace(r.FormValue("state")),
+			PostalCode: strings.TrimSpace(r.FormValue("postal_code")),
+			Country:    strings.TrimSpace(r.FormValue("country")),
+		},
+		Coordinates: Coordinates{
+			Latitude:  parseCoordinateValue(r.FormValue("location_latitude")),
+			Longitude: parseCoordinateValue(r.FormValue("location_longitude")),
+		},
+		Region:      strings.TrimSpace(r.FormValue("region")),
+		Provider:    strings.TrimSpace(r.FormValue("location_provider")),
+		ProviderRef: strings.TrimSpace(r.FormValue("location_provider_ref")),
+		ProviderURL: strings.TrimSpace(r.FormValue("location_provider_url")),
+		Raw:         parseLocationRaw(r.FormValue("location_raw")),
+		DisplayName: strings.TrimSpace(r.FormValue("location_display_name")),
+	}
+	if len(location.Raw) == 0 {
+		location.Raw = nil
+	}
+
 	req := &CreatePropertyRequest{
-		Name:        r.FormValue("name"),
-		Description: r.FormValue("description"),
+		Name:        strings.TrimSpace(r.FormValue("name")),
+		Description: strings.TrimSpace(r.FormValue("description")),
 		Classification: Classification{
 			CategoryID: categoryID,
 			TypeID:     typeID,
 			SubtypeID:  subtypeID,
 		},
-		Location: Location{
-			Address: Address{
-				Street:     r.FormValue("street"),
-				Number:     r.FormValue("number"),
-				City:       r.FormValue("city"),
-				State:      r.FormValue("state"),
-				PostalCode: r.FormValue("postal_code"),
-				Country:    r.FormValue("country"),
-			},
-			Region: r.FormValue("region"),
-		},
+		Location: location,
 		Features: Features{
 			TotalArea: totalArea,
 			Bedrooms:  bedrooms,
@@ -175,11 +196,12 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 		},
 		Price: Price{
 			Amount:   amount,
-			Currency: r.FormValue("currency"),
-			Type:     r.FormValue("price_type"),
+			Currency: strings.TrimSpace(r.FormValue("currency")),
+			Type:     strings.TrimSpace(r.FormValue("price_type")),
 		},
-		Status:  r.FormValue("status"),
-		OwnerID: r.FormValue("owner_id"),
+		Status:        strings.TrimSpace(r.FormValue("status")),
+		OwnerID:       strings.TrimSpace(r.FormValue("owner_id")),
+		SchemaVersion: CurrentPropertySchemaVersion,
 	}
 
 	property, err := h.service.CreateProperty(ctx, req)
@@ -191,6 +213,157 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("property created successfully", "id", property.ID)
 	http.Redirect(w, r, "/list-properties", http.StatusSeeOther)
+}
+
+// SuggestLocations returns autocomplete results for property addresses.
+func (h *Handler) SuggestLocations(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.SuggestLocations")
+	defer finish()
+	log := h.log(r)
+
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	if query == "" {
+		core.RespondError(w, http.StatusBadRequest, "query parameter q is required")
+		return
+	}
+
+	suggestions, err := h.service.SuggestLocations(r.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrLocationProviderUnavailable) {
+			core.RespondSuccess(w, []LocationSuggestion{})
+			return
+		}
+		log.Error("error fetching location suggestions", "error", err)
+		core.RespondError(w, http.StatusBadGateway, "Could not fetch suggestions")
+		return
+	}
+
+	core.RespondSuccess(w, suggestions)
+}
+
+// HTMXNormalizeLocation resolves and normalizes the selected location into form fields.
+func (h *Handler) HTMXNormalizeLocation(w http.ResponseWriter, r *http.Request) {
+	w, r, finish := h.http.Start(w, r, "Handler.HTMXNormalizeLocation")
+	defer finish()
+	log := h.log(r)
+
+	if err := r.ParseForm(); err != nil {
+		log.Error("error parsing normalize location form", "error", err)
+		model := locationFormModelFromRequest(r)
+		model.Error = "Could not parse location data"
+		h.renderLocationFragment(w, model)
+		return
+	}
+
+	providerRef := strings.TrimSpace(r.FormValue("provider_ref"))
+	selectedText := strings.TrimSpace(r.FormValue("selected_text"))
+	if providerRef == "" {
+		model := locationFormModelFromRequest(r)
+		model.Error = "Missing location identifier"
+		h.renderLocationFragment(w, model)
+		return
+	}
+
+	normalized, err := h.service.NormalizeLocation(r.Context(), NormalizeLocationRequest{
+		ProviderRef:  providerRef,
+		SelectedText: selectedText,
+	})
+	if err != nil {
+		model := locationFormModelFromRequest(r)
+		if errors.Is(err, ErrLocationProviderUnavailable) {
+			model.Error = "Location provider not configured"
+		} else {
+			log.Error("error normalizing location", "error", err, "provider_ref", providerRef)
+			model.Error = "Could not normalize location"
+		}
+		h.renderLocationFragment(w, model)
+		return
+	}
+
+	model := locationFormModelFromNormalized(normalized)
+	emitLocationUpdateTrigger(w, model, log)
+	h.renderLocationFragment(w, model)
+}
+
+func (h *Handler) renderLocationFragment(w http.ResponseWriter, model LocationFormModel) {
+	tmpl, err := h.tmplMgr.Get("location-fields.html")
+	if err != nil {
+		h.log().Error("location fields template not found", "error", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]any{
+		"Location": model,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "location-fields.html", data); err != nil {
+		h.log().Error("error rendering location fields", "error", err)
+	}
+}
+
+func parseCoordinateValue(value string) float64 {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0
+	}
+	parsed, err := strconv.ParseFloat(trimmed, 64)
+	if err != nil {
+		return 0
+	}
+	return parsed
+}
+
+func parseLocationRaw(raw string) map[string]any {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil
+	}
+	var result map[string]any
+	if err := json.Unmarshal([]byte(trimmed), &result); err != nil {
+		return nil
+	}
+	return result
+}
+
+func emitLocationUpdateTrigger(w http.ResponseWriter, model LocationFormModel, log core.Logger) {
+	payload := map[string]string{
+		"search_value":  model.SearchValue,
+		"selected_text": model.SelectedText,
+		"street":        model.Street,
+		"number":        model.Number,
+		"unit":          model.Unit,
+		"city":          model.City,
+		"state":         model.State,
+		"postal_code":   model.PostalCode,
+		"country":       model.Country,
+		"latitude":      model.Latitude,
+		"longitude":     model.Longitude,
+		"provider":      model.Provider,
+		"provider_ref":  model.ProviderRef,
+		"provider_url":  model.ProviderURL,
+		"raw_json":      model.RawJSON,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	if log != nil {
+		log.Info("location fields normalized",
+			"search", model.SearchValue,
+			"selected", model.SelectedText,
+			"street", model.Street,
+			"number", model.Number,
+			"city", model.City,
+			"state", model.State,
+			"postal_code", model.PostalCode,
+			"country", model.Country,
+			"latitude", model.Latitude,
+			"longitude", model.Longitude,
+		)
+	}
+	w.Header().Set("HX-Trigger-After-Swap", fmt.Sprintf("{\"locationUpdated\":%s}", data))
 }
 
 // ShowProperty displays a single property
@@ -317,6 +490,7 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 		"Statuses":   DictionaryOptionsToMap(statuses),
 		"PriceTypes": DictionaryOptionsToMap(priceTypes),
 		"Conditions": DictionaryOptionsToMap(conditions),
+		"Location":   locationFormModelFromProperty(property),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "edit-property.html", data); err != nil {
@@ -361,25 +535,40 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 	parking, _ := strconv.Atoi(r.FormValue("parking"))
 	amount, _ := strconv.ParseFloat(r.FormValue("price_amount"), 64)
 
+	location := Location{
+		Address: Address{
+			Street:     strings.TrimSpace(r.FormValue("street")),
+			Number:     strings.TrimSpace(r.FormValue("number")),
+			Unit:       strings.TrimSpace(r.FormValue("unit")),
+			City:       strings.TrimSpace(r.FormValue("city")),
+			State:      strings.TrimSpace(r.FormValue("state")),
+			PostalCode: strings.TrimSpace(r.FormValue("postal_code")),
+			Country:    strings.TrimSpace(r.FormValue("country")),
+		},
+		Coordinates: Coordinates{
+			Latitude:  parseCoordinateValue(r.FormValue("location_latitude")),
+			Longitude: parseCoordinateValue(r.FormValue("location_longitude")),
+		},
+		Region:      strings.TrimSpace(r.FormValue("region")),
+		Provider:    strings.TrimSpace(r.FormValue("location_provider")),
+		ProviderRef: strings.TrimSpace(r.FormValue("location_provider_ref")),
+		ProviderURL: strings.TrimSpace(r.FormValue("location_provider_url")),
+		Raw:         parseLocationRaw(r.FormValue("location_raw")),
+		DisplayName: strings.TrimSpace(r.FormValue("location_display_name")),
+	}
+	if len(location.Raw) == 0 {
+		location.Raw = nil
+	}
+
 	req := &UpdatePropertyRequest{
-		Name:        r.FormValue("name"),
-		Description: r.FormValue("description"),
+		Name:        strings.TrimSpace(r.FormValue("name")),
+		Description: strings.TrimSpace(r.FormValue("description")),
 		Classification: Classification{
 			CategoryID: categoryID,
 			TypeID:     typeID,
 			SubtypeID:  subtypeID,
 		},
-		Location: Location{
-			Address: Address{
-				Street:     r.FormValue("street"),
-				Number:     r.FormValue("number"),
-				City:       r.FormValue("city"),
-				State:      r.FormValue("state"),
-				PostalCode: r.FormValue("postal_code"),
-				Country:    r.FormValue("country"),
-			},
-			Region: r.FormValue("region"),
-		},
+		Location: location,
 		Features: Features{
 			TotalArea: totalArea,
 			Bedrooms:  bedrooms,
@@ -388,11 +577,12 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 		},
 		Price: Price{
 			Amount:   amount,
-			Currency: r.FormValue("currency"),
-			Type:     r.FormValue("price_type"),
+			Currency: strings.TrimSpace(r.FormValue("currency")),
+			Type:     strings.TrimSpace(r.FormValue("price_type")),
 		},
-		Status:  r.FormValue("status"),
-		OwnerID: r.FormValue("owner_id"),
+		Status:        strings.TrimSpace(r.FormValue("status")),
+		OwnerID:       strings.TrimSpace(r.FormValue("owner_id")),
+		SchemaVersion: CurrentPropertySchemaVersion,
 	}
 
 	_, err = h.service.UpdateProperty(ctx, id, req)

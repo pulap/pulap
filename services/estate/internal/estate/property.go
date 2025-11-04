@@ -20,6 +20,7 @@ type Property struct {
 	Price          Price          `json:"price"`              // Pricing information
 	Status         string         `json:"status"`             // e.g., "available", "sold", "rented", "reserved"
 	OwnerID        string         `json:"owner_id,omitempty"` // Reference to owner/user
+	SchemaVersion  int            `json:"schema_version"`
 	CreatedAt      time.Time      `json:"created_at"`
 	CreatedBy      string         `json:"created_by"`
 	UpdatedAt      time.Time      `json:"updated_at"`
@@ -81,10 +82,13 @@ func (p *Property) SetID(id uuid.UUID) {
 }
 
 // New creates a new Property with a generated ID.
+const currentSchemaVersion = 2
+
 func New() *Property {
 	return &Property{
-		ID:     core.GenerateNewID(),
-		Status: "available",
+		ID:            core.GenerateNewID(),
+		Status:        "available",
+		SchemaVersion: currentSchemaVersion,
 		Price: Price{
 			Currency: "USD",
 			Type:     "sale",
@@ -107,9 +111,15 @@ func (p *Property) BeforeCreate() {
 	if p.Status == "" {
 		p.Status = "available"
 	}
+	if p.SchemaVersion == 0 {
+		p.SchemaVersion = currentSchemaVersion
+	}
 }
 
 // BeforeUpdate sets update timestamps.
 func (p *Property) BeforeUpdate() {
 	p.UpdatedAt = time.Now()
+	if p.SchemaVersion == 0 {
+		p.SchemaVersion = currentSchemaVersion
+	}
 }

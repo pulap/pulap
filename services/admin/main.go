@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -63,7 +64,14 @@ func main() {
 		PropertyRepo: propertyRepo,
 	}
 
-	adminService := admin.NewDefaultService(repos, xparams)
+	locationProvider := configureLocationProvider(cfg)
+	if locationProvider == nil {
+		logger.Infof("location provider disabled")
+	} else {
+		logger.Infof("location provider enabled: %s", locationProvider.ProviderID())
+	}
+
+	adminService := admin.NewDefaultService(repos, locationProvider, xparams)
 	deps = append(deps, adminService)
 
 	authZClient := core.NewAuthZHTTPClient(cfg.Services.AuthzURL)
@@ -94,4 +102,34 @@ func main() {
 
 	logger.Infof("Shutting down %s(%s)...", name, version)
 	cancel()
+}
+
+func configureLocationProvider(cfg *config.Config) admin.LocationProvider {
+	if cfg == nil {
+		return nil
+	}
+	provider := strings.ToLower(strings.TrimSpace(cfg.Geocode.Provider))
+	switch provider {
+	case "", admin.ProviderLocationIQ:
+		key := strings.TrimSpace(cfg.Geocode.LocationIQ.Key)
+		if key == "" {
+			return nil
+		}
+		return admin.NewLocationIQProvider(admin.LocationIQOptions{
+			APIKey:   key,
+			Endpoint: cfg.Geocode.LocationIQ.Endpoint,
+		})
+	case admin.ProviderGoogle:
+		return admin.NewGoogleMapsProvider(admin.GoogleMapsOptions{
+			APIKey:   strings.TrimSpace(cfg.Geocode.Google.APIKey),
+			Endpoint: cfg.Geocode.Google.Endpoint,
+		})
+	case admin.ProviderOSM:
+		return admin.NewOpenStreetMapProvider(admin.OpenStreetMapOptions{
+			Endpoint: cfg.Geocode.OSM.Endpoint,
+			Email:    cfg.Geocode.OSM.Email,
+		})
+	default:
+		return nil
+	}
 }

@@ -21,6 +21,7 @@ type Config struct {
 	Services ServicesConfig `koanf:"services"`
 	Auth     AuthConfig     `koanf:"auth"`
 	Debug    DebugConfig    `koanf:"debug"`
+	Geocode  GeocodeConfig  `koanf:"geocode"`
 }
 
 type ServerConfig struct {
@@ -47,6 +48,28 @@ type DebugConfig struct {
 	Routes bool `koanf:"routes"`
 }
 
+type GeocodeConfig struct {
+	Provider   string              `koanf:"provider"`
+	Google     GoogleGeocodeConfig `koanf:"google"`
+	OSM        OSMGeocodeConfig    `koanf:"osm"`
+	LocationIQ LocationIQConfig    `koanf:"locationiq"`
+}
+
+type GoogleGeocodeConfig struct {
+	APIKey   string `koanf:"api_key"`
+	Endpoint string `koanf:"endpoint"`
+}
+
+type OSMGeocodeConfig struct {
+	Endpoint string `koanf:"endpoint"`
+	Email    string `koanf:"email"`
+}
+
+type LocationIQConfig struct {
+	Key      string `koanf:"key"`
+	Endpoint string `koanf:"endpoint"`
+}
+
 func New() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -67,6 +90,18 @@ func New() *Config {
 		},
 		Debug: DebugConfig{
 			Routes: true,
+		},
+		Geocode: GeocodeConfig{
+			Provider: "locationiq",
+			Google: GoogleGeocodeConfig{
+				Endpoint: "https://maps.googleapis.com/maps/api",
+			},
+			OSM: OSMGeocodeConfig{
+				Endpoint: "https://nominatim.openstreetmap.org",
+			},
+			LocationIQ: LocationIQConfig{
+				Endpoint: "https://api.locationiq.com/v1",
+			},
 		},
 	}
 }
@@ -90,6 +125,13 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	fs.String("auth.session_secret", "change-this-in-production", "Session secret")
 	fs.String("log.level", "info", "log level (debug, info, error)")
 	fs.Bool("debug.routes", true, "Expose /debug/routes endpoint")
+	fs.String("geocode.provider", "locationiq", "Location provider to use (locationiq|google|osm)")
+	fs.String("geocode.google.api_key", "", "Google Maps API key")
+	fs.String("geocode.google.endpoint", "https://maps.googleapis.com/maps/api", "Google Maps API endpoint")
+	fs.String("geocode.osm.endpoint", "https://nominatim.openstreetmap.org", "OpenStreetMap Nominatim endpoint")
+	fs.String("geocode.osm.email", "", "Contact email for OpenStreetMap requests")
+	fs.String("geocode.locationiq.key", "", "LocationIQ API key")
+	fs.String("geocode.locationiq.endpoint", "https://api.locationiq.com/v1", "LocationIQ API endpoint")
 	fs.Parse(args[1:])
 
 	raw, err := os.ReadFile(path)
@@ -145,6 +187,27 @@ func LoadConfig(path, envPrefix string, args []string) (*Config, error) {
 	}
 	if val := os.Getenv("ADMIN_DEBUG_ROUTES"); val != "" {
 		cfg.Debug.Routes = parseBoolEnv(val)
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_PROVIDER"); val != "" {
+		cfg.Geocode.Provider = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_GOOGLE_API_KEY"); val != "" {
+		cfg.Geocode.Google.APIKey = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_GOOGLE_ENDPOINT"); val != "" {
+		cfg.Geocode.Google.Endpoint = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_OSM_ENDPOINT"); val != "" {
+		cfg.Geocode.OSM.Endpoint = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_OSM_EMAIL"); val != "" {
+		cfg.Geocode.OSM.Email = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_LOCATIONIQ_KEY"); val != "" {
+		cfg.Geocode.LocationIQ.Key = val
+	}
+	if val := os.Getenv("ADMIN_GEOCODE_LOCATIONIQ_ENDPOINT"); val != "" {
+		cfg.Geocode.LocationIQ.Endpoint = val
 	}
 
 	return cfg, nil

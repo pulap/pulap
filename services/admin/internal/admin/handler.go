@@ -112,6 +112,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/edit-property/{id}", h.EditProperty)
 		r.Post("/update-property/{id}", h.UpdateProperty)
 		r.Post("/delete-property/{id}", h.DeleteProperty)
+		r.Get("/properties/locations/suggest", h.SuggestLocations)
+		r.Post("/properties/locations/normalize", h.HTMXNormalizeLocation)
 
 		// HTMX endpoints for cascading selects
 		r.Get("/htmx/types-by-category", h.HTMXTypesByCategory)
