@@ -248,13 +248,21 @@ func parsePropertyFromMap(data map[string]interface{}) (*Property, error) {
 		}
 	}
 
-	// Parse price
-	if priceData, ok := data["price"].(map[string]interface{}); ok {
-		property.Price = Price{
-			Amount:     floatField(priceData, "amount"),
-			Currency:   stringField(priceData, "currency"),
-			Type:       stringField(priceData, "type"),
-			Negotiable: boolField(priceData, "negotiable"),
+	// Parse prices
+	if pricesData, ok := data["prices"].([]interface{}); ok {
+		property.Prices = make([]Price, 0, len(pricesData))
+		for _, item := range pricesData {
+			priceData, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			property.Prices = append(property.Prices, Price{
+				Amount:     floatField(priceData, "amount"),
+				Currency:   stringField(priceData, "currency"),
+				Type:       stringField(priceData, "type"),
+				Negotiable: boolField(priceData, "negotiable"),
+			})
 		}
 	}
 

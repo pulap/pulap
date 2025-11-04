@@ -104,16 +104,24 @@
 </div>
 
 <div class="card">
-    <h2>Price</h2>
+    <h2>Prices</h2>
 
-    <div class="form-group">
-        <label>Amount</label>
-        <p style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.25rem; margin-top: 0.5rem;">
-            {{printf "%.2f" .Property.Price.Amount}} {{.Property.Price.Currency}}
-            {{if eq .Property.Price.Type "sale"}}(Sale){{else}}({{.Property.Price.Type}}){{end}}
-            {{if .Property.Price.Negotiable}} - Negotiable{{end}}
-        </p>
+    {{if .Property.Prices}}
+    <div class="price-grid readonly">
+        {{range .Property.Prices}}
+        {{$label := index $.PriceTypeLabels .Type}}
+        <div class="price-card readonly">
+            <h3>{{if $label}}{{$label}}{{else}}{{.Type}}{{end}}</h3>
+            <p class="price-value">{{printf "%.2f" .Amount}} {{.Currency}}</p>
+            {{if .Negotiable}}
+            <p class="price-note">Negotiable</p>
+            {{end}}
+        </div>
+        {{end}}
     </div>
+    {{else}}
+    <p style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.25rem; margin-top: 0.5rem;">No pricing data recorded.</p>
+    {{end}}
 </div>
 
 <div class="card">

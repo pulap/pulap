@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -28,6 +29,11 @@ func (h *Handler) ListProperties(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	priceTypes, err := h.dictRepo.ListPriceTypes(ctx)
+	if err != nil {
+		log.Error("error fetching price types", "error", err)
+	}
+
 	tmpl, err := h.tmplMgr.Get("list-properties.html")
 	if err != nil {
 		log.Error("error getting template", "error", err)
@@ -36,10 +42,15 @@ func (h *Handler) ListProperties(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":      "Properties",
-		"Properties": properties,
-		"ActiveNav":  "properties",
-		"Template":   "list-properties-content",
+		"Title":           "Properties",
+		"Properties":      properties,
+		"ActiveNav":       "properties",
+		"Template":        "list-properties-content",
+		"PriceTypeLabels": map[string]string{},
+	}
+
+	if priceTypes != nil {
+		data["PriceTypeLabels"] = priceLabelsByKey(priceTypes)
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "list-properties.html", data); err != nil {
@@ -106,16 +117,18 @@ func (h *Handler) NewProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":      "New Property",
-		"ActiveNav":  "properties",
-		"Template":   "new-property",
-		"Categories": DictionaryOptionsToMap(categories),
-		"Types":      DictionaryOptionsToMap(types),
-		"Subtypes":   DictionaryOptionsToMap(subtypes),
-		"Statuses":   DictionaryOptionsToMap(statuses),
-		"PriceTypes": DictionaryOptionsToMap(priceTypes),
-		"Conditions": DictionaryOptionsToMap(conditions),
-		"Location":   newLocationFormModel(),
+		"Title":           "New Property",
+		"ActiveNav":       "properties",
+		"Template":        "new-property",
+		"Categories":      DictionaryOptionsToMap(categories),
+		"Types":           DictionaryOptionsToMap(types),
+		"Subtypes":        DictionaryOptionsToMap(subtypes),
+		"Statuses":        DictionaryOptionsToMap(statuses),
+		"PriceTypes":      DictionaryOptionsToMap(priceTypes),
+		"Conditions":      DictionaryOptionsToMap(conditions),
+		"Location":        newLocationFormModel(),
+		"PriceValues":     map[string]*Price{},
+		"PriceTypeLabels": priceLabelsByKey(priceTypes),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "new-property.html", data); err != nil {
@@ -152,7 +165,8 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 	bedrooms, _ := strconv.Atoi(r.FormValue("bedrooms"))
 	bathrooms, _ := strconv.Atoi(r.FormValue("bathrooms"))
 	parking, _ := strconv.Atoi(r.FormValue("parking"))
-	amount, _ := strconv.ParseFloat(r.FormValue("price_amount"), 64)
+
+	prices := extractPricesFromForm(r)
 
 	location := Location{
 		Address: Address{
@@ -194,11 +208,7 @@ func (h *Handler) CreateProperty(w http.ResponseWriter, r *http.Request) {
 			Bathrooms: bathrooms,
 			Parking:   parking,
 		},
-		Price: Price{
-			Amount:   amount,
-			Currency: strings.TrimSpace(r.FormValue("currency")),
-			Type:     strings.TrimSpace(r.FormValue("price_type")),
-		},
+		Prices:        prices,
 		Status:        strings.TrimSpace(r.FormValue("status")),
 		OwnerID:       strings.TrimSpace(r.FormValue("owner_id")),
 		SchemaVersion: CurrentPropertySchemaVersion,
@@ -388,6 +398,11 @@ func (h *Handler) ShowProperty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	priceTypes, err := h.dictRepo.ListPriceTypes(ctx)
+	if err != nil {
+		log.Error("error fetching price types", "error", err)
+	}
+
 	tmpl, err := h.tmplMgr.Get("show-property.html")
 	if err != nil {
 		log.Error("error getting template", "error", err)
@@ -396,11 +411,17 @@ func (h *Handler) ShowProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":     fmt.Sprintf("Property: %s", property.Name),
-		"Property":  property,
-		"ActiveNav": "properties",
-		"Template":  "show-property",
+		"Title":           fmt.Sprintf("Property: %s", property.Name),
+		"Property":        property,
+		"ActiveNav":       "properties",
+		"Template":        "show-property",
+		"PriceTypeLabels": map[string]string{},
 	}
+
+	if priceTypes != nil {
+		data["PriceTypeLabels"] = priceLabelsByKey(priceTypes)
+	}
+	data["PriceValues"] = priceValuesByType(property.Prices)
 
 	if err := tmpl.ExecuteTemplate(w, "show-property.html", data); err != nil {
 		log.Error("error executing template", "error", err)
@@ -480,17 +501,19 @@ func (h *Handler) EditProperty(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Title":      fmt.Sprintf("Edit: %s", property.Name),
-		"Property":   property,
-		"ActiveNav":  "properties",
-		"Template":   "edit-property",
-		"Categories": DictionaryOptionsToMap(categories),
-		"Types":      DictionaryOptionsToMap(types),
-		"Subtypes":   DictionaryOptionsToMap(subtypes),
-		"Statuses":   DictionaryOptionsToMap(statuses),
-		"PriceTypes": DictionaryOptionsToMap(priceTypes),
-		"Conditions": DictionaryOptionsToMap(conditions),
-		"Location":   locationFormModelFromProperty(property),
+		"Title":           fmt.Sprintf("Edit: %s", property.Name),
+		"Property":        property,
+		"ActiveNav":       "properties",
+		"Template":        "edit-property",
+		"Categories":      DictionaryOptionsToMap(categories),
+		"Types":           DictionaryOptionsToMap(types),
+		"Subtypes":        DictionaryOptionsToMap(subtypes),
+		"Statuses":        DictionaryOptionsToMap(statuses),
+		"PriceTypes":      DictionaryOptionsToMap(priceTypes),
+		"Conditions":      DictionaryOptionsToMap(conditions),
+		"Location":        locationFormModelFromProperty(property),
+		"PriceValues":     priceValuesByType(property.Prices),
+		"PriceTypeLabels": priceLabelsByKey(priceTypes),
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "edit-property.html", data); err != nil {
@@ -533,7 +556,8 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 	bedrooms, _ := strconv.Atoi(r.FormValue("bedrooms"))
 	bathrooms, _ := strconv.Atoi(r.FormValue("bathrooms"))
 	parking, _ := strconv.Atoi(r.FormValue("parking"))
-	amount, _ := strconv.ParseFloat(r.FormValue("price_amount"), 64)
+
+	prices := extractPricesFromForm(r)
 
 	location := Location{
 		Address: Address{
@@ -575,11 +599,7 @@ func (h *Handler) UpdateProperty(w http.ResponseWriter, r *http.Request) {
 			Bathrooms: bathrooms,
 			Parking:   parking,
 		},
-		Price: Price{
-			Amount:   amount,
-			Currency: strings.TrimSpace(r.FormValue("currency")),
-			Type:     strings.TrimSpace(r.FormValue("price_type")),
-		},
+		Prices:        prices,
 		Status:        strings.TrimSpace(r.FormValue("status")),
 		OwnerID:       strings.TrimSpace(r.FormValue("owner_id")),
 		SchemaVersion: CurrentPropertySchemaVersion,
@@ -693,4 +713,112 @@ func (h *Handler) HTMXSubtypesByType(w http.ResponseWriter, r *http.Request) {
 	for _, s := range subtypes {
 		w.Write([]byte(fmt.Sprintf(`<option value="%s">%s</option>`, s.ID.String(), s.Name)))
 	}
+}
+
+// extractPricesFromForm collects price rows submitted via the property form.
+func extractPricesFromForm(r *http.Request) []Price {
+	type rawPrice struct {
+		amount     string
+		currency   string
+		negotiable bool
+	}
+
+	pricesByType := make(map[string]rawPrice)
+
+	for key, values := range r.PostForm {
+		if !strings.HasPrefix(key, "price_") || !strings.HasSuffix(key, "_amount") {
+			continue
+		}
+
+		typeKey := strings.TrimSuffix(strings.TrimPrefix(key, "price_"), "_amount")
+		if typeKey == "" {
+			continue
+		}
+
+		amount := ""
+		if len(values) > 0 {
+			amount = strings.TrimSpace(values[0])
+		}
+
+		currency := strings.TrimSpace(r.PostFormValue(fmt.Sprintf("price_%s_currency", typeKey)))
+		negotiable := r.PostFormValue(fmt.Sprintf("price_%s_negotiable", typeKey)) == "on"
+
+		pricesByType[typeKey] = rawPrice{
+			amount:     amount,
+			currency:   currency,
+			negotiable: negotiable,
+		}
+	}
+
+	// Legacy single-price fallback for older forms
+	if len(pricesByType) == 0 {
+		legacyAmount := strings.TrimSpace(r.FormValue("price_amount"))
+		if legacyAmount != "" {
+			pricesByType[strings.TrimSpace(r.FormValue("price_type"))] = rawPrice{
+				amount:     legacyAmount,
+				currency:   strings.TrimSpace(r.FormValue("currency")),
+				negotiable: r.FormValue("price_negotiable") == "on",
+			}
+		}
+	}
+
+	if len(pricesByType) == 0 {
+		return nil
+	}
+
+	// Sort keys so output order is deterministic
+	typeKeys := make([]string, 0, len(pricesByType))
+	for key := range pricesByType {
+		if strings.TrimSpace(key) == "" {
+			continue
+		}
+		typeKeys = append(typeKeys, key)
+	}
+	sort.Strings(typeKeys)
+
+	prices := make([]Price, 0, len(typeKeys))
+	for _, key := range typeKeys {
+		entry := pricesByType[key]
+		if entry.amount == "" {
+			continue
+		}
+
+		amount, _ := strconv.ParseFloat(entry.amount, 64)
+		prices = append(prices, Price{
+			Amount:     amount,
+			Currency:   entry.currency,
+			Type:       key,
+			Negotiable: entry.negotiable,
+		})
+	}
+
+	return prices
+}
+
+func priceValuesByType(prices []Price) map[string]*Price {
+	if len(prices) == 0 {
+		return map[string]*Price{}
+	}
+
+	result := make(map[string]*Price, len(prices))
+	for _, price := range prices {
+		if price.Type == "" {
+			continue
+		}
+		p := price
+		result[price.Type] = &p
+	}
+	return result
+}
+
+func priceLabelsByKey(options []DictionaryOption) map[string]string {
+	labels := make(map[string]string, len(options))
+	for _, opt := range options {
+		key := strings.TrimSpace(opt.Key)
+		if key == "" {
+			continue
+		}
+		labels[key] = opt.Name
+	}
+	return labels
 }

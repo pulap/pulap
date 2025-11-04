@@ -2,6 +2,7 @@ package estate
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -62,13 +63,33 @@ func ValidateCreateProperty(ctx context.Context, property *Property) []Validatio
 		}
 	}
 
-	// Validate price
-	if priceErrors := property.Price.Validate(); len(priceErrors) > 0 {
-		for _, err := range priceErrors {
-			errors = append(errors, ValidationError{
-				Field:   "price",
-				Message: err,
-			})
+	// Validate prices
+	if len(property.Prices) == 0 {
+		errors = append(errors, ValidationError{
+			Field:   "prices",
+			Message: "At least one price is required",
+		})
+	}
+
+	seenTypes := make(map[string]bool)
+	for _, price := range property.Prices {
+		if price.Type != "" {
+			if seenTypes[price.Type] {
+				errors = append(errors, ValidationError{
+					Field:   "prices",
+					Message: fmt.Sprintf("duplicate price type detected: %s", price.Type),
+				})
+			}
+			seenTypes[price.Type] = true
+		}
+
+		if priceErrors := price.Validate(); len(priceErrors) > 0 {
+			for _, err := range priceErrors {
+				errors = append(errors, ValidationError{
+					Field:   fmt.Sprintf("prices[%s]", price.Type),
+					Message: err,
+				})
+			}
 		}
 	}
 
@@ -166,13 +187,33 @@ func ValidateUpdateProperty(ctx context.Context, id uuid.UUID, property *Propert
 		}
 	}
 
-	// Validate price
-	if priceErrors := property.Price.Validate(); len(priceErrors) > 0 {
-		for _, err := range priceErrors {
-			errors = append(errors, ValidationError{
-				Field:   "price",
-				Message: err,
-			})
+	// Validate prices
+	if len(property.Prices) == 0 {
+		errors = append(errors, ValidationError{
+			Field:   "prices",
+			Message: "At least one price is required",
+		})
+	}
+
+	seenTypes := make(map[string]bool)
+	for _, price := range property.Prices {
+		if price.Type != "" {
+			if seenTypes[price.Type] {
+				errors = append(errors, ValidationError{
+					Field:   "prices",
+					Message: fmt.Sprintf("duplicate price type detected: %s", price.Type),
+				})
+			}
+			seenTypes[price.Type] = true
+		}
+
+		if priceErrors := price.Validate(); len(priceErrors) > 0 {
+			for _, err := range priceErrors {
+				errors = append(errors, ValidationError{
+					Field:   fmt.Sprintf("prices[%s]", price.Type),
+					Message: err,
+				})
+			}
 		}
 	}
 

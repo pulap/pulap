@@ -15,7 +15,7 @@ type Property struct {
 	Classification Classification `json:"classification"`
 	Location       Location       `json:"location"`
 	Features       Features       `json:"features"`
-	Price          Price          `json:"price"`
+	Prices         []Price        `json:"prices"`
 	Status         string         `json:"status"`
 	OwnerID        string         `json:"owner_id,omitempty"`
 	SchemaVersion  int            `json:"schema_version"`
@@ -25,7 +25,7 @@ type Property struct {
 	UpdatedBy      string         `json:"updated_by"`
 }
 
-const CurrentPropertySchemaVersion = 2
+const CurrentPropertySchemaVersion = 3
 
 // Classification represents the property taxonomy (references to fake service).
 type Classification struct {
@@ -108,7 +108,7 @@ type CreatePropertyRequest struct {
 	Classification Classification `json:"classification"`
 	Location       Location       `json:"location"`
 	Features       Features       `json:"features"`
-	Price          Price          `json:"price"`
+	Prices         []Price        `json:"prices"`
 	Status         string         `json:"status,omitempty"`
 	OwnerID        string         `json:"owner_id,omitempty"`
 	SchemaVersion  int            `json:"schema_version,omitempty"`
@@ -121,7 +121,7 @@ type UpdatePropertyRequest struct {
 	Classification Classification `json:"classification"`
 	Location       Location       `json:"location"`
 	Features       Features       `json:"features"`
-	Price          Price          `json:"price"`
+	Prices         []Price        `json:"prices"`
 	Status         string         `json:"status"`
 	OwnerID        string         `json:"owner_id,omitempty"`
 	SchemaVersion  int            `json:"schema_version,omitempty"`
