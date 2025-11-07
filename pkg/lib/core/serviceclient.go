@@ -82,6 +82,10 @@ func (c *ServiceClient) Request(ctx context.Context, method, path string, body i
 		if err := c.http.Post(ctx, path, body, &resp); err != nil {
 			return nil, err
 		}
+	case "PUT":
+		if err := c.http.Put(ctx, path, body, &resp); err != nil {
+			return nil, err
+		}
 	case "PATCH":
 		if err := c.http.Patch(ctx, path, body, &resp); err != nil {
 			return nil, err

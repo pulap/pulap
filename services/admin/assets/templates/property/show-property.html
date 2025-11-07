@@ -104,6 +104,52 @@
 </div>
 
 <div class="card">
+    <h2>Media</h2>
+
+    {{if .PropertyMedia}}
+    <div class="media-grid">
+        {{range .PropertyMedia}}
+        {{$categoryID := printf "%s" .CategoryID}}
+        {{$category := index $.MediaCategoryLabels $categoryID}}
+        {{$kind := index $.MediaKindLabels .Kind}}
+        <div class="media-card">
+            <div class="media-card-header">
+                <span class="media-chip">{{if $kind}}{{$kind}}{{else}}{{.Kind}}{{end}}</span>
+                {{if not .Enabled}}
+                <span class="media-chip disabled">Disabled</span>
+                {{end}}
+            </div>
+            <p class="media-meta">{{if $category}}{{$category}}{{else}}{{$categoryID}}{{end}}</p>
+            <p class="media-meta">{{.MimeType}} • {{.Resolution.Width}}x{{.Resolution.Height}} • {{.Filesize}} bytes</p>
+            {{if .StoragePath}}
+            <p class="media-path">{{.StoragePath}}</p>
+            {{end}}
+            {{if .Tags}}
+            <div class="media-tags">
+                {{range .Tags}}
+                {{$tagID := printf "%s" .}}
+                {{$tagLabel := index $.MediaTagLabels $tagID}}
+                <span class="media-tag">{{if $tagLabel}}{{$tagLabel}}{{else}}{{$tagID}}{{end}}</span>
+                {{end}}
+            </div>
+            {{end}}
+            {{if .Variants}}
+            <div class="media-variants">
+                {{range $name, $variant := .Variants}}
+                <div class="media-variant"><strong>{{$name}}</strong> {{$variant.Width}}x{{$variant.Height}} • {{$variant.Filesize}} bytes</div>
+                {{end}}
+            </div>
+            {{end}}
+            <p class="media-timestamp">Updated {{.UpdatedAt.Format "2006-01-02 15:04"}}</p>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <p style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.25rem; margin-top: 0.5rem;">No media recorded.</p>
+    {{end}}
+</div>
+
+<div class="card">
     <h2>Prices</h2>
 
     {{if .Property.Prices}}

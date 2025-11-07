@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestOpenStreetMapProvider_Autocomplete(t *testing.T) {
+func TestOpenStreetMapProvideAutocomplete(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -104,7 +104,7 @@ func TestOpenStreetMapProvider_Autocomplete(t *testing.T) {
 	})
 }
 
-func TestOpenStreetMapProvider_Resolve(t *testing.T) {
+func TestOpenStreetMapProvideResolve(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

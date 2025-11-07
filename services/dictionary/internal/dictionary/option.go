@@ -14,15 +14,15 @@ import (
 // Options can have hierarchical relationships via ParentID.
 type Option struct {
 	ID          uuid.UUID  `json:"id" bson:"_id"`
-	Set         uuid.UUID  `json:"set_id" bson:"set_id"`                      // Reference to the Set this option belongs to
-	ParentID    *uuid.UUID `json:"parent_id,omitempty" bson:"parent_id,omitempty"` // Optional parent option for hierarchy
-	Locale      string     `json:"locale" bson:"locale"`                      // Language/locale code
-	ShortCode   string     `json:"short_code" bson:"short_code"`              // Short code for the option
-	Key         string     `json:"key" bson:"key"`                            // Unique key within the set per locale
-	Label       string     `json:"label" bson:"label"`                        // Human-readable label
+	Set         uuid.UUID  `json:"set_id" bson:"set_id"`                               // Reference to the Set this option belongs to
+	ParentID    *uuid.UUID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`     // Optional parent option for hierarchy
+	Locale      string     `json:"locale" bson:"locale"`                               // Language/locale code
+	ShortCode   string     `json:"short_code" bson:"short_code"`                       // Short code for the option
+	Key         string     `json:"key" bson:"key"`                                     // Unique key within the set per locale
+	Label       string     `json:"label" bson:"label"`                                 // Human-readable label
 	Description string     `json:"description,omitempty" bson:"description,omitempty"` // Optional description
-	Value       string     `json:"value" bson:"value"`                        // The actual value
-	Order       int        `json:"order" bson:"order"`                        // Display order
+	Value       string     `json:"value" bson:"value"`                                 // The actual value
+	Order       int        `json:"order" bson:"order"`                                 // Display order
 	Active      bool       `json:"active" bson:"active"`
 	CreatedAt   time.Time  `json:"created_at" bson:"created_at"`
 	CreatedBy   string     `json:"created_by" bson:"created_by"`

@@ -1,0 +1,30 @@
+server:
+  port: ":8090"
+
+log:
+  level: info
+
+storage:
+  backend: local
+  local:
+    directory: ./media/img
+
+processing:
+  cropping: false
+  compression: false
+  variants:
+    - name: thumb
+      width: 150
+      height: 150
+    - name: preview
+      width: 800
+      height: 600
+    - name: web
+      width: 1280
+      height: 720
+
+services:
+  dictionary_url: http://localhost:8082
+
+debug:
+  routes: true

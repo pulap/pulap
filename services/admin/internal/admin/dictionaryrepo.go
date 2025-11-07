@@ -18,6 +18,7 @@ type DictionaryRepo interface {
 	ListStatuses(ctx context.Context) ([]DictionaryOption, error)
 	ListPriceTypes(ctx context.Context) ([]DictionaryOption, error)
 	ListConditions(ctx context.Context) ([]DictionaryOption, error)
+	GetOptionsBySetName(ctx context.Context, setName, locale string, parentID *uuid.UUID) ([]DictionaryOption, error)
 
 	// Set CRUD operations
 	ListSets(ctx context.Context) ([]DictionarySet, error)
@@ -113,6 +114,10 @@ func (c *FakeDictionaryRepo) ListConditions(ctx context.Context) ([]DictionaryOp
 		{ID: uuid.MustParse("e4444444-4444-4444-4444-444444444444"), Name: "Fair"},
 		{ID: uuid.MustParse("e5555555-5555-5555-5555-555555555555"), Name: "Poor"},
 	}, nil
+}
+
+func (c *FakeDictionaryRepo) GetOptionsBySetName(ctx context.Context, setName, locale string, parentID *uuid.UUID) ([]DictionaryOption, error) {
+	return []DictionaryOption{}, nil
 }
 
 // Set CRUD stub implementations for FakeDictionaryRepo

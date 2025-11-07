@@ -7,6 +7,7 @@ services/*/authn
 services/*/authz
 services/*/admin
 services/*/estate
+services/*/media
 services/*/todo
 services/*/.gocache/
 

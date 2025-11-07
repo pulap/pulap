@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestLocationIQProvider_Autocomplete(t *testing.T) {
+func TestLocationIQProvideAutocomplete(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -131,7 +131,7 @@ func TestLocationIQProvider_Autocomplete(t *testing.T) {
 	})
 }
 
-func TestLocationIQProvider_Resolve(t *testing.T) {
+func TestLocationIQProvideResolve(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

@@ -85,7 +85,7 @@ func TestOptionGetID(t *testing.T) {
 func TestOptionResourceType(t *testing.T) {
 	option := &Option{}
 
-	if option.ResourceType() != "fake/option" {
-		t.Errorf("ResourceType() = %s, want %s", option.ResourceType(), "fake/option")
+	if option.ResourceType() != "dictionary/option" {
+		t.Errorf("ResourceType() = %s, want %s", option.ResourceType(), "dictionary/option")
 	}
 }
