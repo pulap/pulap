@@ -1,10 +1,8 @@
 # Pulap
 
-**Pulap** is an early-stage real estate management system developed as both a standalone project and a reference implementation for [HatMax](https://github.com/hatmaxkit/hatmax), a Go monorepo generator for microservices.  
+**Pulap** is an early-stage real estate management system built as a Go monorepo for microservices.
 
-This project emerged from two converging efforts: rethinking and reimplementing ideas drawn from past real estate software I’ve collaborated on, and using it as an exercise to distill and refine patterns that shape HatMax. The aim is to capture the most solid practices and architectural insights gathered across different projects, where each applied a different subset of good ideas, and consolidate them into a coherent, reproducible foundation.  
-
-Building a generator like HatMax naturally involves building, in parallel, a concrete reference implementation. Pulap fulfills that role, focusing on the careful extraction, testing, and polishing of patterns before they are generalized into HatMax. The connection between both projects is simply factual: the same developer is exploring and refining the same body of ideas through two complementary paths.  
+This project emerged from rethinking and reimplementing ideas drawn from past real estate software I've collaborated on. The aim is to capture solid practices and architectural insights gathered across different projects, where each applied a different subset of good ideas, and consolidate them into a coherent, reproducible foundation.
 
 ---
 
